@@ -2,7 +2,11 @@
 # Set default behavior to automatically normalize line endings.
 ###############################################################################
 * text=auto
+# Tell GitHub to treat all files as C# for the language bar
+* linguist-language=C#
 
+# OR: Tell GitHub to ignore a specific folder (like a 'docs' or 'web' folder)
+# folder_name/* linguist-vendored
 ###############################################################################
 # Set default behavior for command prompt diff.
 #

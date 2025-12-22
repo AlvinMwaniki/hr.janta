@@ -1,0 +1,287 @@
+﻿@page "/employees/additional/nextofkin/{employeeId:guid}"
+@using HR.Data
+@using HR.Data.Models.Employees
+@using Microsoft.EntityFrameworkCore
+@using HR.Services.Services
+@inject EmployeeTempService TempService
+@inject HRDbContext Db
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Forms
+
+<h3>Additional Employee Details - Step 3: Next of Kin, Hobbies & Skills</h3>
+
+@if (employee == null)
+{
+  <p>Loading...</p>
+}
+else
+{
+  <EditForm>
+    <DataAnnotationsValidator />
+
+    <!-- NEXT OF KIN -->
+    <h4 class="fw-bold fs-3 mb-3">Next Of Kin</h4>
+
+    <!-- Row 1: FullName + Relationship -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Full Name</label>
+        <InputText @bind-Value="nokModel.FullName" class="form-control" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Relationship</label>
+        <InputText @bind-Value="nokModel.Relationship" class="form-control" />
+      </div>
+    </div>
+
+    <!-- Row 2: Phone + Address -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Phone</label>
+        <InputText @bind-Value="nokModel.Phone" class="form-control" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Address</label>
+        <InputText @bind-Value="nokModel.Address" class="form-control" />
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-primary mb-3" @onclick="AddOrUpdateNok">
+      @(editingNokIndex >= 0 ? "Update" : "Add")
+    </button>
+
+    @if (nextOfKins.Any())
+    {
+      <table class="table mt-2">
+        <thead>
+          <tr>
+            <th>FullName</th>
+            <th>Relationship</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (int i = 0; i < nextOfKins.Count; i++)
+          {
+            var nok = nextOfKins[i];
+            <tr>
+              <td>@nok.FullName</td>
+              <td>@nok.Relationship</td>
+              <td>@nok.Phone</td>
+              <td>@nok.Address</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" @onclick="() => EditNok(i)">Edit</button>
+                <button class="btn btn-sm btn-danger" @onclick="() => DeleteNok(i)">Delete</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <hr />
+
+    <!-- HOBBIES -->
+    <h4 class="fw-bold fs-3 mt-4 mb-3">Employee Hobbies</h4>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Hobby</label>
+        <InputText @bind-Value="hobbyModel.Name" class="form-control" />
+      </div>
+      <div class="col-md-6 d-flex align-items-end">
+        <button type="button" class="btn btn-primary" @onclick="AddOrUpdateHobby">
+          @(editingHobbyIndex >= 0 ? "Update" : "Add")
+        </button>
+      </div>
+    </div>
+
+    @if (hobbies.Any())
+    {
+      <ul class="list-group mb-4">
+        @for (int i = 0; i < hobbies.Count; i++)
+        {
+          var h = hobbies[i];
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            @h.Name
+            <span>
+              <button class="btn btn-sm btn-warning me-1" @onclick="() => EditHobby(i)">Edit</button>
+              <button class="btn btn-sm btn-danger" @onclick="() => DeleteHobby(i)">Delete</button>
+            </span>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- SKILLS -->
+    <h4 class="fw-bold fs-3 mt-4 mb-3">Employee Skills</h4>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Skill</label>
+        <InputText @bind-Value="skillModel.Name" class="form-control" />
+      </div>
+      <div class="col-md-6 d-flex align-items-end">
+        <button type="button" class="btn btn-primary" @onclick="AddOrUpdateSkill">
+          @(editingSkillIndex >= 0 ? "Update" : "Add")
+        </button>
+      </div>
+    </div>
+
+    @if (skills.Any())
+    {
+      <ul class="list-group mb-3">
+        @for (int i = 0; i < skills.Count; i++)
+        {
+          var s = skills[i];
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            @s.Name
+            <span>
+              <button class="btn btn-sm btn-warning me-1" @onclick="() => EditSkill(i)">Edit</button>
+              <button class="btn btn-sm btn-danger" @onclick="() => DeleteSkill(i)">Delete</button>
+            </span>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="mt-2">
+      <button class="btn btn-secondary me-2" @onclick="GoBack">Back</button>
+      <button class="btn btn-success" @onclick="NextStep">Next</button>
+    </div>
+
+  </EditForm>
+
+}
+
+@code {
+  [Parameter] public Guid employeeId { get; set; }
+  Employee? employee;
+
+  // NEXT OF KIN
+  NextOfKin nokModel = new();
+  List<NextOfKin> nextOfKins = new();
+  int editingNokIndex = -1;
+
+  // HOBBIES
+  Hobby hobbyModel = new();
+  List<Hobby> hobbies = new();
+  int editingHobbyIndex = -1;
+
+  // SKILLS
+  Skill skillModel = new();
+  List<Skill> skills = new();
+  int editingSkillIndex = -1;
+
+  protected override async Task OnInitializedAsync()
+  {
+    employee = await Db.Employees
+        .Include(e => e.NextOfKin)
+        .Include(e => e.Hobbies)
+        .Include(e => e.Skills)
+        .FirstOrDefaultAsync(e => e.Id == employeeId);
+
+    if (employee == null)
+    {
+      Navigation.NavigateTo("/employees");
+      return;
+    }
+
+    nextOfKins = employee.NextOfKin.ToList();
+    hobbies = employee.Hobbies.ToList();
+    skills = employee.Skills.ToList();
+  }
+
+  // NEXT OF KIN
+  void AddOrUpdateNok()
+  {
+    if (editingNokIndex >= 0)
+    {
+      nextOfKins[editingNokIndex] = nokModel;
+      editingNokIndex = -1;
+    }
+    else
+    {
+      nextOfKins.Add(nokModel);
+    }
+    nokModel = new NextOfKin();
+  }
+
+  void EditNok(int index)
+  {
+    nokModel = nextOfKins[index];
+    editingNokIndex = index;
+  }
+
+  void DeleteNok(int index)
+  {
+    nextOfKins.RemoveAt(index);
+  }
+
+  // HOBBIES
+  void AddOrUpdateHobby()
+  {
+    if (editingHobbyIndex >= 0)
+    {
+      hobbies[editingHobbyIndex] = hobbyModel;
+      editingHobbyIndex = -1;
+    }
+    else
+    {
+      hobbies.Add(hobbyModel);
+    }
+    hobbyModel = new Hobby();
+  }
+
+  void EditHobby(int index)
+  {
+    hobbyModel = hobbies[index];
+    editingHobbyIndex = index;
+  }
+
+  void DeleteHobby(int index)
+  {
+    hobbies.RemoveAt(index);
+  }
+
+  // SKILLS
+  void AddOrUpdateSkill()
+  {
+    if (editingSkillIndex >= 0)
+    {
+      skills[editingSkillIndex] = skillModel;
+      editingSkillIndex = -1;
+    }
+    else
+    {
+      skills.Add(skillModel);
+    }
+    skillModel = new Skill();
+  }
+
+  void EditSkill(int index)
+  {
+    skillModel = skills[index];
+    editingSkillIndex = index;
+  }
+
+  void DeleteSkill(int index)
+  {
+    skills.RemoveAt(index);
+  }
+
+  void GoBack()
+  {
+    Navigation.NavigateTo($"/employees/additional/workhistory/{employee!.Id}");
+  }
+
+
+  // SAVE ALL
+  void NextStep()
+  {
+    employee!.NextOfKin = nextOfKins;
+    Navigation.NavigateTo($"/employees/additional/bankpayment/{employeeId}");
+  }
+}

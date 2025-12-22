@@ -1,0 +1,180 @@
+.page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.sidebar {
+  /* Use the variable with your blue gradient as the default fallback */
+  background-image: var(--sidebar-bg, linear-gradient(180deg, rgb(0, 2, 105) 50%, #093AAB 100%));
+}
+
+.top-row {
+  /* Use the header variable with #f7f7f7 as fallback */
+  background-color: var(--bg-header, #f7f7f7) !important;
+  border-bottom: 1px solid var(--border, #d6d5d5) !important;
+  justify-content: flex-end;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+}
+
+    .top-row ::deep a, .top-row ::deep .btn-link {
+        white-space: nowrap;
+        margin-left: 1.5rem;
+        text-decoration: none;
+    }
+
+    .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
+        text-decoration: underline;
+    }
+
+    .top-row ::deep a:first-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+@media (max-width: 640.98px) {
+    .top-row {
+        justify-content: space-between;
+    }
+
+    .top-row ::deep a, .top-row ::deep .btn-link {
+        margin-left: 0;
+    }
+}
+
+@media (min-width: 641px) {
+    .page {
+        flex-direction: row;
+    }
+
+    .sidebar {
+        width: 250px;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+    }
+
+    .top-row {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .top-row.auth ::deep a:first-child {
+        flex: 1;
+        text-align: right;
+        width: 0;
+    }
+
+    .top-row, article {
+        padding-left: 2rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+
+#blazor-error-ui {
+    color-scheme: light only;
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+/* --- 1. Header and Brand Styling --- */
+
+/* Replace the old .top-row styling */
+/* --- 1. Title Size Adjustment --- */
+.brand-large {
+  /* Significantly larger title */
+  font-size: 2.2rem !important;
+  font-weight: 900;
+}
+
+/* Specific styling for the HR Master ProX title (keep the color) */
+.navbar-brand-custom {
+  color: var(--brand-title) !important;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+/* --- 2. New Icon & User Styling --- */
+
+/* Color for the User Icon (using the brand's primary color) */
+.user-icon-color {
+  color: rgb(12, 14, 120);
+}
+
+/* Styling for the Settings Cog Icon */
+.settings-icon {
+  /* Make the icon match the user icon's color */
+  color: #555;
+  transition: color 0.2s ease;
+}
+
+  .settings-icon:hover {
+    color: rgb(12, 14, 120); /* Change color on hover */
+  }
+
+/* Keep User Info Styling the same */
+.logged-in-user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  /* Removed margin-right as Logout is now separate */
+}
+
+
+/* --- 3. Logout Text Size Adjustment --- */
+
+/* Ensure the component renders inline with minimal spacing */
+.logout-container {
+  display: flex; /* Ensures the Logout component is aligned */
+  align-items: center;
+  margin-left: 1rem;
+}
+
+  /* Force the button/link inside the Logout component to be small and inline */
+  .logout-container a,
+  .logout-container button {
+    display: flex;
+    align-items: center;
+    padding: 0.3rem 0.8rem; /* Small padding */
+    font-size: 0.8rem; /* Smaller font size */
+    white-space: nowrap; /* Prevents text from wrapping to two lines */
+    /* Keep colors for visibility */
+    color: #fff;
+    background-color: rgb(12, 14, 120);
+    border-radius: 0.3rem;
+    text-decoration: none;
+    border: none;
+  }
+
+    .logout-container a:hover,
+    .logout-container button:hover {
+      background-color: #0366e9; /* Slightly different shade on hover */
+      text-decoration: none;
+    }
+.logged-in-user-name, .navbar-brand-custom {
+  color: var(--text-main) !important;
+}
+    /* End of HR.Web.Admin.Blazor/Components/Layout/MainLayout.razor.css */
+

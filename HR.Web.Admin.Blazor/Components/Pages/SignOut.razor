@@ -1,0 +1,37 @@
+﻿@page "/signout"
+@inject NavigationManager Navigation
+@inject HttpClient HttpClient
+@inject IConfiguration Configuration // To get the base URL if needed
+
+<div class="text-center p-5">
+  <h3 class="text-info">
+    <i class="fas fa-spinner fa-spin me-2"></i> Signing you out...
+  </h3>
+  <p class="text-muted">You are being redirected.</p>
+</div>
+
+@code {
+  protected override async Task OnInitializedAsync()
+  {
+    // 1. Send the POST request to the server endpoint to clear the cookie.
+    // We MUST use the full absolute URL because the sign-out process runs
+    // before the Blazor circuit is fully stable.
+
+    string logoutUrl = Navigation.ToAbsoluteUri("/logout").AbsoluteUri;
+
+    try
+    {
+      // Execute the POST request to the server endpoint
+      await HttpClient.PostAsync(logoutUrl, new StringContent(""));
+    }
+    catch (Exception ex)
+    {
+      // Log the error, but the key action is the redirect below
+      Console.WriteLine($"Logout POST failed: {ex.Message}");
+    }
+
+    // 2. Force the client to navigate to the login page immediately.
+    // This is the clean, definitive client-side solution.
+    Navigation.NavigateTo("/login", forceLoad: true);
+  }
+}

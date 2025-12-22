@@ -1,0 +1,52 @@
+﻿@* /Components/Charts/LeaveChartCard.razor *@
+
+@using HR.Services.DTO
+@inject IJSRuntime JS
+
+@if (LeaveData is null)
+{
+  <div class="card shadow-sm h-100"><div class="card-body"><p>Loading leave data...</p></div></div>
+}
+else
+{
+  <div @attributes="AdditionalAttributes">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div style="height: 300px; width: 100%;">
+          @* ⭐ NEW UNIQUE ID for the Leave Chart ⭐ *@
+          <canvas id="LeaveStatusChartData"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@code {
+  [Parameter]
+  public LeaveChartDataDto LeaveData { get; set; } = new();
+
+  private Dictionary<string, object> AdditionalAttributes =
+      new Dictionary<string, object> { { "autofocus", "false" } };
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender && LeaveData is not null && LeaveData.HasData)
+    {
+      try
+      {
+        await JS.InvokeVoidAsync(
+            "renderLeaveStatusChart",
+            new object[] {
+                        LeaveData.LeavesApproved,
+                        LeaveData.LeavesPending,
+                        LeaveData.LeavesRejected
+            }
+        );
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Leave Chart JS Error: {ex.Message}");
+      }
+    }
+  }
+}

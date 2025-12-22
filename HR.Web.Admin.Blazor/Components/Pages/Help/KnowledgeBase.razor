@@ -1,0 +1,75 @@
+﻿@page "/help/knowledgebase"
+
+<div class="container my-4">
+  <h2 class="mb-4">
+    <i class="fas fa-book me-2"></i> Knowledge Base
+  </h2>
+
+  <p class="text-muted mb-4">
+    Browse articles and guides to help you navigate the HR system efficiently.
+  </p>
+
+  <!-- Search Bar -->
+  <div class="input-group mb-4">
+    <input type="text" class="form-control" placeholder="Search articles..." />
+    <button class="btn btn-primary" type="button">
+      <i class="fas fa-search"></i>
+    </button>
+  </div>
+
+  <!-- Articles List -->
+  <div class="row g-3">
+    <!-- Article 1 -->
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">How to View Your Payslips</h5>
+          <p class="card-text text-muted">
+            Learn how to access and download your payslips from the HR system.
+          </p>
+          <NavLink href="/help/knowledgebase/payslips" class="btn btn-outline-primary btn-sm">
+            Read More
+          </NavLink>
+        </div>
+      </div>
+    </div>
+
+    <!-- Article 2 -->
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">Requesting a Salary Advance</h5>
+          <p class="card-text text-muted">
+            Step-by-step guide to applying for a salary advance.
+          </p>
+          <NavLink href="/help/knowledgebase/salaryadvance" class="btn btn-outline-primary btn-sm">
+            Read More
+          </NavLink>
+        </div>
+      </div>
+    </div>
+
+    <!-- Article 3 -->
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">Updating Your Profile</h5>
+          <p class="card-text text-muted">
+            Instructions on how to update your personal details in the system.
+          </p>
+          <NavLink href="/help/knowledgebase/profileupdate" class="btn btn-outline-primary btn-sm">
+            Read More
+          </NavLink>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add more articles as needed -->
+  </div>
+
+  <div class="mt-4">
+    <NavLink href="/help" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-2"></i> Back to Help & Support
+    </NavLink>
+  </div>
+</div>

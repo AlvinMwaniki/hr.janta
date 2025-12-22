@@ -1,0 +1,166 @@
+﻿@page "/employees/additional"
+@using HR.Data
+@using HR.Data.Models.Employees
+@using Microsoft.EntityFrameworkCore
+@using HR.Services.Services
+@inject HRDbContext Db
+@inject NavigationManager Navigation
+@inject EmployeeTempService TempService
+@using Microsoft.AspNetCore.Components.Forms
+
+<h3>Additional Employee Details - Step 1: Education History</h3>
+
+@if (employee == null)
+{
+  <p>Loading...</p>
+}
+else
+{
+  <EditForm Model="@educationModel" OnValidSubmit="@AddOrUpdateEducation">
+    <DataAnnotationsValidator />
+    <div class="form-card">
+      <h4 class="mb-4">Education History</h4>
+
+      <!-- Row 1: School Name, Country -->
+      <div class="row form-row mb-2">
+        <div class="col-md-6">
+          <label class="form-label">School Name</label>
+          <InputText @bind-Value="educationModel.SchoolName" class="form-control" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Country</label>
+          <InputText @bind-Value="educationModel.Country" class="form-control" />
+        </div>
+      </div>
+
+      <!-- Row 2: Field of Study, Level -->
+      <div class="row form-row mb-2">
+        <div class="col-md-6">
+          <label class="form-label">Field of Study</label>
+          <InputText @bind-Value="educationModel.Field" class="form-control" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Level</label>
+          <InputText @bind-Value="educationModel.Level" class="form-control" />
+        </div>
+      </div>
+
+      <!-- Row 3: From Date, To Date -->
+      <div class="row form-row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">From Date</label>
+          <InputDate @bind-Value="educationModel.FromDate" class="form-control" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">To Date</label>
+          <InputDate @bind-Value="educationModel.ToDate" class="form-control" />
+        </div>
+      </div>
+
+      <button class="btn btn-primary mb-3">
+        @((editingEducationIndex >= 0) ? "Update" : "Add")
+      </button>
+    </div>
+  </EditForm>
+
+  @if (educations.Any())
+  {
+    <table class="table mt-3">
+      <thead>
+        <tr>
+          <th>School</th>
+          <th>Country</th>
+          <th>Field</th>
+          <th>Level</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (int i = 0; i < educations.Count; i++)
+        {
+          var edu = educations[i];
+          <tr>
+            <td>@edu.SchoolName</td>
+            <td>@edu.Country</td>
+            <td>@edu.Field</td>
+            <td>@edu.Level</td>
+            <td>@edu.FromDate.ToShortDateString()</td>
+            <td>@edu.ToDate.ToShortDateString()</td>
+            <td>
+              <button class="btn btn-sm btn-warning me-1" @onclick="() => EditEducation(i)">Edit</button>
+              <button class="btn btn-sm btn-danger" @onclick="() => DeleteEducation(i)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="mt-2">
+      <button class="btn btn-secondary me-2" @onclick="GoBack">Back</button>
+      <button class="btn btn-success" @onclick="NextStep">Next</button>
+    </div>
+  }
+}
+
+@code {
+  [Parameter] public Guid employeeId { get; set; }
+
+  Employee employee => TempService.TempEmployee;
+
+  // Education
+  EducationHistory educationModel = new();
+  List<EducationHistory> educations = new();
+  int editingEducationIndex = -1;
+
+  protected override void OnInitialized()
+  {
+    // Load existing temp data if any
+    if (employee.Education != null && employee.Education.Any())
+    {
+      educations = employee.Education;
+    }
+  }
+
+  void AddOrUpdateEducation()
+  {
+    if (editingEducationIndex >= 0)
+    {
+      // Update existing
+      educations[editingEducationIndex] = educationModel;
+      editingEducationIndex = -1;
+    }
+    else
+    {
+      // Add new
+      educations.Add(educationModel);
+    }
+    educationModel = new EducationHistory(); // Reset form
+  }
+
+  void EditEducation(int index)
+  {
+    educationModel = educations[index];
+    editingEducationIndex = index;
+  }
+
+  void DeleteEducation(int index)
+  {
+    educations.RemoveAt(index);
+  }
+
+  void GoBack()
+  {
+    // Navigate back to Step 1 (Create)
+    Navigation.NavigateTo("/employees/create");
+  }
+
+
+  void NextStep()
+  {
+    // Save to temp service and go to Work History step
+    employee.Education = educations;
+    Navigation.NavigateTo($"/employees/additional/workhistory/{employeeId}");
+  }
+}

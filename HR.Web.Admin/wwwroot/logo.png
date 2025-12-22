@@ -1,0 +1,6 @@
+﻿namespace HR.Web.Admin.wwwroot
+{
+    public class logo
+    {
+    }
+}

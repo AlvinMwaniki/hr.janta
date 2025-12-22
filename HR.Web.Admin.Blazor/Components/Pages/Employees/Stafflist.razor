@@ -1,0 +1,42 @@
+﻿@page "/employees/list"
+
+@using HR.Data
+@using HR.Data.Models.Employees
+@using Microsoft.EntityFrameworkCore
+
+@inject HRDbContext Db
+
+<h3>Employees</h3>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Department</th>
+      <th>Job Title</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (var emp in employees)
+    {
+      <tr>
+        <td>@($"{emp.FirstName} {emp.LastName}")</td>
+        <td>@emp.Department?.Name</td>
+        <td>@emp.JobTitle</td>
+        <td>@emp.Status</td>
+      </tr>
+    }
+  </tbody>
+</table>
+
+@code {
+  List<Employee> employees = new();
+
+  protected override async Task OnInitializedAsync()
+  {
+    employees = await Db.Employees
+        .Include(e => e.Department)
+        .ToListAsync();
+  }
+}

@@ -1,0 +1,181 @@
+﻿@page "/employees/additional/nextofkin"
+@using HR.Data
+@using DataModels = HR.Data.Models.Employees 
+@using Microsoft.EntityFrameworkCore
+@using HR.Services.Services
+@inject EmployeeTempService TempService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Forms
+
+<h3>Step 3: Next of Kin</h3>
+
+<EditForm EditContext="@editContext" OnValidSubmit="AddOrUpdateNextOfKin" FormName="Step4">
+  <DataAnnotationsValidator />
+  <Microsoft.AspNetCore.Components.Forms.ValidationSummary />
+
+  <div class="form-card">
+    <h4 class="mb-4">Next of Kin Details</h4>
+
+    <!-- Row 1: Full Name, Relationship -->
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <label class="form-label">Full Name</label>
+        <InputText @bind-Value="nokModel.FullName" class="form-control" />
+        <ValidationMessage For="@(() => nokModel.FullName)" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Relationship</label>
+        <InputText @bind-Value="nokModel.Relationship" class="form-control" />
+        <ValidationMessage For="@(() => nokModel.Relationship)" />
+
+      </div>
+    </div>
+
+    <!-- Row 2: Phone -->
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <label class="form-label">Phone</label>
+        <InputText @bind-Value="nokModel.Phone" class="form-control" />
+        <ValidationMessage For="@(() => nokModel.Phone)" />
+
+      </div>
+      <!-- Removed the Email input field -->
+    </div>
+
+    <!-- Row 3: Address -->
+    <div class="row mb-2">
+      <div class="col-md-12">
+        <label class="form-label">Address</label>
+        <InputTextArea @bind-Value="nokModel.Address" class="form-control" />
+        <ValidationMessage For="@(() => nokModel.Address)" />
+
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mb-3">
+      @((editingNokIndex >= 0) ? "Update" : "Add")
+    </button>
+  </div>
+</EditForm>
+
+
+@if (TempService.TempEmployee.NextOfKin.Any())
+{
+  <table class="table mt-3">
+    <thead>
+      <tr>
+        <th>Full Name</th>
+        <th>Relationship</th>
+        <th>Phone</th>
+        <th>Address</th> 
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (int i = 0; i < TempService.TempEmployee.NextOfKin.Count; i++)
+      {
+        var nok = TempService.TempEmployee.NextOfKin[i];
+        <tr>
+          <td>@nok.FullName</td>
+          <td>@nok.Relationship</td>
+          <td>@nok.Phone</td>
+          <td>@nok.Address</td> {{-- Updated table cell --}}
+          <td>
+            <button class="btn btn-sm btn-warning me-1" @onclick="() => EditNok(nok)">Edit</button>
+            <button class="btn btn-sm btn-danger" @onclick="() => DeleteNok(nok)">Delete</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="mt-2">
+    <button class="btn btn-secondary me-2" @onclick="GoBack">Back</button>
+    <button class="btn btn-success" @onclick="NextStep">Next</button>
+  </div>
+}
+
+
+@code {
+  // Use the alias when declaring the model type
+  private DataModels.NextOfKin nokModel = new();
+  private int editingNokIndex = -1;
+  private EditContext? editContext;
+
+  protected override void OnInitialized()
+  {
+    editContext = new EditContext(nokModel)!;
+  }
+
+  private void AddOrUpdateNextOfKin(EditContext context)
+  {
+    if (editingNokIndex >= 0)
+    {
+      TempService.UpdateNextOfKin(editingNokIndex, nokModel);
+      editingNokIndex = -1;
+    }
+    else
+    {
+      TempService.AddNextOfKin(nokModel);
+    }
+
+    // Reset the form model and the EditContext
+    nokModel = new DataModels.NextOfKin();
+    editContext = new EditContext(nokModel)!;
+    StateHasChanged(); // Update UI
+  }
+
+  private void EditNok(DataModels.NextOfKin itemToEdit)
+  {
+    // CRITICAL: Find the index of the object passed in
+    int index = TempService.TempEmployee.NextOfKin.IndexOf(itemToEdit);
+
+    if (index == -1) return; // Safely exit if the item is somehow missing
+
+    // Create a deep copy from the item passed in
+    nokModel = new DataModels.NextOfKin
+    {
+      Id = itemToEdit.Id,
+      EmployeeId = itemToEdit.EmployeeId,
+      FullName = itemToEdit.FullName,
+      Relationship = itemToEdit.Relationship,
+      Phone = itemToEdit.Phone,
+      Address = itemToEdit.Address
+    };
+    editingNokIndex = index; // Use the found index for update tracking
+    editContext = new EditContext(nokModel)!;
+    StateHasChanged();
+  }
+
+  private void DeleteNok(DataModels.NextOfKin itemToDelete)
+  {
+    // CRITICAL: Find the index of the object passed in
+    int index = TempService.TempEmployee.NextOfKin.IndexOf(itemToDelete);
+
+    if (index == -1) return; // Safely exit
+
+    // Remove the item using the found index
+    TempService.RemoveNextOfKin(index);
+
+    // Reset form state
+    editingNokIndex = -1;
+    nokModel = new DataModels.NextOfKin();
+    editContext = new EditContext(nokModel)!;
+    StateHasChanged();
+  }
+
+  private void GoBack()
+  {
+    // Go back to Work History page
+    Navigation.NavigateTo("/employees/workhistory");
+    StateHasChanged();
+  }
+
+  private void NextStep()
+  {
+    // Navigate to the next step, assuming Hobbies page now
+    Navigation.NavigateTo($"/employees/additional/bankpayment/");
+    StateHasChanged();
+  }
+}

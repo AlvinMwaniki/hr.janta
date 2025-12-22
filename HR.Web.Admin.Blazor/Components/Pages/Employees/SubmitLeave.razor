@@ -1,0 +1,139 @@
+﻿@page "/leave/submit"
+@using HR.Core.Enums
+@using HR.Services.DTO
+@using HR.Services.Interfaces
+@inject HR.Services.Services.LeaveService LeaveService
+@inject NavigationManager Navigation
+@inject ICurrentUserService CurrentUser
+@inject ILeaveService LeaveService
+@rendermode InteractiveServer
+
+<h3>Submit New Leave Request</h3>
+<hr />
+
+@if (IsLoading)
+{
+  <div class="alert alert-info">Loading employee data...</div>
+}
+else if (CurrentEmployee == null)
+{
+  <div class="alert alert-danger">
+    <strong>ERROR:</strong> Could not retrieve employee details. Please **check your database link** between User and Employee.
+  </div>
+}
+else
+{
+  <div class="card shadow-sm p-3 mb-4 bg-light border-primary">
+    <h5 class="card-title mb-2 text-primary">Your Details</h5>
+    <div class="row small">
+      <div class="col-md-4"><strong>Employee Name:</strong> @CurrentEmployee.FullName</div>
+      <div class="col-md-4"><strong>Department:</strong> @CurrentEmployee.DepartmentName</div>
+      <div class="col-md-4"><strong>Job Title:</strong> @CurrentEmployee.JobTitle</div>
+    </div>
+  </div>
+  @if (!string.IsNullOrEmpty(errorMessage))
+  {
+    <div class="alert alert-danger">@errorMessage</div>
+  }
+
+  @if (isSuccess)
+  {
+    <div class="alert alert-success">Leave request submitted successfully! Redirecting...</div>
+  }
+  else
+  {
+    <EditForm Model="@model" OnValidSubmit="HandleValidSubmit" FormName="Leave">
+      <DataAnnotationsValidator />
+      <div class="card shadow-sm p-4">
+
+        <div class="mb-3">
+          <label for="leaveType" class="form-label">Leave Type</label>
+          <InputSelect @bind-Value="model.Type" class="form-select">
+            <option value="">Select Type...</option>
+            @foreach (var type in Enum.GetValues<LeaveType>())
+            {
+              <option value="@type">@type.ToString()</option>
+            }
+          </InputSelect>
+          <ValidationMessage For="@(() => model.Type)" />
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="startDate" class="form-label">Start Date</label>
+            <InputDate @bind-Value="model.StartDate" class="form-control" />
+            <ValidationMessage For="@(() => model.StartDate)" />
+          </div>
+          <div class="col-md-6">
+            <label for="endDate" class="form-label">End Date</label>
+            <InputDate @bind-Value="model.EndDate" class="form-control" />
+            <ValidationMessage For="@(() => model.EndDate)" />
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="reason" class="form-label">Reason for Leave</label>
+          <InputTextArea @bind-Value="model.Reason" class="form-control" rows="3" />
+          <ValidationMessage For="@(() => model.Reason)" />
+        </div>
+
+        <button type="submit" class="btn btn-success" disabled="@isSubmitting">
+          @if (isSubmitting)
+          {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          }
+          Submit Request
+        </button>
+        <a href="/dashboard" class="btn btn-link mt-2">Cancel</a>
+      </div>
+    </EditForm>
+  }
+}
+
+@code {
+  private LeaveSubmissionDto model = new();
+  private CurrentEmployeeDetailsDto? CurrentEmployee;
+  private bool IsLoading = true;
+  private bool isSubmitting = false;
+  private bool isSuccess = false;
+  private string? errorMessage;
+
+  protected override async Task OnInitializedAsync()
+  {
+    CurrentEmployee = await CurrentUser.GetCurrentEmployeeDetailsAsync();
+    IsLoading = false;
+
+    // Set initial dates
+    model.StartDate = DateTime.Today;
+    model.EndDate = DateTime.Today;
+  }
+
+  private async Task HandleValidSubmit()
+  {
+    if (CurrentEmployee == null) return;
+
+    errorMessage = null;
+    isSubmitting = true;
+
+    try
+    {
+      await LeaveService.SubmitLeaveRequestAsync(model);
+
+      isSuccess = true;
+      await Task.Delay(2000);
+      Navigation.NavigateTo("/dashboard");
+    }
+    catch (InvalidOperationException ex)
+    {
+      errorMessage = ex.Message;
+    }
+    catch (Exception)
+    {
+      errorMessage = "An unexpected error occurred during submission.";
+    }
+    finally
+    {
+      isSubmitting = false;
+    }
+  }
+}

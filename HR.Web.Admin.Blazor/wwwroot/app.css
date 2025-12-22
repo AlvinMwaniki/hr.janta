@@ -1,0 +1,520 @@
+﻿html, body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: var(--bg-body) !important;
+  transition: none !important; /* Disable transitions during nav to stop the flash */
+}
+/*=========BUTTONS STYLING=========*/
+a, .btn-link {
+    color: #006bb7;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+/*=========END BUTTONS STYLING=========*/
+
+/*========FORMS FOR EMPLOYEE==========*/
+/*======== MODERN FORMS FOR HR MASTER PROX ==========*/
+
+/* 1. The Container Card */
+.form-card {
+    background: #ffffff;
+    padding: 32px; /* More breathing room */
+    border-radius: 16px; /* Softer corners */
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); /* Very soft, modern shadow */
+    margin-bottom: 30px;
+}
+
+/* 2. Modern Labels */
+.form-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: block;
+    transition: color 0.2s ease;
+}
+
+/* 3. The Input Field Transformation */
+.form-control, .form-select {
+    height: calc(3rem + 2px); /* Slightly taller for luxury feel */
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa; /* Light grey background */
+    border: 1.5px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    color: #212529;
+    transition: all 0.2s ease-in-out;
+}
+
+/* 4. The "Magic" Focus State */
+.form-control:focus, .form-select:focus {
+    background-color: #fff;
+    border-color: #1064ee; /* Match your brand blue */
+    box-shadow: 0 0 0 4px rgba(16, 100, 238, 0.1); /* Soft blue outer glow */
+    outline: 0;
+}
+
+/* 5. Placeholder Styling */
+.form-control::placeholder {
+    color: #adb5bd;
+    font-weight: 400;
+}
+
+/* 6. Section Titles inside Forms */
+.form-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #131494; /* Your Deep Blue */
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+/* 7. Input Group Icons (If you use them) */
+.input-group-text {
+    background-color: #f8f9fa;
+    border: 1.5px solid #e9ecef;
+    border-radius: 10px;
+    color: #6c757d;
+}
+
+/* 8. Success/Validation Look */
+.form-control.is-valid {
+    border-color: #13e5bf; /* Match your brand green */
+}
+
+/*=========== END OF MODERN FORM CSS ========*/
+/*===========END OF FORM FIELDS CSS========*/
+
+.content {
+    padding-top: 1.1rem;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid #e50000;
+}
+
+.validation-message {
+    color: #e50000;
+}
+
+.blazor-error-boundary {
+    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: white;
+}
+
+    .blazor-error-boundary::after {
+        content: "An error has occurred."
+    }
+
+.darker-border-checkbox.form-check-input {
+    border-color: #929292;
+}
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
+
+/* --- GLOBAL LOGIN PAGE STYLES --- */
+/* You can use a repeating background image here if you have one, 
+   otherwise, use the subtle gradient effect */
+body {
+  background-color: #f4f7f9; /* Fallback color in case the image doesn't load */
+  
+}
+
+.login-page-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  padding: 40px 20px;
+  background-color: #f4f7f9;
+  /* ADD THE BACKGROUND IMAGE HERE */
+  background-image: url('../images/Untitled design (3).png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+/* FIX: Add min-height: 100vh to allow centering across the full viewport */
+.login-page-wrapper {
+    min-height: 100vh; 
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center;    /* Center vertically */
+    
+    /* ADDED: Generous padding to create space around the card on the screen edges */
+}
+
+/* --- B. THE MAIN TWO-COLUMN CARD (The element you want to shrink) --- */
+.login-card {
+    
+    max-width: 950px; 
+    width: 100%; /* Ensures it scales correctly */
+    
+    /* Reduced height for a more compact look */
+    height: 540px; 
+    
+    border-radius: 20px;
+    overflow: hidden; 
+    background: white;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); /* Stronger shadow for "pop-up" effect */
+    border: none;
+}
+
+
+/* --- C. COLUMN 1: PORTAL DESCRIPTION STYLES --- */
+.login-portal-panel {
+  /* Ensure the column takes up the full available height of the .login-card */
+  height: 100%;
+  background: linear-gradient(135deg, #13e5bf 0%, #1064ee 50%, #d3f2ff 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  position: relative; /* REQUIRED for the dots to position correctly */
+  border-radius: 20px 0 0 20px;
+  overflow: hidden; /* Keeps the dots inside the rounded corners */
+  z-index: 1; /* Sets a base layer */
+}
+
+  /* Common Dot Logic */
+  .login-portal-panel::before,
+  .login-portal-panel::after {
+    content: "";
+    position: absolute;
+    width: 100px; /* Width of the dotted area */
+    height: 100px; /* Height of the dotted area */
+    /* This creates the polka dot pattern using your color #131494 */
+    background-image: radial-gradient(#131494 20%, transparent 20%);
+    background-size: 12px 12px; /* Controls how close the dots are */
+    z-index: 0; /* Sits behind your text but above the background gradient */
+    opacity: 0.4; /* Makes the dots subtle against the gradient */
+  }
+
+  /* Top Left Dotted Icon */
+  .login-portal-panel::before {
+    top: -5px;
+    left: -5px;
+  }
+
+  /* Bottom Right Dotted Icon */
+  .login-portal-panel::after {
+    bottom: -5px;
+    right: -5px;
+  }
+
+/* Ensure the text content stays on top of the dots */
+.portal-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* --- D. COLUMN 2: LOGIN FORM PANEL --- */
+
+.login-form-panel {
+  background: white;
+  height: 100%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0 20px 20px 0;
+}
+
+  /* Override the margins and width imposed by your Login.razor content */
+  .login-form-panel > .row.justify-content-center {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+  }
+
+  .login-form-panel .col-md-5 {
+    /* Remove the width restriction from col-md-5 inside the panel */
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  .login-form-panel .card {
+    /* Remove unnecessary outer margins */
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    height: 100%;
+    /* Keep the card shadow and background, but let it expand */
+  }
+.portal-content .portal-title {
+  /* Optional: Ensure no other padding/margin is pushing the title down */
+  margin-top: 0;
+  /* The large space below the title is handled by the Bootstrap mb-5 class in HTML */
+}
+
+
+/* Targets the list items and forces a large gap below them */
+.portal-list-spaced li {
+  /* Sets the margin below each item to 25 pixels, which should look like skipping a line */
+  margin-bottom: 25px;
+}
+
+  /* Optional: To ensure the icon doesn't look too close to the text */
+  .portal-list-spaced li span {
+    margin-right: 12px;
+  }
+/* --- 📱 MOBILE RESPONSIVE UPDATE --- */
+@media (max-width: 767.98px) {
+  .login-card {
+    flex-direction: column; /* Stack vertically on mobile */
+    height: auto;
+    min-height: unset;
+    margin: 20px 0;
+  }
+
+  .login-portal-panel {
+    /* Transform into a header */
+    width: 100% !important;
+    height: auto !important;
+    padding: 40px 20px !important;
+    border-radius: 20px 20px 0 0 !important;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Hide features list on mobile to save vertical space */
+  .portal-features, .portal-list-spaced {
+    display: none !important;
+  }
+
+  .portal-title {
+    font-size: 1.8rem !important;
+    margin-bottom: 0 !important;
+  }
+
+  .login-form-panel {
+    width: 100% !important;
+    border-radius: 0 0 20px 20px !important;
+    padding: 30px 20px !important;
+  }
+
+  /* Center the dots for the new mobile header layout */
+  .login-portal-panel::after {
+    bottom: -30px;
+    right: -30px;
+  }
+}
+
+@media (min-width: 768px) {
+  .login-portal-panel {
+    border-radius: 20px 0 0 20px;
+    height: 100%;
+  }
+
+  .login-form-panel {
+    border-radius: 0 20px 20px 0;
+    height: 100%;
+  }
+}
+
+
+  /*===========MAIN CSS FOR DASHBOARD CARDS/ LINKS========*/
+/* Custom CSS for the new dashboard cards/links */
+
+/* Style for the quick action link boxes */
+.action-btn-link:hover .bg-white {
+  background-color: #f8f9fa !important; /* Slightly darker on hover */
+  transform: translateY(-2px);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Base style for the hover-zoom effect */
+.hover-zoom {
+  transition: all 0.2s ease-in-out;
+}
+
+.coming-soon-wrapper {
+  min-height: 80vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent; /* Let the body color show through */
+}
+
+.coming-soon-card {
+  /* Use variables so it flips automatically */
+  background: var(--bg-card, #ffffff);
+  color: var(--text-main, #212529);
+  padding: 3rem;
+  border-radius: 16px;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+/* Dark Mode specific tweak for the card */
+body.dark .coming-soon-card {
+  background: #1a1a1a !important; /* Professional Gray */
+  border: 1px solid #333;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.coming-soon-icon {
+  font-size: 3.5rem;
+  /* Use a lighter blue in dark mode for better visibility */
+  color: #0d6efd;
+}
+
+body.dark .coming-soon-icon {
+  color: #66b0ff;
+}
+/* Notification Bell Styling */
+.notification-btn {
+  color: var(--text-main);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+  .notification-btn:hover {
+    color: #1064ee; /* Matches your portal blue */
+    transform: scale(1.1);
+  }
+
+/* Badge Tweaks */
+.notification-wrapper .badge {
+  font-size: 0.65rem;
+  padding: 0.35em 0.5em;
+  /* Adjusting position slightly to sit on the corner of the bell */
+  margin-top: 2px;
+  margin-left: -2px;
+}
+
+/* Dark Mode Fix: Ensure the bell is high-contrast white in dark mode */
+body.dark .notification-btn {
+  color: var(--text-main) !important;
+}
+
+  body.dark .notification-btn:hover {
+    color: #13e5bf !important; /* Teal hover in dark mode */
+  }
+/*===========END OF MAIN CSS========*/
+/* NEXT CSS */
+/*=====================================================================================================================================*/
+/*=====================================================================================================================================*/
+/* --- 1. VARIABLE DEFINITIONS --- */
+/* --- GLOBAL THEME TOKENS --- */
+/* LIGHT MODE (Default & Forced) */
+:root, [data-bs-theme="light"] {
+  --bg-body: #f4f7f9;
+  --bg-card: #ffffff;
+  --text-main: #212529;
+  --input-bg: #ffffff;
+  --bg-header: #1a1a1a; /* Dark Header */
+  --brand-title: #2596be; /* Strong Blue for Light Mode */
+}
+
+/* DARK MODE (Forced & System-Dark) */
+body.dark, [data-bs-theme="dark"] {
+  --bg-body: #000000; /* Pure Black */
+  --bg-card: #2E2D2D; /* Gray Card */
+  --bg-header: #1a1a1a; /* Dark Header */
+  --text-main: #FCFCFC; /* High Contrast White */
+  --input-bg: #2d2d2d; /* Lighter Gray Inputs */
+  --border: #444444;
+  --sidebar-bg: linear-gradient(180deg, #1a1a1a 0%, #1a1a1a 100%) !important;
+  --brand-title: #ffffff; /* Pure White for Dark Mode */
+}
+
+/* Global Application */
+
+
+.form-card {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border, #dee2e6);
+}
+
+.form-control {
+  background-color: var(--input-bg) !important;
+  color: var(--text-main) !important;
+}
+
+/* Header persistence across all pages 
+.top-row {
+  background-color: var(--bg-header, #f7f7f7) !important;
+  border-bottom: 1px solid var(--border, #d6d5d5) !important;
+}*/
+
+/* Sidebar Dark Mode Fix */
+body.dark .sidebar {
+  background-image: linear-gradient(180deg, #2E2E2E 0%, #262626 100%) !important;
+}
+
+body.dark .nav-link {
+  color: #ffffff !important;
+}
+
+  body.dark .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+body.dark .custom-header {
+  border-bottom: 1px solid #333 !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.8) !important;
+}
+/* Ensure the logo container background matches */
+/*body.dark .top-row.navbar {
+  background-color: #121212 !important;
+}*/
+
+
+/* 3. LIGHT MODE THEME BUTTON STYLES: Targets the button when body.dark is NOT present. */
+
+
+/* --- HOVER ACTIVATION FIX (Override Bootstrap default click behavior) --- */
+
+/* 1. Main Menu Dropdown */
+/* When the parent dropdown container is hovered, show the menu */
+.dropdown:hover > .dropdown-menu {
+    display: block; /* Forces the menu to be visible */
+    margin-top: 0;  /* Keeps the menu attached to the button */
+}
+
+/* 2. Nested (Dropend) Menu */
+/* When the 'Theme Settings' link (nested-trigger) is hovered, show the nested menu */
+.dropend:hover > .dropdown-menu {
+  display: block; /* Forces the nested menu to be visible */
+  /* Adjust positioning for right-side dropend (Standard Bootstrap usually handles this) */
+  top: -5px;
+  /* 3. Pushes the menu right, clear of the parent menu */
+  left: 100%;
+  position: absolute;
+  width: max-content;
+  margin-left: .1rem;
+}
+
+/* Ensure the button looks clickable on hover */
+.settings-icon:hover {
+    cursor: pointer;
+}

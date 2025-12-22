@@ -1,0 +1,260 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using HR.Services.Constants
+@inject HR.Services.Services.ImpersonationService Impersonation
+@inject HR.Services.Services.ThemeService Theme
+@attribute [Authorize]
+@implements IDisposable
+
+<div class="top-row ps-3 navbar navbar-dark">
+  <div class="container-fluid">
+    <img src="/lib/Images/Black and White Modern Personal Brand Logo (1)-Photoroom.png"
+         style="
+                 width: 100px;
+                 height: 120px;
+                 position: absolute;
+                 left: 50%;
+                 top: 70%;
+                 transform: translate(-50%, -50%);
+                 z-index: 100; /* Ensure it stays above other elements if needed */
+             " />
+  </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+  <nav class="nav flex-column">
+
+    <!-- Home & Weather -->    <!-- Dashboard -->
+
+    <div class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="/dashboard" role="button" aria-expanded="false" aria-controls="Home" active>
+        <i class="fas fa-home me-2"></i> Home
+        <i class="fas fa-chevron-down chevron open"></i>
+      </a>
+      <div class="submenu ms-3 expanded">
+        <NavLink class="nav-link" href="/dashboard" Match="NavLinkMatch.Prefix">
+          <span class="icon-style bi-plus-square-fill-nav-menu"></span>
+        Overview
+      </NavLink>
+    </div>
+    </div>
+
+    <!-- Employee Management -->
+    <AuthorizeView Policy="@AppPermissions.ManageUsers">
+      <div class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="#employeeMenu" role="button" aria-expanded="false" aria-controls="employeeMenu">
+        <i class="fas fa-users-cog me-2"></i>Employee Management
+        <i class="fas fa-chevron-down chevron open"></i>
+      </a>
+      <div class="submenu ms-3 @(isEmployeeMenuExpanded ? "expanded" : "")" id="employeeMenu">
+        <nav class="nav flex-column ms-3">
+          <NavLink class="nav-link" href="/employees/create" Match="NavLinkMatch.Prefix">Add New Employee</NavLink>
+          <NavLink class="nav-link" href="/employees/list" Match="NavLinkMatch.Prefix">Employee Profiles</NavLink>
+          <NavLink class="nav-link" href="/employees/leaves" Match="NavLinkMatch.Prefix" >Leaves</NavLink>
+          <NavLink class="nav-link" href="/employees/advance" Match="NavLinkMatch.Prefix" >Salary Advance</NavLink>
+          <NavLink class="nav-link" href="/employees/paymentdetails" Match="NavLinkMatch.Prefix" >Payment Details</NavLink>
+          <NavLink class="nav-link" href="/employees/exit" Match="NavLinkMatch.Prefix">Exit Staff</NavLink>
+        </nav>
+      </div>
+    </div>
+    </AuthorizeView>
+
+    <!-- EMPLOYEE SECTION -->
+   @* The base permission for this whole section can be ViewEmployeeDashboard. *@
+        <AuthorizeView Policy="@AppPermissions.ViewEmployeeDashboard">
+            <div class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#selfServiceMenu" role="button" aria-expanded="false" aria-controls="selfServiceMenu">
+                    <i class="fas fa-id-badge me-2"></i> Self-Service
+                    <i class="fas fa-chevron-down chevron open"></i>
+                </a>
+                <div class="submenu ms-3" id="selfServiceMenu">
+                    <nav class="nav flex-column ms-3">
+
+                        @* Apply for Leave: Check for specific SubmitLeave permission *@
+                        <AuthorizeView Policy="@AppPermissions.SubmitLeave">
+                                 <Authorized Context="leaveContext">
+                                <NavLink class="nav-link" href="/leave/submit" Match="NavLinkMatch.Prefix">Apply for Leave</NavLink>
+                            </Authorized>
+                        </AuthorizeView>
+
+                        <NavLink class="nav-link" href="/advance/apply" Match="NavLinkMatch.Prefix">Request Salary Advance</NavLink>
+                        <NavLink class="nav-link" href="/profile" Match="NavLinkMatch.Prefix">Update Profile</NavLink>
+                        
+                        @* View Payslips: Check for specific ViewPayslips permission *@
+                        <AuthorizeView Policy="@AppPermissions.ViewPayslips">
+                            <Authorized Context="payslipContext">
+>
+                                <NavLink class="nav-link" href="/payslips/my" Match="NavLinkMatch.Prefix">View Payslips</NavLink>
+                            </Authorized>
+                        </AuthorizeView>
+
+                    </nav>
+                </div>
+            </div>
+        </AuthorizeView>
+
+    <!-- THE END OF EMPLOYEE -->
+    <!-- Time & Attendance -->
+    <div class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="#timeMenu" role="button" aria-expanded="false" aria-controls="timeMenu">
+        <i class="fas fa-clock me-2"></i> Time & Attendance
+        <i class="fas fa-chevron-down chevron open"></i>
+
+      </a>
+      <div class="submenu ms-3 @(isTimeMenuExpanded ? "expanded" : "")" id="timeMenu">
+        <nav class="nav flex-column ms-3">
+          <NavLink class="nav-link" href="/timesheets" Match="NavLinkMatch.Prefix">Timesheets</NavLink>
+          @* Only users who manage leave/attendance should see these *@
+
+          @* Only users who manage leave/attendance should see these *@
+          <AuthorizeView Policy="@AppPermissions.ApproveRejectLeave">
+            <NavLink class="nav-link" href="/leaverequests" Match="NavLinkMatch.Prefix">Leave Requests</NavLink>
+          </AuthorizeView>
+          <AuthorizeView Policy="@AppPermissions.ViewAllLeaveRequests">
+            <NavLink class="nav-link" href="/attendance" Match="NavLinkMatch.Prefix">Attendance Records</NavLink>
+          </AuthorizeView>
+
+          <NavLink class="nav-link" href="/clockhistory" Match="NavLinkMatch.Prefix">Clock-In/Out History</NavLink>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Payroll -->
+    @* The most restrictive permission for the entire menu *@
+    <AuthorizeView Policy="@AppPermissions.ManagePayrollData">
+      <div class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="#payrollMenu" role="button" aria-expanded="false" aria-controls="payrollMenu">
+        <i class="fas fa-money-bill-wave me-2"></i> Payroll
+        <i class="fas fa-chevron-down chevron open"></i>
+      </a>
+      <div class="submenu ms-3 @(isPayrollMenuExpanded ? "expanded" : "")" id="payrollMenu">
+        <nav class="nav flex-column ms-3">
+          <NavLink class="nav-link" href="/salarymanagement" Match="NavLinkMatch.Prefix">Salary Management</NavLink>
+          <NavLink class="nav-link" href="/payrollprocessing" Match="NavLinkMatch.Prefix">Payroll Processing</NavLink>
+            <NavLink class="nav-link" href="//payslips/my" Match="NavLinkMatch.Prefix">Payslips</NavLink>
+          <NavLink class="nav-link" href="/bonuses" Match="NavLinkMatch.Prefix">Bonuses & Deductions</NavLink>
+        </nav>
+      </div>
+    </div>
+    </AuthorizeView>
+
+    <!-- Recruitment -->
+    @* Use a generic high-level permission for the entire menu *@
+    <AuthorizeView Policy="@AppPermissions.EditEmployeeProfiles">
+    <div class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="#recruitmentMenu" role="button" aria-expanded="false" aria-controls="recruitmentMenu">
+        <i class="fas fa-user-tie me-2"></i> Recruitment
+        <i class="fas fa-chevron-down chevron open"></i>
+      </a>
+      <div class="submenu ms-3 @(isRecruitmentMenuExpanded ? "expanded" : "")" id="recruitmentMenu">
+        <nav class="nav flex-column ms-3">
+          <NavLink class="nav-link" href="/joblistings" Match="NavLinkMatch.Prefix">Job Listings</NavLink>
+          <NavLink class="nav-link" href="/ats" Match="NavLinkMatch.Prefix">ATS</NavLink>
+          <NavLink class="nav-link" href="/interviews" Match="NavLinkMatch.Prefix" >Interviews</NavLink>
+          <NavLink class="nav-link" href="/onboarding" Match="NavLinkMatch.Prefix">Onboarding</NavLink>
+        </nav>
+      </div>
+    </div>
+    </AuthorizeView>
+
+    <!-- Other Modules -->
+    <AuthorizeView Policy="@AppPermissions.ViewReports">
+    <div class="nav-item">
+      <NavLink class="nav-link" href="/reports" Match="NavLinkMatch.Prefix">
+        <i class="fas fa-chart-bar me-2"></i> Reports & Analytics
+      </NavLink>
+    </div>
+    </AuthorizeView>
+
+    <div class="nav-item">
+      <NavLink class="nav-link" href="/compliance" Match="NavLinkMatch.Prefix">
+        <i class="fas fa-balance-scale-right me-2"></i> Compliance</NavLink>
+    </div>
+    <div class="nav-item">
+      <NavLink class="nav-link" href="/help" Match="NavLinkMatch.Prefix">
+        <i class="fas fa-question-circle me-2"></i> Help & Support
+      </NavLink>
+    </div>
+
+  </nav>
+</div>
+
+
+
+@code {
+  @inject NavigationManager Navigation
+
+  // State variables for each menu
+  private bool isHomeMenuExpanded = true;
+  private bool isEmployeeMenuExpanded;
+  private bool isTimeMenuExpanded;
+  private bool isPayrollMenuExpanded;
+  private bool isRecruitmentMenuExpanded;
+
+  // --- Toggle Functions: Used for manual click (open/close) ---
+  private void ToggleHomeMenu() => isHomeMenuExpanded = !isHomeMenuExpanded;
+  private void ToggleEmployeeMenu() => isEmployeeMenuExpanded = !isEmployeeMenuExpanded;
+  private void ToggleTimeMenu() => isTimeMenuExpanded = !isTimeMenuExpanded;
+  private void TogglePayrollMenu() => isPayrollMenuExpanded = !isPayrollMenuExpanded;
+  private void ToggleRecruitmentMenu() => isRecruitmentMenuExpanded = !isRecruitmentMenuExpanded;
+
+  protected override void OnInitialized()
+  {
+    // Subscribe to navigation events to re-check the URL on every navigation
+    Navigation.LocationChanged += HandleLocationChanged;
+    CheckForInitialExpansion();
+  }
+  private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+  {
+    // 1. Re-check the menu expansion logic
+    CheckForInitialExpansion();
+
+    // 2. Fix the "Reset to Light Mode" issue
+    // We use Task.Run or InvokeAsync to ensure the JS call doesn't block the UI
+    InvokeAsync(async () =>
+    {
+      await Theme.InitializeThemeAsync();
+      StateHasChanged();
+    });
+  }
+
+  private void CheckForInitialExpansion()
+  {
+    var path = Navigation.ToBaseRelativePath(Navigation.Uri).ToLowerInvariant();
+
+    // 1. Reset all states to ensure only one is open (The "previous one closes" effect)
+    isHomeMenuExpanded = path.StartsWith("dashboard");
+    isEmployeeMenuExpanded = false;
+    isTimeMenuExpanded = false;
+    isPayrollMenuExpanded = false;
+    isRecruitmentMenuExpanded = false;
+
+    // 2. Set the expansion state based on the current URL path
+    if (path.StartsWith("employees"))
+    {
+      isEmployeeMenuExpanded = true;
+    }
+    else if (path.StartsWith("timesheets") || path.StartsWith("leaverequests") || path.StartsWith("attendance") || path.StartsWith("clockhistory"))
+    {
+      isTimeMenuExpanded = true;
+    }
+    else if (path.StartsWith("salarymanagement") || path.StartsWith("payrollprocessing") || path.StartsWith("payslips") || path.StartsWith("bonuses"))
+    {
+      isPayrollMenuExpanded = true;
+    }
+    else if (path.StartsWith("joblistings") || path.StartsWith("ats") || path.StartsWith("interviews") || path.StartsWith("onboarding"))
+    {
+      isRecruitmentMenuExpanded = true;
+    }
+  }
+
+  // Always dispose of subscriptions to prevent memory leaks
+  public void Dispose()
+  {
+    Navigation.LocationChanged -= HandleLocationChanged;
+  }
+
+
+}

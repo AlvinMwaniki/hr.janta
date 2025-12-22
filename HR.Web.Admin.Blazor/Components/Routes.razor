@@ -1,0 +1,57 @@
+﻿
+@using HR.Web.Admin.Blazor.Exceptions
+@using Microsoft.AspNetCore.Components.Web
+
+@* 1. This component now inherits directly from the ErrorBoundary base class *@
+@inherits Microsoft.AspNetCore.Components.Web.ErrorBoundary
+
+@* 2. This is the ChildContent (the main content) that runs if no error occurs. *@
+<Router AppAssembly="typeof(Program).Assembly">
+  <Found Context="routeData">
+    <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+    <FocusOnNavigate RouteData="routeData" Selector="h1" />
+  </Found>
+  <NotFound>
+    <PageTitle>Not found</PageTitle>
+    <LayoutView Layout="@typeof(Layout.MainLayout)">
+      <p role="alert">Sorry, there's nothing at this address.</p>
+    </LayoutView>
+  </NotFound>
+</Router>
+
+@* 3. This block handles displaying the error content ONLY if CurrentException is not null. *
+   * We must provide a way for the user to reload the page here. *@
+@if (CurrentException != null)
+{
+  <div class="blazor-error-ui">
+    <p class="error-text">An unhandled error has occurred.</p>
+    <a href="." class="reload">Reload</a>
+  </div>
+}
+
+@code {
+  // We have access to 'CurrentException' because we inherit from ErrorBoundary.
+
+  // 1. Reset the ErrorBoundary when navigating
+  public override Task SetParametersAsync(ParameterView parameters)
+  {
+    Recover();
+    return base.SetParametersAsync(parameters);
+  }
+
+  // 2. Silently handle the RedirectException
+  protected override void OnAfterRender(bool firstRender)
+  {
+    if (CurrentException != null)
+    {
+      if (CurrentException is RedirectException)
+      {
+        // The HTTP redirect has been sent. We silence the error display.
+        Recover();
+      }
+      // IMPORTANT: If it's a real, unhandled exception (not RedirectException),
+      // the code falls through and the @if block above displays the error message.
+    }
+    base.OnAfterRender(firstRender);
+  }
+}

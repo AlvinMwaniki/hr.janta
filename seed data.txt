@@ -1,0 +1,214 @@
+//
+await SeedDataAsync(app.Services);
+await SeedInitialPermissionsAsync(app.Services);
+await SeedRolePermissionsAsync(app.Services);
+
+//
+
+
+// --- ADD THIS NEW STATIC METHOD TO THE BOTTOM OF YOUR FILE ---
+static async Task SeedDataAsync(IServiceProvider serviceProvider)
+{
+	using var scope = serviceProvider.CreateScope();
+	var dbContext = scope.ServiceProvider.GetRequiredService<HRDbContext>();
+
+	// Retrieve the AuthService once at the start of the scope
+	var passwordHasher = scope.ServiceProvider.GetRequiredService<AuthService>();
+
+	// 1. Ensure the database is created and migrations are applied
+	await dbContext.Database.MigrateAsync();
+
+	// 2. Define the Admin Role
+	const string adminRoleName = "Admin";
+	var adminRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Name == adminRoleName);
+
+	if (adminRole == null)
+	{
+		adminRole = new HR.Data.Models.Auth.Role { Id = Guid.NewGuid(), Name = adminRoleName };
+		dbContext.Roles.Add(adminRole);
+		await dbContext.SaveChangesAsync();
+	}
+	// ⭐ NEW STEP 2b: Define the Employee Role
+	const string employeeRoleName = "Employee";
+	var employeeRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Name == employeeRoleName);
+
+	if (employeeRole == null)
+	{
+		employeeRole = new HR.Data.Models.Auth.Role { Id = Guid.NewGuid(), Name = employeeRoleName };
+		dbContext.Roles.Add(employeeRole);
+		await dbContext.SaveChangesAsync();
+	}
+
+
+	// 3. Define the Admin User
+	const string adminEmail = "alvin.kiarie.m@gmail.com";
+	var adminUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
+
+	if (adminUser == null)
+	{
+		// 3a. Create the temporary User object required by the PasswordHasher interface
+		var tempUser = new HR.Data.Models.Auth.User();
+
+		// 3b. Hash the password using the retrieved service and the tempUser object
+		// NOTE: The plain password is "AdminPassword123!" (CHANGE THIS SECURE PASSWORD!)
+		var hashedPassword = passwordHasher.HashPassword(tempUser, "mwenda2sana");
+
+		// 3c. Create the final Admin User record
+		adminUser = new HR.Data.Models.Auth.User
+		{
+			Id = Guid.NewGuid(),
+			Username = "AdminUser",
+			Email = adminEmail,
+			PasswordHash = hashedPassword,
+			RoleId = adminRole.Id,
+			CreatedAt = DateTime.UtcNow
+		};
+
+		dbContext.Users.Add(adminUser);
+		await dbContext.SaveChangesAsync();
+	}
+}
+// Program.cs (New Method at the bottom)
+
+static async Task SeedInitialPermissionsAsync(IServiceProvider serviceProvider)
+{
+	using var scope = serviceProvider.CreateScope();
+	var dbContext = scope.ServiceProvider.GetRequiredService<HRDbContext>();
+
+	// 1. Find the existing Admin and Employee Roles
+	var adminRole = await dbContext.Roles
+		.FirstOrDefaultAsync(r => r.Name == AppRoles.Admin);
+
+	var employeeRole = await dbContext.Roles
+		.FirstOrDefaultAsync(r => r.Name == AppRoles.Employee);
+
+	if (adminRole == null || employeeRole == null) return; // Exit if roles aren't set
+
+	// 2. Find all existing Users (Admin and Employee)
+	var allUsers = await dbContext.Users
+		.Where(u => u.RoleId == adminRole.Id || u.RoleId == employeeRole.Id)
+		.ToListAsync();
+
+	var permissionsToInsert = new List<UserPermission>();
+
+	foreach (var user in allUsers)
+	{
+		// 3. Define permissions based on the user's current role
+		var isExistingAdmin = user.RoleId == adminRole.Id;
+		var requiredPermissions = new List<string>();
+
+		if (isExistingAdmin)
+		{
+			// Admin must have all permissions
+			requiredPermissions.Add(AppPermissions.ManageUsers);
+			requiredPermissions.Add(AppPermissions.ViewAdminDashboard);
+			requiredPermissions.Add(AppPermissions.ViewEmployeeDashboard);
+			requiredPermissions.Add(AppPermissions.SubmitLeave);
+		}
+		else // Must be Employee role
+		{
+			// Employees only get basic permissions
+			requiredPermissions.Add(AppPermissions.ViewEmployeeDashboard);
+			requiredPermissions.Add(AppPermissions.SubmitLeave);
+		}
+
+		// 4. Create UserPermission objects for each required permission
+		foreach (var permissionCode in requiredPermissions)
+		{
+			// Check if permission already exists to prevent duplicates
+			var exists = await dbContext.UserPermissions
+				.AnyAsync(up => up.UserId == user.Id && up.PermissionCode == permissionCode);
+
+			if (!exists)
+			{
+				permissionsToInsert.Add(new UserPermission
+				{
+					Id = Guid.NewGuid(),
+					UserId = user.Id,
+					PermissionCode = permissionCode
+				});
+			}
+		}
+	}
+
+	// 5. Insert all new permissions in a batch
+	if (permissionsToInsert.Any())
+	{
+		dbContext.UserPermissions.AddRange(permissionsToInsert);
+		await dbContext.SaveChangesAsync();
+	}
+}
+// Program.cs (New Method at the bottom)
+
+
+static async Task SeedRolePermissionsAsync(IServiceProvider serviceProvider)
+{
+	using var scope = serviceProvider.CreateScope();
+	var dbContext = scope.ServiceProvider.GetRequiredService<HRDbContext>();
+
+	// 1. Get the Role GUIDs (CRITICAL: Need the IDs, not just the names)
+	var adminRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Name == AppRoles.Admin);
+	var employeeRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Name == AppRoles.Employee);
+
+	if (adminRole == null || employeeRole == null) return; // Exit if roles aren't set
+
+	// 2. Define the permissions for the ADMIN ROLE
+	var adminPermissions = new string[]
+	{
+		AppPermissions.ManageUsers,
+		AppPermissions.ViewAdminDashboard,
+		AppPermissions.ViewEmployeeDashboard,
+		AppPermissions.SubmitLeave,
+        // New HR/Management Permissions:
+        AppPermissions.ViewAllLeaveRequests,
+		AppPermissions.ApproveRejectLeave,
+		AppPermissions.EditEmployeeProfiles,
+		AppPermissions.ManagePayrollData,
+		AppPermissions.ManageRoles,
+		AppPermissions.ViewReports
+	};
+	await InsertPermissionsForRole(dbContext, adminRole.Id, adminPermissions);
+
+	// 3. Define the permissions for the EMPLOYEE ROLE
+	var employeePermissions = new string[]
+	{
+		AppPermissions.ViewEmployeeDashboard,
+		AppPermissions.SubmitLeave,
+		AppPermissions.ViewPayslips // View Own Payslip
+    };
+	await InsertPermissionsForRole(dbContext, employeeRole.Id, employeePermissions);
+
+	// 4. Clean up any accidental entries in the old UserPermissions table 
+	// where UserId matches a RoleId, just in case. (Optional, but safe).
+	var userRoleIds = new Guid[] { adminRole.Id, employeeRole.Id };
+	var obsoleteUserPermissions = await dbContext.UserPermissions
+		.Where(up => userRoleIds.Contains(up.UserId))
+		.ToListAsync();
+
+	if (obsoleteUserPermissions.Any())
+	{
+		dbContext.UserPermissions.RemoveRange(obsoleteUserPermissions);
+		await dbContext.SaveChangesAsync();
+	}
+}
+
+// Helper method to insert permissions (to avoid duplicates)
+static async Task InsertPermissionsForRole(HRDbContext dbContext, Guid roleId, IEnumerable<string> permissions)
+{
+	foreach (var permissionCode in permissions)
+	{
+		var exists = await dbContext.RolePermissions
+			.AnyAsync(rp => rp.RoleId == roleId && rp.PermissionCode == permissionCode);
+
+		if (!exists)
+		{
+			dbContext.RolePermissions.Add(new RolePermission
+			{
+				Id = Guid.NewGuid(),
+				RoleId = roleId, // Linked to the Role GUID
+				PermissionCode = permissionCode
+			});
+		}
+	}
+	await dbContext.SaveChangesAsync();
+}

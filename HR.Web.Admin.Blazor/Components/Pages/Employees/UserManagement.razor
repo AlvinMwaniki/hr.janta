@@ -1,0 +1,213 @@
+﻿@page "/employees/Manage_users"
+@using Microsoft.AspNetCore.Authorization
+@using HR.Services.Constants
+@using HR.Services.DTO
+@using HR.Services.Interfaces
+@attribute [Authorize(Roles = AppRoles.Admin)] // Secure the page to ONLY Admins
+
+@inject NavigationManager Navigation
+@inject IPermissionManagementService PermissionService
+@rendermode InteractiveServer
+
+
+<h3>👤 User Management</h3>
+
+<p class="text-muted">Manage user accounts, primary roles, and granular permissions.</p>
+
+<div class="mb-3 d-flex justify-content-end" >
+<button @onclick:stopPropagation @onclick="CreateUser" class="btn btn-primary shadow-sm">
+    <i class="fas fa-user-plus me-2"></i> Create New User
+</button>
+</div>
+
+@if (Users == null)
+{
+    <div class="alert alert-info" role="alert">
+        <i class="fas fa-spinner fa-spin me-2"></i> Loading user data...
+    </div>
+}
+else if (!Users.Any())
+{
+    <div class="alert alert-warning" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i> No user accounts found.
+    </div>
+}
+else
+{
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Users)
+                        {
+                            <tr>
+                                <td class="text-truncate" style="max-width: 80px;">@user.Id.ToString().Substring(0, 8)...</td>
+                                <td>@user.Username</td>
+                                <td>@user.Email</td>
+                                <td>
+                                    <span class="badge @GetRoleBadgeClass(user.RoleName)">
+                                        @user.RoleName
+                                    </span>
+                                </td>
+                                <td>@user.CreatedDate.ToShortDateString()</td>
+                                <td>
+                                    <button @onclick:stopPropagation @onclick="() => EditUser(user.Id)" class="btn btn-sm btn-info me-1" title="Edit User Details">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+
+                                    <button @onclick:stopPropagation @onclick="() => ToggleAdmin(user)" 
+                                            class="btn btn-sm @(user.IsAdmin ? "btn-secondary" : "btn-success") me-1" 
+                                            title="@(user.IsAdmin ? "Remove Admin Role" : "Grant Admin Role")">
+                                        <i class="fas @(user.IsAdmin ? "fa-user-times" : "fa-user-shield")"></i> 
+                                        @(user.IsAdmin ? "Remove Admin" : "Make Admin")
+                                    </button>
+
+                                    <button @onclick:stopPropagation @onclick="() => ToggleLeavePermission(user)" 
+                                            class="btn btn-sm @(user.CanSubmitLeave ? "btn-primary" : "btn-outline-primary") me-1" 
+                                            title="@(user.CanSubmitLeave ? "Revoke Leave Submission" : "Grant Leave Submission")">
+                                        <i class="fas @(user.CanSubmitLeave ? "fa-calendar-times" : "fa-calendar-check")"></i> 
+                                        Leave
+                                    </button>
+                                    
+                                    <button @onclick:stopPropagation @onclick="() => ConfirmDelete(user)" class="btn btn-sm btn-danger" title="Delete Account">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@if (UserToDelete != null)
+{
+    <div class="modal d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to permanently delete user <strong>@UserToDelete.Username (@UserToDelete.Email)</strong>?</p>
+                    <p class="text-danger">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="DeleteUser">Delete Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+  //====CREATE USERS====
+    private void CreateUser()
+{
+    // Navigate to a dedicated creation page
+    Navigation.NavigateTo($"/employees/create_users");
+}
+
+    // --- Navigation ---
+    private List<UserManagementDto>? Users;
+    private UserManagementDto? UserToDelete;
+
+    // --- Data Fetching ---
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Call the service to get the data
+        Users = await PermissionService.GetAllUsersForManagementAsync();
+    }
+
+    // --- UI Helpers ---
+
+    private string GetRoleBadgeClass(string roleName)
+    {
+        return roleName switch
+        {
+            AppRoles.Admin => "bg-danger",
+            AppRoles.Employee => "bg-primary",
+            _ => "bg-secondary",
+        };
+    }
+
+    // --- Action Handlers ---
+
+    // 1. Edit User
+    private void EditUser(Guid userId)
+    {
+        // Navigate to a dedicated edit page (e.g., to change username, email, password)
+        Navigation.NavigateTo($"/employees/edit_users/{userId}");
+    }
+
+    // 2. Toggle Admin Role
+    private async Task ToggleAdmin(UserManagementDto user)
+    {
+        // Call the service to update the RoleId in the database
+        var newIsAdmin = !user.IsAdmin;
+        
+        await PermissionService.ToggleAdminRoleAsync(user.Id, newIsAdmin);
+        
+        // Update local DTO for immediate UI change
+        user.IsAdmin = newIsAdmin;
+        user.RoleName = newIsAdmin ? AppRoles.Admin : AppRoles.Employee;
+        
+        // Ensure other permissions are consistent if needed (e.g., if you force all Admins to have all rights)
+    }
+
+    // 3. Toggle Leave Submit Permission (Granular Control)
+    private async Task ToggleLeavePermission(UserManagementDto user)
+    {
+        // Call the service to update the specific permission claim for this user
+        var newCanSubmitLeave = !user.CanSubmitLeave;
+        
+        // Note: This relies on your service implementation to add/remove a claim for this user in the DB.
+        await PermissionService.TogglePermissionAsync(user.Id, AppPermissions.SubmitLeave, newCanSubmitLeave);
+        
+        // Update local DTO for immediate UI change
+        user.CanSubmitLeave = newCanSubmitLeave;
+    }
+
+    // 4. Delete User Handlers
+    private void ConfirmDelete(UserManagementDto user)
+    {
+        UserToDelete = user;
+    }
+
+    private void CancelDelete()
+    {
+        UserToDelete = null;
+    }
+
+    private async Task DeleteUser()
+    {
+        if (UserToDelete != null)
+        {
+            await PermissionService.DeleteUserAsync(UserToDelete.Id);
+
+            // Remove from the local list
+            Users?.Remove(UserToDelete);
+            UserToDelete = null; 
+
+            // Re-render the table
+            StateHasChanged();
+        }
+    }
+}

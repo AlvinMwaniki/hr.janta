@@ -1,0 +1,155 @@
+﻿@page "/login"
+@layout LoginLayout
+@using HR.Web.Admin.Models.ViewModels   
+@using HR.Web.Admin.Blazor.Components.Layout
+@using HR.Services.Services             
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using HR.Web.Admin.Blazor.Exceptions
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@inject CaptchaService CaptchaService
+@inject NavigationManager Navigation
+@inject ProtectedSessionStorage SessionStorage
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card shadow-lg mt-5">
+      <div class="card-header bg-primary text-white text-center">
+        <h4>Login</h4>
+      </div>
+      <div class="card-body p-4">
+
+        <EditForm EditContext="editContext">
+          @* RESTORED: Provides the EditContext! *@
+          <DataAnnotationsValidator /> @* Now this works again *@
+
+          @* The inner pure HTML form handles the submission, bypassing Blazor's EditForm handler. *@
+          <form method="post" action="/api/loginhandler">
+            @* Hidden field for ReturnUrl, required by the server endpoint *@
+            <input type="hidden" name="ReturnUrl" value="@(ReturnUrl ?? "/dashboard")" />
+
+            @* Error message display logic (Uses the new ErrorMessage parameter) *@
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+              <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              @* Use InputText (must be inside EditForm/EditContext) and ADD the 'name' attribute for the server POST *@
+              <InputText id="email" name="Email" @bind-Value="model!.Email" class="form-control" />
+              <ValidationMessage For="@(() => model.Email)" />
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              @* Use InputText and ADD the 'name' attribute for the server POST *@
+              <InputText id="password" name="Password" @bind-Value="model.Password" type="password" class="form-control" />
+              <ValidationMessage For="@(() => model.Password)" />
+            </div>
+
+            @* CAPTCHA Section (Simplified) *@
+            <div class="mb-3">
+              <label for="captcha" class="form-label">Verification Code</label>
+              <div class="input-group">
+                @if (captchaImageSource != null)
+                {
+                  <img src="@captchaImageSource" alt="CAPTCHA Image" style="width: 180px; height: 50px; cursor: pointer;"
+                       @onclick="ReloadCaptcha" class="me-2 border rounded" />
+                }
+                @* Use InputText and ADD the 'name' attribute for the server POST *@
+                <InputText id="captcha" name="CaptchaCode" @bind-Value="model.CaptchaCode" class="form-control" />
+                <button type="button" class="btn btn-outline-secondary" @onclick="ReloadCaptcha">
+                  <span class="oi oi-reload"></span>
+                </button>
+              </div>
+              <ValidationMessage For="@(() => model.CaptchaCode)" />
+            </div>
+
+            @* Forgot Password Section *@
+            <div class="d-flex justify-content-end mb-3">
+              <a href="/forgotpassword" class="text-sm">Forgot Password?</a>
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                Log In
+              </button>
+            </div>
+          </form> @* END of the PURE HTML FORM *@
+        </EditForm> @* END of the BLZOR EDITFORM *@
+      </div>
+    </div>
+  </div>
+</div>
+
+@code {
+  // We are deliberately keeping EditContext to enable DataAnnotationsValidator
+  private EditContext? editContext;
+
+  private LoginViewModel? model;
+
+  // Must be injected at the top
+  // @inject IJSRuntime JSRuntime
+
+  [SupplyParameterFromQuery]
+  [Parameter]
+  public string? ErrorMessage { get; set; }
+
+  [SupplyParameterFromQuery]
+  [Parameter]
+  public string? ReturnUrl { get; set; } = "/dashboard";
+
+  private string? errorMessage;
+  private string? captchaImageSource;
+  private bool isCaptchaInitialized = false;
+
+protected override void OnInitialized()  {
+    model = new LoginViewModel();
+    editContext = new EditContext(model);
+
+    // Logic to display server errors sent back
+    if (ErrorMessage == "InvalidCaptcha")
+    {
+      errorMessage = "Invalid verification code. Please try again.";
+    }
+    else if (ErrorMessage == "InvalidCredentials")
+    {
+      errorMessage = "Invalid login attempt. Check your email and password.";
+    }
+
+    model.ReturnUrl = ReturnUrl ?? "/dashboard";
+
+    // ⭐ NOW SAFE: Calling ReloadCaptcha here is fine because prerendering is disabled. ⭐
+    //await ReloadCaptcha();
+  }
+
+  // ⭐ RE-INTRODUCE THE OnAfterRenderAsync METHOD (The ONLY safe place for JS) ⭐
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    // This runs twice (statically and interactively).
+    // We ensure ReloadCaptcha only runs on the first INTERACTIVE pass.
+    if (firstRender && !isCaptchaInitialized)
+    {
+      isCaptchaInitialized = true;
+      await ReloadCaptcha();
+    }
+  }
+  private async Task ReloadCaptcha()
+  {
+    var result = await CaptchaService.GenerateCaptchaAsync();
+    captchaImageSource = $"data:image/png;base64,{result.CaptchBase64Data}";
+
+    string codeToStore = result.CaptchaCode;
+
+    // ⭐ CRITICAL FIX: The logic is now simple and guaranteed to run when safe. ⭐
+    await JSRuntime.InvokeVoidAsync("eval", $@"document.cookie = 'CaptchaCode={codeToStore}; max-age=300; path=/';");
+    model!.CaptchaCode = "";
+    StateHasChanged();
+  }
+}

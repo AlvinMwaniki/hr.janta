@@ -1,0 +1,220 @@
+﻿@page "/employees/workhistory"
+@using HR.Data
+@using DataModels = HR.Data.Models.Employees 
+@using Microsoft.EntityFrameworkCore
+@using HR.Services.Services
+@inject EmployeeTempService TempService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer 
+@using Microsoft.AspNetCore.Components.Forms
+
+<h3>Step 3: Work History</h3>
+
+@* 1. Use EditContext parameter instead of Model *@
+<EditForm EditContext="@editContext" OnValidSubmit="AddOrUpdateWork" FormName="Step3">
+  <DataAnnotationsValidator />
+  <Microsoft.AspNetCore.Components.Forms.ValidationSummary />
+
+  <div class="form-card">
+    <h4 class="mb-4">Work History</h4>
+
+    <!-- Row 1: Job Title, Company Name -->
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <label class="form-label">Job Title</label>
+        <InputText @bind-Value="workModel.JobTitle" class="form-control" />
+        <ValidationMessage For="@(() => workModel.JobTitle)" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Company Name</label>
+        <InputText @bind-Value="workModel.CompanyName" class="form-control" />
+        <ValidationMessage For="@(() => workModel.CompanyName)" />
+      </div>
+    </div>
+
+    <!-- Row 2: City, Country -->
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <label class="form-label">City</label>
+        <InputText @bind-Value="workModel.CompanyCity" class="form-control" />
+        <ValidationMessage For="@(() => workModel.CompanyCity)" />
+
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Country</label>
+        <InputText @bind-Value="workModel.CompanyCountry" class="form-control" />
+        <ValidationMessage For="@(() => workModel.CompanyCountry)" />
+
+      </div>
+    </div>
+    
+    <!-- Row 3: Job Duties -->
+    <div class="row mb-2">
+      <div class="col-md-12">
+        <label class="form-label">Job Duties</label>
+        <InputTextArea @bind-Value="workModel.JobDuties" class="form-control" />
+        <ValidationMessage For="@(() => workModel.JobDuties)" />
+      </div>
+    </div>
+
+    <!-- Row 4: From Date, To Date -->
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <label class="form-label">From Date</label>
+        <InputDate @bind-Value="workModel.JobFromDate" class="form-control" />
+        <ValidationMessage For="@(() => workModel.JobFromDate)" />
+
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">To Date</label>
+        <InputDate @bind-Value="workModel.JobToDate" class="form-control" />
+        <ValidationMessage For="@(() => workModel.JobToDate)" />
+
+      </div>
+    </div>
+
+    <!-- Current Job Checkbox -->
+    <div class="row mb-3">
+      <div class="col-md-12">
+        <div class="form-check">
+          <InputCheckbox @bind-Value="workModel.IsCurrentJob" class="form-check-input" />
+          <label class="form-check-label ms-2">Current Job</label>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mb-3">
+      @((editingWorkIndex >= 0) ? "Update" : "Add")
+    </button>
+  </div>
+</EditForm>
+
+@* --- List existing items directly from the Service's list --- *@
+@if (TempService.TempEmployee.WorkHistory.Any())
+{
+  <table class="table mt-3">
+    <thead>
+      <tr>
+        <th>Job Title</th>
+        <th>Company</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Current</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (int i = 0; i < TempService.TempEmployee.WorkHistory.Count; i++)
+      {
+        var work = TempService.TempEmployee.WorkHistory[i];
+        <tr>
+          <td>@work.JobTitle</td>
+          <td>@work.CompanyName</td>
+          <td>@work.JobFromDate.ToShortDateString()</td>
+          <td>@work.JobToDate.ToShortDateString()</td>
+          <td>@(work.IsCurrentJob ? "Yes" : "No")</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1" @onclick="() => EditWork(work)">Edit</button>
+            <button class="btn btn-sm btn-danger" @onclick="() => DeleteWork(work)">Delete</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="mt-2">
+    <button class="btn btn-secondary me-2" @onclick="GoBack">Back</button>
+    <button class="btn btn-success" @onclick="NextStep">Next</button>
+  </div>
+}
+
+@code {
+  // Use the alias when declaring the model type
+  private DataModels.WorkHistory workModel = new();
+  private int editingWorkIndex = -1;
+  private EditContext? editContext;
+
+  protected override void OnInitialized()
+  {
+    editContext = new EditContext(workModel)!;
+    workModel.JobFromDate = DateTime.Today;
+    workModel.JobToDate = DateTime.Today;
+  }
+
+  private void AddOrUpdateWork(EditContext context)
+  {
+    if (editingWorkIndex >= 0)
+    {
+      TempService.UpdateWork(editingWorkIndex, workModel);
+      editingWorkIndex = -1;
+    }
+    else
+    {
+      TempService.AddWork(workModel);
+    }
+
+    // Use alias when resetting the model
+    workModel = new DataModels.WorkHistory(); 
+    editContext = new EditContext(workModel)!;
+    StateHasChanged(); 
+  }
+
+  // CHANGE: Accepts the WorkHistory object, not the index
+  private void EditWork(DataModels.WorkHistory itemToEdit)
+  {
+    // CRITICAL: Find the index of the object passed in
+    int index = TempService.TempEmployee.WorkHistory.IndexOf(itemToEdit);
+
+    if (index == -1) return; // Safely exit if the item is somehow missing
+
+    // Create a deep copy from the item passed in
+    workModel = new DataModels.WorkHistory
+    {
+      Id = itemToEdit.Id,
+      EmployeeId = itemToEdit.EmployeeId,
+      JobTitle = itemToEdit.JobTitle,
+      CompanyName = itemToEdit.CompanyName,
+      CompanyCity = itemToEdit.CompanyCity,
+      CompanyCountry = itemToEdit.CompanyCountry,
+      JobDuties = itemToEdit.JobDuties,
+      JobFromDate = itemToEdit.JobFromDate,
+      JobToDate = itemToEdit.JobToDate,
+      IsCurrentJob = itemToEdit.IsCurrentJob
+    };
+
+    editingWorkIndex = index; // Use the found index for update tracking
+    editContext = new EditContext(workModel)!;
+    StateHasChanged();
+  }
+
+  // CHANGE: Accepts the WorkHistory object, not the index
+
+  private void DeleteWork(DataModels.WorkHistory itemToDelete)
+  {
+    // CRITICAL: Find the index of the object passed in
+    int index = TempService.TempEmployee.WorkHistory.IndexOf(itemToDelete);
+
+    if (index == -1) return; // Safely exit
+
+    // Remove the item using the found index
+    TempService.RemoveWork(index);
+
+    editingWorkIndex = -1;
+    // Reset form for next input
+    workModel = new DataModels.WorkHistory();
+    editContext = new EditContext(workModel)!;
+    StateHasChanged();
+  }
+  
+  private void GoBack()
+  {
+    Navigation.NavigateTo("/employees/additional");
+    StateHasChanged();
+  }
+
+  private void NextStep()
+  {
+    Navigation.NavigateTo($"/employees/additional/nextofkin");
+    StateHasChanged();
+  }
+}

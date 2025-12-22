@@ -1,0 +1,226 @@
+﻿@page "/employees/additional"
+@using HR.Data
+@using HR.Data.Models.Employees
+@using Microsoft.EntityFrameworkCore
+@using HR.Services.Services
+@inject HRDbContext Db
+@inject NavigationManager Navigation
+@inject EmployeeTempService TempService
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Forms
+
+<h3>Step 2: Education History</h3>
+
+@* The Employee is always available via the service now *@
+<EditForm EditContext="@editContext" OnValidSubmit="AddOrUpdateEducation" FormName="Step 2">
+  <DataAnnotationsValidator />
+  <Microsoft.AspNetCore.Components.Forms.ValidationSummary />
+
+    <div class="form-card">
+      <h4 class="mb-4">Education History</h4>
+
+      <!-- Row 1: School Name, Country -->
+      <div class="row form-row mb-2">
+        <div class="col-md-6">
+          <label class="form-label">School Name</label>
+        <InputText @bind-Value="educationModel.SchoolName" class="form-control" />
+        <ValidationMessage For="@(() => educationModel.SchoolName)" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Country</label>
+        <InputText @bind-Value="educationModel.Country" class="form-control" />
+        <ValidationMessage For="@(() => educationModel.Country)" />
+        </div>
+      </div>
+      <!-- ... (The rest of your input fields for educationModel remain the same) ... -->
+       <!-- Row 2: Field of Study, Level -->
+      <div class="row form-row mb-2">
+        <div class="col-md-6">
+          <label class="form-label">Field of Study</label>
+        <InputText @bind-Value="educationModel.Field" class="form-control" />
+        <ValidationMessage For="@(() => educationModel.Field)" />
+
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Level</label>
+        <InputText @bind-Value="educationModel.Level" class="form-control" />
+        <ValidationMessage For="@(() => educationModel.Level)" />
+        </div>
+      </div>
+
+      <!-- Row 3: From Date, To Date -->
+      <div class="row form-row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">From Date</label>
+          <InputDate @bind-Value="educationModel.FromDate" class="form-control" />
+        <ValidationMessage For="@(() => educationModel.FromDate)" />
+
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">To Date</label>
+          <InputDate @bind-Value="educationModel.ToDate" class="form-control" />
+        <ValidationMessage For="@(() => educationModel.ToDate)" />
+        </div>
+      </div>
+
+
+    <button type="submit" class="btn btn-primary mb-3">
+      @((editingEducationIndex >= 0) ? "Update" : "Add")
+    </button>
+    </div>
+</EditForm>
+
+@* --- List existing items directly from the Service's list --- *@
+@if (TempService.TempEmployee.Education.Any())
+{
+  <table class="table mt-3">
+    <thead>
+      <tr>
+        <th>School</th>
+        <th>Country</th>
+        <th>Field</th>
+        <th>Level</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @* Loop directly through the SERVICE's list *@
+      @for (int i = 0; i < TempService.TempEmployee.Education.Count; i++)
+      {
+        var edu = TempService.TempEmployee.Education[i];
+        <tr>
+          <td>@edu.SchoolName</td>
+          <td>@edu.Country</td>
+          <td>@edu.Field</td>
+          <td>@edu.Level</td>
+          <td>@edu.FromDate.ToShortDateString()</td>
+          <td>@edu.ToDate.ToShortDateString()</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1" @onclick="() => EditEducation(edu)">Edit</button>
+            <button class="btn btn-sm btn-danger" @onclick="() => DeleteEducation(edu)">Delete</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="mt-2">
+    <button class="btn btn-secondary me-2" @onclick="GoBack">Back</button>
+    <button class="btn btn-success" @onclick="NextStep">Next</button>
+  </div>
+}
+
+
+@code {
+  // Education
+  EducationHistory educationModel = new();
+  int editingEducationIndex = -1;
+
+  // 2. Declare the EditContext field
+  private EditContext? editContext;
+
+  protected override void OnInitialized()
+  {
+
+    // 3. Initialize the EditContext in OnInitialized
+    editContext = new EditContext(educationModel);
+
+    // Add placeholders for required strings
+   
+    educationModel.FromDate = DateTime.Today;
+    educationModel.ToDate = DateTime.Today;
+  }
+
+  // Changed method signature to accept EditContext parameter
+  void AddOrUpdateEducation(EditContext context)
+  {
+    if (editingEducationIndex >= 0)
+    {
+      TempService.UpdateEducation(editingEducationIndex, educationModel);
+      editingEducationIndex = -1;
+    }
+    else
+    {
+      TempService.AddEducation(educationModel);
+    }
+
+    // 4. Reset the form: Create a NEW model and a NEW EditContext
+    educationModel = new EducationHistory();
+    editContext = new EditContext(educationModel); // <--- Key step for stability
+
+    educationModel.FromDate = DateTime.Today;
+    educationModel.ToDate = DateTime.Today;
+
+    StateHasChanged(); // Update UI
+  }
+
+
+  void EditEducation(EducationHistory itemToEdit)
+  {
+    // Find the index of the object directly in the list
+    int index = TempService.TempEmployee.Education.IndexOf(itemToEdit);
+
+    // CRITICAL CHECK: Now we check if the item was found
+    if (index == -1)
+    {
+      Console.WriteLine("Error: Education item not found in the list.");
+      return;
+    }
+
+    // Proceed with creating the deep copy from the item passed in
+    educationModel = new EducationHistory
+    {
+      Id = itemToEdit.Id,
+      EmployeeId = itemToEdit.EmployeeId,
+      SchoolName = itemToEdit.SchoolName,
+      Country = itemToEdit.Country,
+      Field = itemToEdit.Field,
+      Level = itemToEdit.Level,
+      FromDate = itemToEdit.FromDate,
+      ToDate = itemToEdit.ToDate,
+    };
+
+    editingEducationIndex = index; // Store the found index
+    editContext = new EditContext(educationModel);
+    StateHasChanged();
+  }
+
+  // Change signature to accept the object
+  void DeleteEducation(EducationHistory itemToDelete)
+  {
+    // Find the index of the object directly in the list
+    int index = TempService.TempEmployee.Education.IndexOf(itemToDelete);
+
+    if (index == -1)
+    {
+      Console.WriteLine("Error: Education item not found for deletion.");
+      return;
+    }
+
+    // Remove by index
+    TempService.RemoveEducation(index);
+
+    // Reset state
+    editingEducationIndex = -1;
+    educationModel = new EducationHistory();
+    editContext = new EditContext(educationModel);
+    educationModel.FromDate = DateTime.Today;
+    educationModel.ToDate = DateTime.Today;
+
+    StateHasChanged();
+  }
+
+
+  void GoBack()
+  {
+    Navigation.NavigateTo("/employees/create");
+  }
+
+  void NextStep()
+  {
+    // All data is already saved in the TempService lists. Just navigate.
+    Navigation.NavigateTo("/employees/workhistory");
+  }
+}

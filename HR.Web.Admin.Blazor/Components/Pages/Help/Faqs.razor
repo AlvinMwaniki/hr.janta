@@ -1,0 +1,78 @@
+﻿@page "/help/faqs"
+
+<div class="container my-4">
+  <h2 class="mb-4">
+    <i class="fas fa-info-circle me-2"></i> Frequently Asked Questions
+  </h2>
+
+  <p class="text-muted mb-4">
+    Find answers to the most common questions about the HR system.
+  </p>
+
+  <div class="accordion" id="faqAccordion">
+
+    <!-- FAQ 1 -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="faqHeading1">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="true" aria-controls="faq1">
+          How do I reset my password?
+        </button>
+      </h2>
+      <div id="faq1" class="accordion-collapse collapse show" aria-labelledby="faqHeading1" data-bs-parent="#faqAccordion">
+        <div class="accordion-body">
+          To reset your password, click on <strong>Forgot Password</strong> on the login page and follow the instructions sent to your email.
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ 2 -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="faqHeading2">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false" aria-controls="faq2">
+          How can I view my payslips?
+        </button>
+      </h2>
+      <div id="faq2" class="accordion-collapse collapse" aria-labelledby="faqHeading2" data-bs-parent="#faqAccordion">
+        <div class="accordion-body">
+          Navigate to <strong>Payslips → View Payslips</strong> from the sidebar to access your salary records.
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ 3 -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="faqHeading3">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false" aria-controls="faq3">
+          How do I apply for a salary advance?
+        </button>
+      </h2>
+      <div id="faq3" class="accordion-collapse collapse" aria-labelledby="faqHeading3" data-bs-parent="#faqAccordion">
+        <div class="accordion-body">
+          Go to <strong>Salary Advance → Request Salary Advance</strong> and fill out the form with the required details.
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ 4 -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="faqHeading4">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false" aria-controls="faq4">
+          How do I update my profile?
+        </button>
+      </h2>
+      <div id="faq4" class="accordion-collapse collapse" aria-labelledby="faqHeading4" data-bs-parent="#faqAccordion">
+        <div class="accordion-body">
+          Navigate to <strong>Profile → Update Profile</strong> and edit your details. Click save when done.
+        </div>
+      </div>
+    </div>
+
+    <!-- Add more FAQs as needed -->
+  </div>
+
+  <div class="mt-4">
+    <NavLink href="/help" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-2"></i> Back to Help & Support
+    </NavLink>
+  </div>
+</div>

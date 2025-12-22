@@ -1,0 +1,270 @@
+﻿@page "/employees/confirm"
+@using HR.Data
+@using HR.Data.Models.Employees
+@using HR.Data.Models.BANKING
+@using HR.Data.Models.Auth
+@using HR.Services.Services
+@using HR.Services
+@using Microsoft.EntityFrameworkCore
+@inject EmployeeTempService TempService
+@inject HRDbContext Db
+@inject NavigationManager Navigation
+@inject IAuthService AuthService
+@rendermode InteractiveServer 
+
+<h3>Confirm Employee Details</h3>
+
+@* The employee object is always available via the service, so we don't need the @if (employee == null) check in the markup *@
+
+<!-- Step Tracker -->
+<div class="mb-4">
+  <span class="badge bg-success me-2">Step 1: Basic Info ✅</span>
+  <span class="badge bg-success me-2">Step 2: Education ✅</span>
+  <span class="badge bg-success me-2">Step 3: Work History ✅</span>
+  <span class="badge bg-success me-2">Step 4: Next of Kin ✅</span>
+  <span class="badge bg-success me-2">Step 5: Bank & Payment ✅</span>
+  <span class="badge bg-primary">Step 6: Confirmation 📝</span>
+</div>
+
+<!-- Basic Information -->
+<div class="card mb-3">
+  <div class="card-header">Basic Information</div>
+  <div class="card-body">
+    <p><strong>Employee Code:</strong> @TempService.TempEmployee.EmployeeCode</p>
+    <p><strong>Full Name:</strong> @TempService.TempEmployee.FirstName @TempService.TempEmployee.MiddleName @TempService.TempEmployee.LastName</p>
+    <p><strong>Email:</strong> @TempService.TempEmployee.Email</p>
+    <p><strong>Phone:</strong> @TempService.TempEmployee.Phone</p>
+    <p><strong>Address:</strong> @TempService.TempEmployee.Address</p>
+    <p><strong>Date of Birth:</strong> @TempService.TempEmployee.DOB.ToShortDateString()</p>
+    <p><strong>National ID:</strong> @TempService.TempEmployee.NationalID</p>
+    <p><strong>Gender:</strong> @TempService.TempEmployee.Gender</p>
+    <p><strong>Job Title:</strong> @TempService.TempEmployee.JobTitle</p>
+    <p><strong>Disability:</strong> @TempService.TempEmployee.Disability</p>
+    <p><strong>Ethnicity:</strong> @TempService.TempEmployee.Ethnicity</p>
+    <p><strong>Hire Date:</strong> @TempService.TempEmployee.HireDate.ToShortDateString()</p>
+    <p><strong>Status:</strong> @TempService.TempEmployee.Status</p>
+    @* We cannot display the Department Name directly here as the Service doesn't load navigation properties from the DB *@
+    <p><strong>Department ID:</strong> @TempService.TempEmployee.DepartmentId</p> 
+  </div>
+</div>
+
+<!-- Education History -->
+@if (TempService.TempEmployee.Education?.Any() == true)
+{
+  <div class="card mb-3">
+    <div class="card-header">Education History</div>
+    <div class="card-body">
+      @foreach (var edu in TempService.TempEmployee.Education)
+      {
+        <p>
+          <strong>Level:</strong> @edu.Level in <strong>@edu.Field</strong> from <strong>@edu.SchoolName</strong> (@edu.Country) <br />
+          <small>@edu.FromDate.ToShortDateString() - @edu.ToDate.ToShortDateString()</small>
+        </p>
+        <hr />
+      }
+    </div>
+  </div>
+}
+
+<!-- Work History -->
+@if (TempService.TempEmployee.WorkHistory?.Any() == true)
+{
+  <div class="card mb-3">
+    <div class="card-header">Work History</div>
+    <div class="card-body">
+      @foreach (var work in TempService.TempEmployee.WorkHistory)
+      {
+        <p>
+          <strong>@work.JobTitle</strong> at <strong>@work.CompanyName</strong>, @work.CompanyCity, @work.CompanyCountry <br />
+          Duties: @work.JobDuties <br />
+          <small>@work.JobFromDate.ToShortDateString() - @work.JobToDate.ToShortDateString()</small> <br />
+          <strong>Current Job:</strong> @(work.IsCurrentJob ? "Yes" : "No")
+        </p>
+        <hr />
+      }
+    </div>
+  </div>
+}
+
+<!-- Next of Kin -->
+@if (TempService.TempEmployee.NextOfKin?.Any() == true)
+{
+  <div class="card mb-3">
+    <div class="card-header">Next of Kin</div>
+    <div class="card-body">
+      @foreach (var nok in TempService.TempEmployee.NextOfKin)
+      {
+        <p>
+          <strong>@nok.FullName</strong> - @nok.Relationship <br />
+          Phone: @nok.Phone <br />
+          Address: @nok.Address
+        </p>
+        <hr />
+      }
+    </div>
+  </div>
+}
+
+@* Hobbies/Skills sections are omitted for brevity but work the same way *@
+
+<!-- Bank & Payment -->
+<div class="card mb-3">
+  <div class="card-header">Bank & Payment Details</div>
+  <div class="card-body">
+    <p><strong>Bank Name:</strong> @TempService.TempEmployee.BankDetail?.BankName</p>
+    <p><strong>Branch:</strong> @TempService.TempEmployee.BankDetail?.Branch</p>
+    <p><strong>Account Name:</strong> @TempService.TempEmployee.BankDetail?.AccountName</p>
+    <p><strong>Account Number:</strong> @TempService.TempEmployee.BankDetail?.AccountNumber</p>
+
+    <p><strong>KRA PIN:</strong> @TempService.TempEmployee.PaymentData?.KRA_PIN</p>
+    <p><strong>NSSF Number:</strong> @TempService.TempEmployee.PaymentData?.NSSF_Number</p>
+    <p><strong>NHIF Number:</strong> @TempService.TempEmployee.PaymentData?.NHIF_Number</p>
+  </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="mt-3">
+  <button class="btn btn-secondary me-2" @onclick="GoBack">Back</button>
+  <button class="btn btn-success" @onclick="ConfirmAndSave">Confirm & Submit</button>
+</div>
+
+
+@code {
+  
+
+  protected override void OnInitialized()
+  {
+    // Check if the service data is empty/null, if so, redirect back to start
+    if (TempService.TempEmployee.Id == Guid.Empty)
+    {
+      Navigation.NavigateTo("/employees/create");
+    }
+  }
+
+  private void GoBack()
+  {
+    // Go back to the bank page
+    Navigation.NavigateTo($"/employees/additional/bankpayment/");
+    StateHasChanged();
+  }
+
+  private async Task ConfirmAndSave()
+  {
+    // The TempService.TempEmployee object is fully assembled in memory now.
+    var employeeToSave = TempService.TempEmployee;
+
+    // --- A. ID Initialization ---
+    // Ensure the new Employee's ID is set (or generated)
+    if (employeeToSave.Id == Guid.Empty)
+    {
+      employeeToSave.Id = Guid.NewGuid();
+    }
+
+    // 🔑 CRITICAL NEW STEP: Retrieve the default role ID
+    var employeeRole = await Db.Roles
+        .FirstOrDefaultAsync(r => r.Name == "Employee"); // ⭐ Query the DB for the "Employee" Role ID
+
+    if (employeeRole == null)
+    {
+      // Log an error or return a message: The role is missing!
+      throw new InvalidOperationException("Cannot save employee: 'Employee' role is missing from the database.");
+    }
+
+    // ***************************************************************
+    // --- 1. CREATE THE CORRESPONDING USER RECORD ---
+    var newUser = new User
+    {
+      Id = employeeToSave.Id, // Use same GUID for 1:1 linkage
+      Email = employeeToSave.Email,
+      Username = employeeToSave.Email, // Email is the primary login identifier
+      RoleId = employeeRole.Id,
+      CreatedAt = DateTime.UtcNow
+    };
+    Db.Users.Add(newUser);
+    // ***************************************************************
+
+    // --- B. Circular Dependency Fixes (Your existing logic) ---
+    employeeToSave.Department = null!;
+
+    // Education History
+    foreach (var edu in employeeToSave.Education)
+    {
+      edu.Id = Guid.Empty;
+      edu.Employee = null!;
+    }
+
+    // Work History
+    foreach (var work in employeeToSave.WorkHistory)
+    {
+      work.Id = Guid.Empty;
+      work.Employee = null!;
+    }
+
+    // Next of Kin
+    foreach (var nok in employeeToSave.NextOfKin)
+    {
+      nok.Id = Guid.Empty;
+      nok.Employee = null!;
+    }
+
+    // CRITICAL BANKING FIX: Break the circular dependencies
+    if (employeeToSave.BankDetail != null)
+    {
+      if (employeeToSave.BankDetail.Id == Guid.Empty)
+      {
+        employeeToSave.BankDetail.Id = Guid.NewGuid();
+      }
+      employeeToSave.BankDetail.Employee = null!;
+      employeeToSave.BankDetail.PaymentData = null!;
+    }
+
+    if (employeeToSave.PaymentData != null)
+    {
+      employeeToSave.PaymentData.Id = Guid.Empty;
+      employeeToSave.PaymentData.Employee = null!;
+
+      if (employeeToSave.BankDetail != null)
+      {
+        employeeToSave.PaymentData.BankDetailId = employeeToSave.BankDetail.Id;
+      }
+      else
+      {
+        employeeToSave.PaymentData.BankDetailId = Guid.Empty;
+      }
+      employeeToSave.PaymentData.BankDetail = null!;
+    }
+    // --- End of Existing Logic ---
+
+    // --- C. Save to Database ---
+    // This line already existed in your code:
+    Db.Employees.Add(TempService.TempEmployee);
+
+    // This single call saves ALL tracked entities (Employee, related entities, AND User)
+    await Db.SaveChangesAsync();
+
+    // ***************************************************************
+    // --- 2. INITIATE SECURE SETUP EMAIL (POST-SAVE) ---
+    // If Db.SaveChangesAsync succeeded, we initiate the setup.
+    try
+    {
+      await AuthService.InitiateEmployeeSetupAsync(
+          userId: newUser.Id,
+          email: newUser.Email,
+          firstName: employeeToSave.FirstName, // Name from Employee record for email greeting
+          lastName: employeeToSave.LastName ?? string.Empty);
+    }
+    catch (Exception ex)
+    {
+      // Log the error. The employee is saved, but the admin needs to know the email failed.
+      Console.WriteLine($"WARNING: Employee created, but setup email failed! Error: {ex.Message}");
+    }
+    // ***************************************************************
+
+    // --- D. Final Cleanup and Redirect (Your existing logic) ---
+    TempService.Clear();
+
+    // Navigate to a success page or back to the list
+    Navigation.NavigateTo("/employees/success");
+  }
+
+}

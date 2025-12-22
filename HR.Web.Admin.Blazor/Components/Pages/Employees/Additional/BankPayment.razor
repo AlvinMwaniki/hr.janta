@@ -1,0 +1,163 @@
+﻿@page "/employees/additional/bankpayment/"
+@using HR.Data
+@using DataModels = HR.Data.Models.Employees
+@using HR.Data.Models.BANKING
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@using HR.Services.Services
+@inject EmployeeTempService TempService
+@inject NavigationManager Navigation
+@rendermode @(new Microsoft.AspNetCore.Components.Web.InteractiveServerRenderMode(prerender: true))
+
+
+<h3>Bank Details & Payment Information</h3>
+
+<p>
+   Step 5: Bank & Payment Data 💵
+</p>
+
+<EditForm EditContext="@editContext" OnValidSubmit="@SaveAndNextStep" FormName="BankPaymentForm">
+  <DataAnnotationsValidator />
+  <Microsoft.AspNetCore.Components.Forms.ValidationSummary />
+
+  <div class="form-card">
+    <h4 class="mb-4">Bank Details</h4>
+
+    <!-- ROW 1 -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Bank Name</label>
+        <InputText @bind-Value="pageModel.BankName" class="form-control" />
+        <ValidationMessage For="@(() => pageModel.BankName)" />
+
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Branch</label>
+        <InputText @bind-Value="pageModel.Branch" class="form-control" />
+        <ValidationMessage For="@(() => pageModel.Branch)" />
+      </div>
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Account Name</label>
+        <InputText @bind-Value="pageModel.AccountName" class="form-control" />
+        <ValidationMessage For="@(() => pageModel.AccountName)" />
+
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">AccountNumber</label>
+        <InputText @bind-Value="pageModel.AccountNumber" class="form-control" />
+        <ValidationMessage For="@(() => pageModel.AccountNumber)" />
+
+      </div>
+    </div>
+
+    <hr />
+    <h4>Payment Information</h4>
+
+    <!-- ONE ROW WITH 3 COLUMNS -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">KRA PIN</label>
+        <InputText @bind-Value="pageModel.KRA_PIN" class="form-control" />
+        <ValidationMessage For="@(() => pageModel.KRA_PIN)" />
+
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">NSSF Number</label>
+        <InputText @bind-Value="pageModel.NSSF_Number" class="form-control" />
+        <ValidationMessage For="@(() => pageModel.NSSF_Number)" />
+
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">NHIF/SHA Number</label>
+        <InputText @bind-Value="pageModel.NHIF_Number" class="form-control" />
+        <ValidationMessage For="@(() => pageModel.NHIF_Number)" />
+
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <button type="button" class="btn btn-secondary me-2" @onclick="GoBack">Back</button>
+      <button type="submit" class="btn btn-success">Next / Review</button>
+    </div>
+
+  </div>
+</EditForm>
+
+
+@code {
+  private BankPaymentCombinedModel pageModel = new();
+  private EditContext? editContext;
+
+  protected override void OnInitialized()
+  {
+    editContext = new EditContext(pageModel)!;
+
+    // Load existing temp data from service into the combined model (handles nulls from service model gracefully)
+    if (TempService.TempEmployee.BankDetail != null)
+    {
+      pageModel.BankName = TempService.TempEmployee.BankDetail.BankName ?? string.Empty;
+      pageModel.Branch = TempService.TempEmployee.BankDetail.Branch ?? string.Empty;
+      pageModel.AccountName = TempService.TempEmployee.BankDetail.AccountName ?? string.Empty;
+      pageModel.AccountNumber = TempService.TempEmployee.BankDetail.AccountNumber ?? string.Empty;
+    }
+
+    if (TempService.TempEmployee.PaymentData != null)
+    {
+      pageModel.KRA_PIN = TempService.TempEmployee.PaymentData.KRA_PIN ?? string.Empty;
+      pageModel.NSSF_Number = TempService.TempEmployee.PaymentData.NSSF_Number ?? string.Empty;
+      pageModel.NHIF_Number = TempService.TempEmployee.PaymentData.NHIF_Number ?? string.Empty;
+    }
+  }
+
+  void GoBack()
+  {
+    Navigation.NavigateTo("/employees/additional/nextofkin");
+    StateHasChanged();
+  }
+
+  void SaveAndNextStep()
+  {
+    // Map the combined model data back to the two service models
+    var bankDetail = new BankDetail
+    {
+      BankName = pageModel.BankName,
+      Branch = pageModel.Branch,
+      AccountName = pageModel.AccountName,
+      AccountNumber = pageModel.AccountNumber
+    };
+    var paymentData = new PaymentData
+    {
+      KRA_PIN = pageModel.KRA_PIN,
+      NSSF_Number = pageModel.NSSF_Number,
+      NHIF_Number = pageModel.NHIF_Number
+    };
+
+    // Use the TempService to save these two models
+    TempService.SetBankDetail(bankDetail);
+    TempService.SetPaymentData(paymentData);
+
+    // Navigate to the final confirmation page
+    Navigation.NavigateTo("/employees/confirm");
+    StateHasChanged();
+  }
+
+  // Define a local class just for this page's single combined input form
+  // Use non-nullable strings to match your data models
+  private class BankPaymentCombinedModel
+  {
+    // Bank Details
+    public string BankName { get; set; } = string.Empty;
+    public string Branch { get; set; } = string.Empty;
+    public string AccountName { get; set; } = string.Empty;
+    public string AccountNumber { get; set; } = string.Empty;
+
+    // Payment Data
+    public string KRA_PIN { get; set; } = string.Empty;
+    public string NSSF_Number { get; set; } = string.Empty;
+    public string NHIF_Number { get; set; } = string.Empty;
+  }
+}

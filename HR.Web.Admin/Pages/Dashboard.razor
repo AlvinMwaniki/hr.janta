@@ -1,0 +1,144 @@
+﻿@page "/dashboard"
+@using HR.Services
+@using HR.Services.DTO
+@using Microsoft.JSInterop
+@inject DashboardService DashboardService
+@inject IJSRuntime JS
+
+<h3 class="mb-4">Dashboard</h3>
+
+@if (totals is null)
+{
+  <p>Loading...</p>
+}
+else
+{
+  <div class="row g-3">
+    <!-- Total Employees Card -->
+    <div class="col-md-3">
+      <div class="card shadow-sm text-white bg-primary">
+        <div class="card-body">
+          <h5 class="card-title">Total Employees</h5>
+          <h3>@totals.Employees</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Departments Card -->
+    <div class="col-md-3">
+      <div class="card shadow-sm text-white bg-success">
+        <div class="card-body">
+          <h5 class="card-title">Total Departments</h5>
+          <h3>@totals.Departments</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaves Card -->
+    <div class="col-md-3">
+      <div class="card shadow-sm text-white bg-warning">
+        <div class="card-body">
+          <h5 class="card-title">Leaves</h5>
+          <h3>@totals.Leaves</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advances Card -->
+    <div class="col-md-3">
+      <div class="card shadow-sm text-white bg-danger">
+        <div class="card-body">
+          <h5 class="card-title">Advances</h5>
+          <h3>@totals.Advances</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Leaves Overview</h5>
+          <canvas id="leavePieChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Payroll Overview</h5>
+          <canvas id="payrollChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@code {
+  private DashboardTotals? totals;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await LoadDashboardSafeAsync();
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender && totals is not null)
+    {
+      try
+      {
+        await JS.InvokeVoidAsync(
+            "renderLeaveChart",
+            new object[] { totals.OnLeave, totals.NotOnLeave }
+        );
+
+        await JS.InvokeVoidAsync(
+            "renderPayrollChart",
+            new object[] { totals.Advances, totals.Leaves }
+        );
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"JS Error rendering chart: {ex.Message}");
+      }
+    }
+  }
+
+  private async Task LoadDashboardSafeAsync()
+  {
+    try
+    {
+      totals = await LoadDashboardAsync();
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+      totals = new DashboardTotals(); // fallback
+    }
+  }
+
+  private async Task<DashboardTotals> LoadDashboardAsync()
+  {
+    try
+    {
+      return new DashboardTotals
+      {
+        Employees = await DashboardService.GetTotalEmployeesAsync(),
+        Departments = await DashboardService.GetTotalDepartmentsAsync(),
+        Leaves = await DashboardService.GetTotalLeavesAsync(),
+        Advances = await DashboardService.GetTotalAdvancesAsync(),
+        OnLeave = await DashboardService.GetEmployeesOnLeaveAsync(),
+        NotOnLeave = await DashboardService.GetEmployeesNotOnLeaveAsync()
+      };
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine("🔥 FATAL DASHBOARD ERROR:");
+      Console.WriteLine(ex.ToString());
+      throw;
+    }
+  }
+}

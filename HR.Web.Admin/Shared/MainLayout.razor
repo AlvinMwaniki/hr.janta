@@ -1,0 +1,188 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Routing
+@using Blazorise.Icons.FontAwesome
+@inject NavigationManager Navigation
+
+<div class="d-flex vh-100">
+
+  <!-- Sidebar -->
+  <aside class="sidebar bg-#010048 text-white d-flex flex-column">
+
+    <!-- Logo -->
+    <div class="logo mb-4 text-center">
+      <img src="~/li" alt="Company Logo" style="width:150px; height:auto;" />
+    </div>
+
+    <nav class="flex-grow-1 overflow-auto">
+
+      <!-- Dashboard -->
+      <button type="button" class="sidebar-btn @(IsMenuOpen("Dashboard") ? "active" : "")"
+              @onclick="@(() => ToggleMenu("Dashboard"))">
+        <span class="menu-text">Dashboard</span>
+        <i id="chevron-Dashboard" class="fas fa-chevron-down chevron @(IsMenuOpen("Dashboard") ? "open" : "")"></i>
+      </button>
+      <div id="submenu-Dashboard" class="submenu-container @(IsMenuOpen("Dashboard") ? "expanded" : "")"
+           aria-hidden="@(IsMenuOpen("Dashboard") ? "false" : "true")">
+        <div class="submenu">
+          <NavLink class="sidebar-sub-btn" href="/dashboard" Match="NavLinkMatch.Prefix">Overview</NavLink>
+        </div>
+      </div>
+
+      <!-- Employee Management -->
+      <button type="button" class="sidebar-btn @(IsMenuOpen("EmployeeManagement") ? "active" : "")"
+              @onclick="@(() => ToggleMenu("EmployeeManagement"))">
+        <span class="menu-text">Employee Management</span>
+        <i id="chevron-EmployeeManagement" class="fas fa-chevron-down chevron @(IsMenuOpen("EmployeeManagement") ? "open" : "")"></i>
+      </button>
+      <div id="submenu-EmployeeManagement" class="submenu-container @(IsMenuOpen("EmployeeManagement") ? "expanded" : "")"
+           aria-hidden="@(IsMenuOpen("EmployeeManagement") ? "false" : "true")">
+        <div class="submenu">
+          <NavLink class="sidebar-sub-btn" href="/employees/create" Match="NavLinkMatch.Prefix">Add New Employee</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/employees/list" Match="NavLinkMatch.Prefix">Employee Profiles</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/employees/leaves" Match="NavLinkMatch.Prefix">Leaves</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/employees/advance" Match="NavLinkMatch.Prefix">Salary Advance</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/employees/paymentdetails" Match="NavLinkMatch.Prefix">Payment Details</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/employees/exit" Match="NavLinkMatch.Prefix">Exit Staff</NavLink>
+        </div>
+      </div>
+
+      <!-- Time & Attendance -->
+      <button type="button" class="sidebar-btn @(IsMenuOpen("TimeAttendance") ? "active" : "")"
+              @onclick="@(() => ToggleMenu("TimeAttendance"))">
+        <span class="menu-text">Time & Attendance</span>
+        <i id="chevron-TimeAttendance" class="fas fa-chevron-down chevron @(IsMenuOpen("TimeAttendance") ? "open" : "")"></i>
+      </button>
+      <div id="submenu-TimeAttendance" class="submenu-container @(IsMenuOpen("TimeAttendance") ? "expanded" : "")"
+           aria-hidden="@(IsMenuOpen("TimeAttendance") ? "false" : "true")">
+        <div class="submenu">
+          <NavLink class="sidebar-sub-btn" href="/timesheets" Match="NavLinkMatch.Prefix">Timesheets</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/leaverequests" Match="NavLinkMatch.Prefix">Leave Requests</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/attendance" Match="NavLinkMatch.Prefix">Attendance Records</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/clockhistory" Match="NavLinkMatch.Prefix">Clock-In/Out History</NavLink>
+        </div>
+      </div>
+
+      <!-- Payroll -->
+      <button type="button" class="sidebar-btn @(IsMenuOpen("Payroll") ? "active" : "")"
+              @onclick="@(() => ToggleMenu("Payroll"))">
+        <span class="menu-text">Payroll</span>
+        <i id="chevron-Payroll" class="fas fa-chevron-down chevron @(IsMenuOpen("Payroll") ? "open" : "")"></i>
+      </button>
+      <div id="submenu-Payroll" class="submenu-container @(IsMenuOpen("Payroll") ? "expanded" : "")"
+           aria-hidden="@(IsMenuOpen("Payroll") ? "false" : "true")">
+        <div class="submenu">
+          <NavLink class="sidebar-sub-btn" href="/salarymanagement" Match="NavLinkMatch.Prefix">Salary Management</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/payrollprocessing" Match="NavLinkMatch.Prefix">Payroll Processing</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/payslips" Match="NavLinkMatch.Prefix">Payslips</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/bonuses" Match="NavLinkMatch.Prefix">Bonuses & Deductions</NavLink>
+        </div>
+      </div>
+
+      <!-- Recruitment -->
+      <button type="button" class="sidebar-btn @(IsMenuOpen("Recruitment") ? "active" : "")"
+              @onclick="@(() => ToggleMenu("Recruitment"))">
+        <span class="menu-text">Recruitment</span>
+        <i id="chevron-Recruitment" class="fas fa-chevron-down chevron @(IsMenuOpen("Recruitment") ? "open" : "")"></i>
+      </button>
+      <div id="submenu-Recruitment" class="submenu-container @(IsMenuOpen("Recruitment") ? "expanded" : "")"
+           aria-hidden="@(IsMenuOpen("Recruitment") ? "false" : "true")">
+        <div class="submenu">
+          <NavLink class="sidebar-sub-btn" href="/joblistings" Match="NavLinkMatch.Prefix">Job Listings</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/ats" Match="NavLinkMatch.Prefix">Applicant Tracking System (ATS)</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/interviews" Match="NavLinkMatch.Prefix">Interview Management</NavLink>
+          <NavLink class="sidebar-sub-btn" href="/onboarding" Match="NavLinkMatch.Prefix">Onboarding Processes</NavLink>
+        </div>
+      </div>
+
+      <!-- Other Modules -->
+      <NavLink class="sidebar-btn" href="/reports" Match="NavLinkMatch.Prefix">Reports & Analytics</NavLink>
+      <NavLink class="sidebar-btn" href="/compliance" Match="NavLinkMatch.Prefix">Compliance</NavLink>
+      <NavLink class="sidebar-btn" href="/help" Match="NavLinkMatch.Prefix">Help & Support</NavLink>
+
+    </nav>
+
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-fill d-flex flex-column">
+
+    <header class="d-flex justify-content-between align-items-center p-3 shadow-sm bg-white" style="box-shadow: 0 4px 6px -2px rgba(0,0,0,0.3);">
+      <h4 class="mb-0">@CurrentPageTitle</h4>
+
+      <div class="d-flex align-items-center">
+        <input class="form-control me-3" type="text" placeholder="Search..." style="width:250px;" />
+        <button class="btn btn-light me-2 position-relative">
+          <i class="fas fa-bell"></i>
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">3</span>
+        </button>
+        <button class="btn btn-light me-2">
+          <i class="fas fa-cog"></i>
+        </button>
+        <img src="images/user.png" alt="User" class="rounded-circle me-2" style="width:40px;height:40px;" />
+        <button class="btn btn-link text-danger" @onclick="Logout">Logout</button>
+      </div>
+    </header>
+
+    <main class="p-4 flex-fill bg-light overflow-auto">
+      @Body
+    </main>
+
+    <footer class="text-center py-2 bg-dark text-white">
+      &copy; Alvin Mwaniki DevOp
+    </footer>
+  </div>
+</div>
+
+@code {
+  private string CurrentPageTitle = "Dashboard";
+  private string? OpenMenu;
+
+  protected override void OnInitialized()
+  {
+    // Determine which menu to open on load based on the current path
+    var current = Navigation.ToBaseRelativePath(Navigation.Uri).ToLowerInvariant();
+
+    if (string.IsNullOrEmpty(current) || current.StartsWith("dashboard"))
+    {
+      OpenMenu = "Dashboard";
+    }
+    else if (current.StartsWith("employees"))
+    {
+      OpenMenu = "EmployeeManagement";
+    }
+    else if (current.StartsWith("timesheets") || current.StartsWith("leaverequests") || current.StartsWith("attendance") || current.StartsWith("clockhistory"))
+    {
+      OpenMenu = "TimeAttendance";
+    }
+    else if (current.StartsWith("salarymanagement") || current.StartsWith("payrollprocessing") || current.StartsWith("payslips") || current.StartsWith("bonuses"))
+    {
+      OpenMenu = "Payroll";
+    }
+    else if (current.StartsWith("joblistings") || current.StartsWith("ats") || current.StartsWith("interviews") || current.StartsWith("onboarding"))
+    {
+      OpenMenu = "Recruitment";
+    }
+    else
+    {
+      OpenMenu = null;
+    }
+
+    // Ensure "Overview" shows active when on /dashboard (NavLink handles this)
+    base.OnInitialized();
+  }
+
+  private void ToggleMenu(string menu)
+  {
+    if (OpenMenu == menu)
+      OpenMenu = null;
+    else
+      OpenMenu = menu;
+
+    StateHasChanged(); // forces UI update
+  }
+
+
+  private bool IsMenuOpen(string menu) => OpenMenu == menu;
+
+  private void Logout() => Navigation.NavigateTo("/login");
+}

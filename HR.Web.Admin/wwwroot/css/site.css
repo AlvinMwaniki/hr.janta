@@ -1,0 +1,389 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  overflow-x: hidden !important;
+  height: 100%;
+  box-sizing: border-box; /* make sizing predictable */
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow-x: hidden !important;
+  height: 100%;
+  box-sizing: border-box; /* make sizing predictable */
+}
+
+/* Main content should always fit the remaining space */
+.flex-fill {
+  min-width: 0; /* Critical: prevents overflow when flex item grows */
+}
+/* Make box-sizing apply everywhere */
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* Prevent flex children from forcing page overflow (critical for Bootstrap flex) */
+.d-flex, .flex-fill {
+  min-height: 0;
+  min-width: 0;
+}
+
+  /* Ensure top-level flex container uses viewport height correctly */
+  .d-flex.vh-100 {
+    height: 100vh;
+    min-height: 100vh;
+  }
+
+main {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+  color: var(--bs-secondary-color);
+  text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
+
+/* Card layout for forms */
+.form-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  transition: all 0.3s ease;
+}
+
+  .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+  }
+
+.btn-secondary {
+  background-color: #fff;
+  color: #0d6efd;
+  border: 2px solid #0d6efd;
+  transition: all 0.3s ease;
+}
+
+  .btn-secondary:hover {
+    background-color: #0d6efd;
+    color: #fff;
+  }
+
+/* Form labels */
+.form-label {
+  font-weight: 600;
+}
+
+/* Row spacing for input fields */
+.form-row {
+  margin-bottom: 15px;
+}
+
+.btn-outline-primary {
+  border-width: 2px;
+}
+
+  .btn-outline-primary:hover {
+    background: #0d6efd;
+    color: white;
+  }
+
+/* Sidebar base */
+.sidebar {
+  background-color: #13265C;
+  height: 100vh; /* always full viewport height */
+  width: 280px; /* fixed width */
+  min-width: 280px;
+  max-width: 280px;
+  overflow-y: auto; /* menu can scroll */
+  overflow-x: hidden !important;
+  padding: 20px 12px;
+  box-sizing: border-box; /* include padding/border in width */
+  color: white;
+  display: flex;
+  flex-direction: column;
+  /* overlay scrollbar instead of taking width */
+  scrollbar-width: thin;
+  scrollbar-color: #0d6efd transparent;
+}
+
+  .sidebar * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+
+  /* Sidebar scrollbar for Chrome, Edge, Safari */
+  .sidebar::-webkit-scrollbar {
+    width: 6px; /* thin scrollbar */
+  }
+
+
+  .sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1); /* thumb color */
+    border-radius: 4px; /* rounded edges */
+    min-height: 20px; /* minimum thumb height */
+  }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background-color: #0a58ca;
+    }
+
+  /* Scrollbar buttons (up/down) */
+  .sidebar::-webkit-scrollbar-button {
+    background-color: black;
+    display: block;
+    height: 8px;
+  }
+
+/* Firefox */
+.sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: black transparent; /* thumb / track */
+}
+  /* Buttons and links */
+  .sidebar a.sidebar-btn,
+  .sidebar button.sidebar-btn {
+    width:100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+    margin: 5px 15px;
+    padding: 10px 15px;
+    border: none;
+    border: 2px solid transparent; /* <-- outline default */
+    border-radius: 5px;
+    text-decoration: none;
+    box-sizing: border-box;
+    font-weight: 500;
+    background: transparent;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+    /* Hover */
+    .sidebar a.sidebar-btn:hover,
+    .sidebar button.sidebar-btn:hover {
+      background-color: rgba(255,255,255,0.08);
+      border: 2px solid #0d6efd;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* White bottom border for active main button */
+    .sidebar button.sidebar-btn.active {
+      border-bottom: 3px solid white;
+      background-color: #0d6efd;
+      color: white;
+    }
+
+/* Submenu container handles the slide animation using max-height */
+.submenu-container {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, padding 0.3s ease;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+  .submenu-container.expanded {
+    max-height: 500px; /* adjust if needed */
+    padding-top: 6px;
+    padding-bottom: 10px;
+  }
+
+.sidebar button.sidebar-btn:hover + .submenu-container,
+.sidebar a.sidebar-btn:hover + .submenu-container {
+  max-height: 500px;
+  padding-top: 6px;
+  padding-bottom: 10px;
+}
+
+/* Allow submenu items to be hovered without flickering */
+.submenu-container:hover {
+  max-height: 500px;
+  padding-top: 6px;
+  padding-bottom: 10px;
+}
+
+/* Submenu list */
+.submenu {
+  display: flex;
+  flex-direction: column;
+  padding-left: 20px;
+  margin: 6px 0 10px 0;
+}
+
+/* Submenu links */
+.sidebar-sub-btn {
+  color: white;
+  padding: 8px 12px;
+  margin: 4px 15px;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  display: block;
+}
+
+  /* Hover for submenu */
+  .sidebar-sub-btn:hover {
+    background-color: white;
+    color: #13265C;
+  }
+
+  /* NavLink active (blazor will add 'active') */
+  .sidebar-sub-btn.active {
+    background-color: rgba(255,255,255,0.12);
+    color: white;
+  }
+
+/* Chevron rotation */
+.chevron {
+  transition: transform 240ms ease;
+  font-size: 0.9rem;
+  margin-left: 8px;
+}
+
+  /* rotate chevron when open - rotate 180deg gives up arrow feel */
+  .chevron.open {
+    transform: rotate(180deg);
+  }
+
+/* small responsiveness */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 220px;
+  }
+}
+
+/* dashboard.css */
+.card {
+  border-radius: 0.75rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 12px;
+}
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+
+/* Pie chart card */
+#leavePieChartCard {
+  height: 350px;
+}
+
+/* Tablets (screens < 992px) */
+@media(max-width: 992px) {
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
+  }
+
+  header h4 {
+    font-size: 1.1rem;
+  }
+
+  main {
+    padding: 20px !important;
+  }
+}
+
+/* Mobile (screens < 768px) */
+@media(max-width: 768px) {
+
+  .d-flex.vh-100 {
+    flex-direction: column;
+  }
+
+  /* Sidebar collapses to top */
+  .sidebar {
+    width: 100%;
+    max-height: 300px;
+    position: relative;
+  }
+
+  header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+    header input {
+      width: 100% !important;
+    }
+
+  main {
+    padding: 16px !important;
+  }
+}
+/* Ensure main content scrolls internally (not the whole page) */
+main, .flex-fill.d-flex.flex-column {
+  min-height: 0;
+}
+
+/* The content area should scroll vertically inside the flex layout */
+main {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Footer: ensure it stays at bottom and doesn't cause extra height */
+footer {
+  box-sizing: border-box;
+  width: 100%;
+}
+/* ----------------
+   Small responsive tweaks
+   ---------------- */
+@media (max-width: 992px) {
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .d-flex.vh-100 {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 100%;
+    max-height: 320px;
+    position: relative;
+  }
+}

@@ -1,0 +1,218 @@
+﻿@page "/employees/create"
+@using HR.Data
+@using HR.Services.Services
+@inject HRDbContext Db
+@inject NavigationManager Navigation
+@inject EmployeeTempService TempService
+@rendermode InteractiveServer
+@using HR.Data.Models.Employees
+@using HR.Data.Models.Departments
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Forms
+
+
+
+<h3>Create Employee</h3>
+
+<EditForm Model="@TempService.TempEmployee" OnValidSubmit="Save" OnInvalidSubmit="OnInvalidSubmit" FormName="Step1">
+  <DataAnnotationsValidator /> 
+
+
+  <!--Basic Info-->
+
+  <div class="form-card">
+
+    <!-- Row 1: Employee Code -->
+    <div class="row form-row mb-2">
+      <div class="col-md-4">
+        <label class="form-label">Employee Code</label>
+        <InputText @bind-Value="TempService.TempEmployee.EmployeeCode" class="form-control" />
+      </div>
+    </div>
+
+    <!-- Row 2: First, Middle, Last Name -->
+    <div class="row form-row mb-2">
+      <div class="col-md-4">
+        <label class="form-label">First Name</label>
+        <InputText @bind-Value="TempService.TempEmployee.FirstName" class="form-control" />
+        <ValidationMessage For="@(() => TempService.TempEmployee.FirstName)" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Middle Name</label>
+        <InputText @bind-Value="TempService.TempEmployee.MiddleName" class="form-control" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Last Name</label>
+        <InputText @bind-Value="TempService.TempEmployee.LastName" class="form-control" />
+        <ValidationMessage For="@(() => TempService.TempEmployee.LastName)" />
+
+      </div>
+    </div>
+
+    <!-- Row 3: Email, Phone, Address -->
+    <div class="row form-row mb-2">
+      <div class="col-md-4">
+        <label class="form-label">Email</label>
+        <InputText @bind-Value="TempService.TempEmployee.Email" class="form-control" />
+        <ValidationMessage For="@(() => TempService.TempEmployee.Email)" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Phone</label>
+        <InputText @bind-Value="TempService.TempEmployee.Phone" class="form-control" />
+        <ValidationMessage For="@(() => TempService.TempEmployee.Phone)" />
+
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Address</label>
+        <InputText @bind-Value="TempService.TempEmployee.Address" class="form-control" />
+        <ValidationMessage For="@(() => TempService.TempEmployee.Address)" />
+
+      </div>
+    </div>
+
+    <!-- Row 4: DOB, National ID, Gender -->
+    <div class="row form-row mb-2">
+      <div class="col-md-4">
+        <label class="form-label">Date of Birth</label>
+        <InputDate @bind-Value="TempService.TempEmployee.DOB" class="form-control" />
+        <ValidationMessage For="@(() => TempService.TempEmployee.DOB)" />
+
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">National ID</label>
+        <InputText @bind-Value="TempService.TempEmployee.NationalID" class="form-control" />
+        <ValidationMessage For="@(() => TempService.TempEmployee.NationalID)" />
+
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Gender</label>
+        <InputSelect @bind-Value="TempService.TempEmployee.Gender" class="form-control">
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => TempService.TempEmployee.Gender)" />
+
+      </div>
+    </div>
+
+    <!-- Row 5: Job Title, Disability, Ethnicity -->
+    <div class="row form-row mb-2">
+      <div class="col-md-4">
+        <label class="form-label">Job Title</label>
+        <InputText @bind-Value="TempService.TempEmployee.JobTitle" class="form-control" />
+        <ValidationMessage For="@(() => TempService.TempEmployee.JobTitle)" />
+
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Disability</label>
+        <InputSelect @bind-Value="TempService.TempEmployee.Disability" class="form-control">
+          <option value="">Select</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => TempService.TempEmployee.Disability)" />
+
+
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Ethnicity</label>
+        <InputSelect @bind-Value="TempService.TempEmployee.Ethnicity" class="form-control">
+          <option value="">Select</option>
+          <option value="Kikuyu">Kikuyu</option>
+          <option value="Luo">Luo</option>
+          <option value="Luhya">Luhya</option>
+          <option value="Kalenjin">Kalenjin</option>
+          <option value="Kamba">Kamba</option>
+          <option value="Maasai">Maasai</option>
+          <option value="Meru">Meru</option>
+          <option value="Embu">Embu</option>
+          <option value="Turkana">Turkana</option>
+          <option value="Somali">Somali</option>
+          <option value="Mijikenda">Mijikenda</option>
+          <option value="Taita">Taita</option>
+          <option value="Kisii">Kisii</option>
+          <option value="Giriama">Giriama</option>
+          <option value="Borana">Borana</option>
+          <option value="Pokot">Pokot</option>
+          <option value="Samburu">Samburu</option>
+          <option value="Others">Others</option>
+        </InputSelect>
+
+      </div>
+    </div>
+
+    <!-- Row 6: Hire Date, Status, Department -->
+    <div class="row form-row mb-2">
+      <div class="col-md-4">
+        <label class="form-label">Hire Date</label>
+        <InputDate @bind-Value="TempService.TempEmployee.HireDate" class="form-control" />
+        <ValidationMessage For="@(() => TempService.TempEmployee.HireDate)" />
+
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Status</label>
+        <InputSelect @bind-Value="TempService.TempEmployee.Status" class="form-control">
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => TempService.TempEmployee.Status)" />
+
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Department</label>
+        <InputSelect @bind-Value="TempService.TempEmployee.DepartmentId" class="form-control">
+          <option value="">Select Department</option>
+          @foreach (var d in departments)
+          {
+            <option value="@d.Id">@d.Name</option>
+          }
+        </InputSelect>
+        <ValidationMessage For="@(() => TempService.TempEmployee.DepartmentId)" />
+
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save & Continue</button>
+  </div>
+</EditForm>
+
+
+@code {
+  //private Employee employee = new Employee();
+ // private EditContext? editContext;
+  List<Department> departments = new();
+
+  // We need this to manage component state during navigation
+
+  protected override async Task OnInitializedAsync()
+  {
+    // Make sure TempEmployee exists
+    //employee = TempService.TempEmployee ?? new Employee();
+
+
+    // Now create EditContext
+    //editContext = new EditContext(TempService.TempEmployee!);
+
+    // Load departments
+    departments = await Db.Departments.ToListAsync();
+  }
+
+  private void Save()
+  {
+    // Since all inputs bind directly to TempService.TempEmployee,
+    // The service already has the updated values.
+
+    // Just navigate to the next step:
+    Navigation.NavigateTo($"/employees/additional");
+  }
+
+  private void OnInvalidSubmit(EditContext ctx)
+  {
+    Console.WriteLine("Form invalid - touch all fields to see validation messages.");
+    foreach (var m in ctx.GetValidationMessages())
+      Console.WriteLine("Validation: " + m);
+  }
+}
+
+

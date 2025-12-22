@@ -1,0 +1,195 @@
+﻿@page "/employees/edit_users/{UserId:guid}"
+@using HR.Services.DTO
+@using HR.Services.Constants
+@using HR.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = AppRoles.Admin)]
+@rendermode InteractiveServer
+@inject IUserAccountService AccountService
+@inject NavigationManager Navigation
+
+@if (IsLoading)
+{
+  <div class="alert alert-info" role="alert"><i class="fas fa-spinner fa-spin me-2"></i> Loading user data...</div>
+}
+else if (Model == null)
+{
+  <div class="alert alert-danger" role="alert"><i class="fas fa-exclamation-triangle me-2"></i> User not found.</div>
+}
+else
+{
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="m-0"><i class="fas fa-user-edit me-2"></i> Edit User: @Model.Username</h3>
+    <button @onclick="NavigateToManagement" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-2"></i> Back to Management
+    </button>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow p-4">
+        <h5 class="card-title"><i class="fas fa-info-circle me-1"></i> General Information and Role</h5>
+        <hr />
+        <EditForm Model="Model" OnValidSubmit="HandleGeneralUpdate">
+          <DataAnnotationsValidator />
+
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <InputText id="username" class="form-control" @bind-Value="Model.Username" />
+            <ValidationMessage For="() => Model.Username" class="text-danger" />
+          </div>
+
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <InputText id="email" class="form-control" @bind-Value="Model.Email" />
+            <ValidationMessage For="() => Model.Email" class="text-danger" />
+          </div>
+
+          <div class="mb-4">
+            <label for="role" class="form-label">Primary Role</label>
+            <InputSelect id="role" class="form-select" @bind-Value="Model.RoleName">
+              <option value="@AppRoles.Employee">Employee</option>
+              <option value="@AppRoles.Admin">Admin</option>
+            </InputSelect>
+            <ValidationMessage For="() => Model.RoleName" class="text-danger" />
+          </div>
+
+          @if (!string.IsNullOrEmpty(GeneralError))
+          {
+            <div class="alert alert-danger">@GeneralError</div>
+          }
+
+          <button type="submit" class="btn btn-primary w-100" disabled="@IsBusy">
+            <i class="fas fa-save me-2"></i> Save Changes
+          </button>
+          @if (!string.IsNullOrEmpty(GeneralSuccess))
+          {
+            <div class="alert alert-success mt-3 p-2">@GeneralSuccess</div>
+          }
+        </EditForm>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow p-4">
+        <h5 class="card-title text-danger"><i class="fas fa-key me-1"></i> Password Reset (Admin Only)</h5>
+        <hr />
+        <EditForm Model="PasswordModel" OnValidSubmit="HandlePasswordChange">
+          <DataAnnotationsValidator />
+
+          <div class="mb-3">
+            <label for="newPassword" class="form-label">New Password</label>
+            <InputText id="newPassword" type="password" class="form-control" @bind-Value="PasswordModel.NewPassword" />
+            <ValidationMessage For="() => PasswordModel.NewPassword" class="text-danger" />
+          </div>
+
+          <div class="mb-4">
+            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+            <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="PasswordModel.ConfirmPassword" />
+            <ValidationMessage For="() => PasswordModel.ConfirmPassword" class="text-danger" />
+          </div>
+
+          @if (!string.IsNullOrEmpty(PasswordError))
+          {
+            <div class="alert alert-danger">@PasswordError</div>
+          }
+
+          <button type="submit" class="btn btn-danger w-100" disabled="@IsBusy">
+            <i class="fas fa-lock me-2"></i> Reset Password
+          </button>
+          @if (!string.IsNullOrEmpty(PasswordSuccess))
+          {
+            <div class="alert alert-success mt-3 p-2">@PasswordSuccess</div>
+          }
+        </EditForm>
+      </div>
+    </div>
+  </div>
+}
+
+@code {
+  [Parameter]
+  public Guid UserId { get; set; }
+
+  private UserEditDto? Model;
+  private UserPasswordChangeDto PasswordModel = new();
+  private bool IsLoading = true;
+  private bool IsBusy = false;
+
+  private string? GeneralError;
+  private string? GeneralSuccess;
+  private string? PasswordError;
+  private string? PasswordSuccess;
+
+
+  private void NavigateToManagement()
+    {
+        Navigation.NavigateTo("/employees/Manage_users");
+    }
+
+  protected override async Task OnParametersSetAsync()
+  {
+    IsLoading = true;
+    GeneralError = GeneralSuccess = PasswordError = PasswordSuccess = null;
+
+    // 1. Fetch user data using the service method we built
+    Model = await AccountService.GetUserForEditAsync(UserId);
+
+    // 2. Ensure the ID is set for the password DTO
+    PasswordModel.UserId = UserId;
+    IsLoading = false;
+  }
+
+  private async Task HandleGeneralUpdate()
+  {
+    if (Model == null) return;
+    IsBusy = true;
+    GeneralError = null;
+    GeneralSuccess = null;
+    try
+    {
+      await AccountService.UpdateUserGeneralInfoAsync(Model);
+      GeneralSuccess = "User information updated successfully!";
+    }
+    catch (InvalidOperationException ex)
+    {
+      GeneralError = ex.Message;
+    }
+    catch (Exception)
+    {
+      GeneralError = "An unexpected error occurred during the update.";
+    }
+    finally
+    {
+      IsBusy = false;
+    }
+  }
+
+  private async Task HandlePasswordChange()
+  {
+    IsBusy = true;
+    PasswordError = null;
+    PasswordSuccess = null;
+
+    // Basic validation for DTO rules (NewPassword and ConfirmPassword) is done by EditForm
+
+    try
+    {
+      await AccountService.ChangePasswordAsync(PasswordModel);
+      PasswordSuccess = "Password reset successfully!";
+
+      // Clear the password fields on success
+      PasswordModel.NewPassword = string.Empty;
+      PasswordModel.ConfirmPassword = string.Empty;
+    }
+    catch (Exception)
+    {
+      PasswordError = "An unexpected error occurred during password reset.";
+    }
+    finally
+    {
+      IsBusy = false;
+    }
+  }
+}

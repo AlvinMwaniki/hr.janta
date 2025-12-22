@@ -1,0 +1,257 @@
+﻿@inherits LayoutComponentBase
+@using System;  
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using HR.Services.Services
+@using HR.Services.Constants
+@using Microsoft.AspNetCore.Components.Web
+@using HR.Web.Admin.Blazor.Components.Pages.Employees
+@using Microsoft.JSInterop
+@inject NavigationManager Nav
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject HR.Services.Services.ThemeService Theme
+@inject AuthenticationStateProvider Auth
+@inject HR.Services.Services.ImpersonationService Impersonation
+@inject ThemeService Theme
+
+<CascadingAuthenticationState>
+
+  <div class="page">
+
+    <div class="sidebar">
+      <NavMenu />
+    </div>
+
+    <main>
+
+      <header class="navbar navbar-expand-lg px-4 py-2 custom-header shadow-sm">
+
+        <div class="d-flex align-items-center">
+          <input type="checkbox" title="Navigation menu" class="navbar-toggler me-3 d-lg-none" />
+
+          <h1 class="mb-0">
+            <a class="navbar-brand-custom brand-large" href="/dashboard">
+              <i class="fas fa-cubes me-2"></i>
+              <strong class="brand-color-text fw-bolder">HR Master ProX</strong>
+            </a>
+          </h1>
+        </div>
+
+        <div class="ms-auto d-flex align-items-center">
+
+          <div class="input-group search-bar me-4 d-none d-md-flex">
+            <span class="input-group-text bg-white border-end-0" id="search-addon">
+              <i class="fas fa-search text-secondary"></i>
+            </span>
+            <input type="text" class="form-control border-start-0" placeholder="Search..." aria-label="Search" aria-describedby="search-addon" />
+          </div>
+
+          <div class="dropdown me-4">
+            <button type="button"
+                    class="settings-icon btn p-0 bg-transparent border-0 dropdown-toggle"
+                    id="mainSettingsDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+              <i class="fas fa-cog fa-lg"></i>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mainSettingsDropdown">
+
+              <li class="dropend">
+                <a class="dropdown-item dropdown-toggle nested-trigger" href="#"
+                   id="themeSubmenu"
+                   role="button"
+                   @onclick:preventDefault>
+                  <i class="fas fa-palette me-2"></i> Theme Settings
+                </a>
+
+                <ul class="dropdown-menu" aria-labelledby="themeSubmenu">
+                  <li><hr class="dropdown-divider"></li>
+                  <li class="d-flex align-items-center justify-content-between px-3 py-1">
+                    <div class="ms-auto">
+                      <ThemeSwitcher />
+                    </div>
+                  </li>
+                </ul>
+              </li>
+
+              <AuthorizeView Policy="@AppPermissions.ManageUsers">
+                <Authorized>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <a class="dropdown-item" href="/employees/Manage_users">
+                      <i class="fas fa-users-cog me-2"></i> User Management
+                    </a>
+                  </li>
+                </Authorized>
+              </AuthorizeView>
+
+              <li><hr class="dropdown-divider"></li>
+
+              <li>
+                <a class="dropdown-item" href="/profile">
+                  <i class="fas fa-user me-2"></i> Profile
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          @* *** DYNAMIC USER INFO BLOCK *** *@
+          <AuthorizeView>
+            <Authorized Context="AuthContext">
+
+              @* Simplified variable declaration: No more "@{...}" block needed *@
+              @{
+                var userInfo = GetUserInfo(AuthContext.User);
+              }
+
+              <div class="d-flex align-items-center me-3 user-info-container">
+                <i class="fas fa-user-circle fa-2x user-icon-color me-2"></i>
+                <div class="d-flex flex-column text-end">
+                  <span class="logged-in-user-name">
+                    @userInfo.UserName
+                  </span>
+                  <span class="logged-in-user-email text-muted small">
+                    @userInfo.Email
+                  </span>
+                </div>
+              </div>
+            </Authorized>
+            <NotAuthorized>
+              <span class="text-muted me-3">Guest</span>
+            </NotAuthorized>
+          </AuthorizeView>
+
+          @* ⭐ ADMIN IMPOSTER BUTTON ⭐ *@
+          @*  <ImpersonationButton />*@
+          <div class="notification-wrapper me-4">
+            <button type="button" class="btn p-0 bg-transparent border-0 position-relative notification-btn">
+              <i class="fas fa-bell fa-lg"></i>
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light">
+                3
+                <span class="visually-hidden">unread messages</span>
+              </span>
+            </button>
+          </div>
+
+          <div class="logout-container">
+            <a href="/signout" class="btn btn8-outline-danger" title="Log Out">
+              <i class="fas fa-sign-out-alt me-2"></i> Log Out
+            </a>
+          </div>
+        </div>
+      </header>
+      <article class="content px-4">
+        @Body
+      </article>
+    </main>
+  </div>
+
+</CascadingAuthenticationState>
+
+<div id="blazor-error-ui" data-nosnippet>
+  An unhandled error has occurred.
+  <a href="." class="reload">Reload</a>
+  <span class="dismiss">🗙</span>
+</div>
+
+@code {
+
+  protected class UserInfo
+  {
+    public string UserName { get; set; } = "User";
+    public string Email { get; set; } = "Not Available";
+  }
+  //USER 
+  protected UserInfo GetUserInfo(ClaimsPrincipal user)
+  {
+    var email = user.FindFirst(ClaimTypes.Email)?.Value;
+
+    // 2. Get the Identity Name claim (which you set to the email)
+    var identityName = user.Identity?.Name;
+    var userNameClaim = user.FindFirst(ClaimTypes.Name)?.Value;
+    // 3. Get the GivenName claim (which we also set to the email)
+    var displayUserName = user.FindFirst(ClaimTypes.GivenName)?.Value;
+
+    // Prioritize the GivenName (if available), then the Identity Name, then a fallback
+    string finalDisplayName = displayUserName ?? identityName ?? "Admin";
+
+    return new UserInfo
+    {
+      // The professional display name will now be the Email until the User model is updated.
+      UserName = finalDisplayName,
+      Email = email ?? "admin@example.com"
+    };
+  }
+  // Admin impersonation toggle
+  // This calls the service to toggle impersonation mode
+
+
+  private void ToggleImpersonation()
+  {
+    // 1. Toggle the state (This updates the AuthenticationStateProvider)
+    Impersonation.ToggleImpersonation();
+
+    // ⭐ CRITICAL FIX: Force the page to reload to apply the new Impersonation state ⭐
+    // We navigate to /dashboard, forcing a full page reload (bypassing the client-side router)
+    Navigation.NavigateTo("/dashboard", forceLoad: true);
+  }
+
+
+
+
+  // ⭐ CRITICAL 2: Subscription Setup (OnInitialized) ⭐
+  protected override void OnInitialized()
+  {
+    // Subscribe to the service event
+    Impersonation.ImpersonationStateChanged += OnImpersonationStateChanged;
+  
+    Theme.OnThemeChanged += RefreshUI;
+  }
+  private void RefreshUI() => InvokeAsync(StateHasChanged);
+
+ 
+  // ⭐ CRITICAL 3: Subscription Cleanup (Dispose) ⭐
+  public void Dispose()
+  {
+    Impersonation.ImpersonationStateChanged -= OnImpersonationStateChanged;
+  
+    Theme.OnThemeChanged -= RefreshUI;
+  }
+
+
+
+  // ⭐ CRITICAL 4: Handler Method ⭐
+  private void OnImpersonationStateChanged()
+  {
+    // This forces the button text to update
+    InvokeAsync(StateHasChanged);
+  }
+
+  // Theme management
+  // This is the simple function that flips the state in the service
+
+  // We call the service method which now handles JS and State logic
+
+
+
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender)
+    {
+      await Theme.InitializeThemeAsync();
+    }
+    else
+    {
+      // This handles every subsequent render (navigation)
+      // ensuring the theme is always forced on
+      await JSRuntime.InvokeVoidAsync("applyTheme", Theme.CurrentMode);
+    }
+  }
+
+}
+

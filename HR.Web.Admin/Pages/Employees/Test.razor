@@ -1,0 +1,11 @@
+﻿@page "/test"
+
+<h3>Test Button</h3>
+<button type="button" @onclick="TestClick">Click me</button>
+
+@code {
+  void TestClick()
+  {
+    Console.WriteLine("BUTTON CLICKED");
+  }
+}

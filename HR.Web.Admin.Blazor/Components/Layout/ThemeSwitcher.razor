@@ -1,0 +1,30 @@
+﻿@rendermode InteractiveServer
+@inject HR.Services.Services.ThemeService Theme
+
+<div class="d-flex gap-2">
+  <button class="btn btn-sm @(Theme.CurrentMode == "light" ? "btn-primary" : "btn-outline-secondary")"
+          @onclick='() => Theme.SetThemeAsync("light")' title="Always Light">
+    <i class="fas fa-sun"></i>
+  </button>
+
+  <button class="btn btn-sm @(Theme.CurrentMode == "dark" ? "btn-primary" : "btn-outline-secondary")"
+          @onclick='() => Theme.SetThemeAsync("dark")' title="Always Dark">
+    <i class="fas fa-moon"></i>
+  </button>
+
+  <button class="btn btn-sm @(Theme.CurrentMode == "system" ? "btn-primary" : "btn-outline-secondary")"
+          @onclick='() => Theme.SetThemeAsync("system")' title="Follow System">
+    <i class="fas fa-desktop"></i>
+  </button>
+</div>
+
+@code {
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender)
+    {
+      await Theme.InitializeThemeAsync();
+      StateHasChanged();
+    }
+  }
+}

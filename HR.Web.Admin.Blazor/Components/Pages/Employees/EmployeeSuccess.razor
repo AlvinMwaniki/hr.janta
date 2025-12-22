@@ -1,0 +1,89 @@
+﻿@page "/employees/success"
+@inject NavigationManager Navigation
+
+@rendermode InteractiveServer
+
+<div class="container text-center py-5">
+  <div class="card p-5 shadow-lg mx-auto" style="max-width: 500px; border-radius: 15px;">
+
+    <div class="mb-4" style="margin: 0 auto; width: 100px; height: 100px;">
+      <svg xmlns="http://www.w3.org/2000/svg"
+           viewBox="0 0 52 52"
+           style="background-color: #d4edda; border-radius: 50%;">
+        <circle cx="26" cy="26" r="25" fill="none" stroke="#28a745" stroke-width="3" />
+        <path fill="none" stroke="#28a745" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+              d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+      </svg>
+    </div>
+
+    <h2 class="card-title text-success mb-3">
+      Employee Created Successfully!
+    </h2>
+
+    <p class="card-text fs-5 text-muted">
+      The new employee record has been saved to the database.
+    </p>
+
+    <p class="mt-4 text-secondary">
+      Redirecting to the **Dashboard** in @secondsRemaining seconds...
+    </p>
+
+    <div class="mt-4">
+      <button class="btn btn-outline-secondary btn-sm" @onclick="RedirectNow">
+        Go to Dashboard Now
+      </button>
+    </div>
+  </div>
+</div>
+
+@code {
+  // 7 seconds is the requested time for redirection
+  private const int RedirectDelaySeconds = 5;
+  private int secondsRemaining = RedirectDelaySeconds;
+  private Timer? timer;
+
+  protected override void OnInitialized()
+  {
+    // 1. Initialize the timer to tick every 1000 milliseconds (1 second)
+    timer = new Timer(Tick, null, 1000, 1000);
+  }
+
+  private void Tick(object? state)
+  {
+    if (secondsRemaining > 0)
+    {
+      secondsRemaining--;
+      // Since this runs on a background thread, we must explicitly call InvokeAsync
+      // to update the UI on the Blazor synchronization context.
+      InvokeAsync(StateHasChanged);
+    }
+    else
+    {
+      // 2. Stop the timer and redirect
+      timer?.Dispose();
+      RedirectNow();
+    }
+  }
+
+  private void RedirectNow()
+  {
+    timer?.Dispose(); // Ensure timer stops if button is clicked
+
+    // CRITICAL FIX: Wrap navigation in try-catch to suppress the internal exception.
+    try
+    {
+      Navigation.NavigateTo("/dashboard", forceLoad: true);
+    }
+    catch (Microsoft.AspNetCore.Components.NavigationException)
+    {
+      // This exception is expected when navigating from a non-UI thread or lifecycle hook.
+      // We catch it and silently let the navigation proceed.
+    }
+  }
+
+  // 3. CRITICAL: Dispose of the timer when the component is removed to prevent memory leaks/crashes
+  public void Dispose()
+  {
+    timer?.Dispose();
+  }
+}

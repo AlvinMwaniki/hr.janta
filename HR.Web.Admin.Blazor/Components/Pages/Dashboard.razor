@@ -1,0 +1,360 @@
+﻿@page "/dashboard"
+@using HR.Services
+@using HR.Services.DTO
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using HR.Services.Constants
+@using HR.Web.Admin.Blazor.Components.Charts
+@rendermode InteractiveServer
+@attribute [Authorize]
+@inject DashboardService DashboardService
+@inject HR.Services.Services.ImpersonationService Impersonation
+
+@inject IJSRuntime JS
+
+
+
+<h3 class="mb-4">Dashboard</h3>
+
+@if (totals is null)
+{
+  <p>Loading...</p>
+}
+else
+{
+  // ===========ADMIN DASHBOARD VIEW===========
+  <AuthorizeView Policy="@AppPermissions.ViewAdminDashboard">
+    <Authorized>
+  <div class="row g-3">
+    <!-- Total Employees Card -->
+        <div class="col-md-3">
+          <div class="card shadow-sm text-white bg-primary">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-users me-2"></i> Total Employees</h5>
+              <h3>@totals.Employees</h3>
+            </div>
+          </div>
+        </div>
+    <!-- Total Departments Card -->
+    <div class="col-md-3">
+      <div class="card shadow-sm text-white bg-success">
+        <div class="card-body">
+        <h5 class="card-title"><i class="fas fa-building me-2"></i> Total Departments</h5>
+          <h3>@totals.Departments</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaves Card -->
+    <div class="col-md-3">
+      <div class="card shadow-sm text-white bg-warning">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fas fa-calendar-day me-2"></i> Leaves</h5>
+          <h3>@totals.Leaves</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advances Card -->
+    <div class="col-md-3">
+      <div class="card shadow-sm text-white bg-danger">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i> Advances</h5>
+          <h3>@totals.Advances</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- Charts -->
+      <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+        <h4 class="mb-0">@(showAnalyticsPage ? "Detailed Analytics" : "Quick Overview")</h4>
+        <button class="btn btn-outline-primary btn-sm" @onclick="TogglePage">
+          @if (showAnalyticsPage)
+          {
+            <span><i class="fas fa-arrow-left"></i> Back to Overview</span>
+          }
+          else
+          {
+            <span>View Trends <i class="fas fa-arrow-right"></i></span>
+          }
+        </button>
+      </div>
+
+      <div class="row">
+        @if (!showAnalyticsPage)
+        {
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <h5 class="card-title">Leaves Overview</h5>
+                <LeaveChartCard LeaveData="@totals.LeaveChartData" />
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <h5 class="card-title">Advance Overview</h5>
+                <AdvanceChartCard AdvanceData="@totals.AdvanceChartData" />
+              </div>
+            </div>
+          </div>
+        }
+        else
+        {
+          <div class="col-md-12">
+            <div class="card shadow-sm border-primary">
+              <div class="card-body text-center py-5">
+                <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                <h5>Monthly Attendance & Leave Trends</h5>
+                <p class="text-muted">Coming Soon.</p>
+                @* <MonthlyTrendChart /> *@
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </Authorized>
+  </AuthorizeView>
+  // ===========END OF ADMIN DASHBOARD VIEW===========
+
+  // ===========EMPLOYEE DASHBOARD VIEW (Visible to all)===========
+  @if (ShowEmployeeView){
+    <AuthorizeView Policy="@AppPermissions.ViewEmployeeDashboard">
+      <Authorized>
+      @* === 1. WELCOME HEADER (Full Width) === *@
+<div class="row mb-4">
+         <div class="col-12">
+    <div class="p-3 rounded-3 shadow-sm bg-light" style="min-height: 50px;">
+        <div class="d-flex align-items-center gap-3">
+            <!-- Job Title Badge -->
+            <span class="badge bg-info text-dark fs-6 fw-semibold">
+                <i class="fas fa-briefcase me-1"></i> @totals.JobTitle
+            </span>
+
+            <!-- Department Badge -->
+            <span class="badge bg-primary fs-6 fw-semibold">
+                <i class="fas fa-building me-1"></i> @totals.Department
+            </span>
+        </div>
+    </div>
+</div>
+    </div>
+
+
+    @* === 2. MAIN SYMMETRIC DASHBOARD ROW === *@
+    <div class="row g-4">
+        
+        @* === LEFT SECTION: 3 METRIC CARDS (col-lg-6) === *@
+        <div class="col-lg-8">
+            <div class="card shadow-lg p-3 h-100">
+                <div class="card-body d-flex flex-column p-0">
+
+                <h5 class="mb-4 text-dark border-bottom pb-2">@context.User.Identity?.Name! Hub</h5>
+                    
+                    @* --- Key Metric Cards (3-column layout) --- *@
+                    <div class="row g-3 flex-grow-1">
+                        
+                        <div class="col-md-4">
+                            <div class="card shadow-sm text-white bg-info h-100">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title text-uppercase fw-light"><i class="fas fa-plane-departure me-2"></i> Balance</h6>
+                                    <h3 class="mb-0">@totals.LeaveBalance</h3>
+                        <small>Days Remaining (of @HR.Core.HRConstants.AnnualLeaveDaysLimit)</small>
+                      </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card shadow-sm text-white bg-warning h-100">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title text-uppercase fw-light"><i class="fas fa-calendar-check me-2"></i> Taken</h6>
+                                    <h3 class="mb-0">@totals.LeavesTaken</h3>
+                                    <small>Days YTD</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card shadow-sm text-white bg-danger h-100">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title text-uppercase fw-light"><i class="fas fa-clipboard-list me-2"></i> Tasks</h6>
+                                    <h3 class="mb-0">@totals.PendingTasks</h3>
+                                    <small>Required Action</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* === RIGHT SECTION: CALL-TO-ACTIONS (col-lg-6 - Unchanged, remains symmetrical) === *@
+        <div class="col-lg-4">
+            <div class="card shadow-lg p-3 h-100 bg-light">
+                <div class="card-body d-flex flex-column justify-content-center p-2">
+                    <h5 class="card-title text-success mb-4 text-center border-bottom pb-2">Quick Actions & Documents</h5>
+                    
+                    @* --- Action 1: Payslip (Unchanged) --- *@
+                    <a href="/payslips" class="action-btn-link mb-3 text-decoration-none">
+                        <div class="d-flex align-items-center p-3 rounded-3 shadow-sm bg-white hover-zoom">
+                            <i class="fas fa-money-bill-wave fa-lg text-secondary me-3"></i>
+                            <div>
+                                <strong class="d-block">View Last Payslip</strong>
+                                <small class="text-muted">Download your recent salary statement.</small>
+                            </div>
+                            <i class="fas fa-chevron-right ms-auto text-muted"></i>
+                        </div>
+                    </a>
+
+                    @* --- Action 2: Submit Leave (Unchanged) --- *@
+                    <AuthorizeView Policy="@AppPermissions.SubmitLeave">
+                  <Authorized Context="submitContext">
+                    <a href="/leave/submit" class="action-btn-link text-decoration-none">
+                                <div class="d-flex align-items-center p-3 rounded-3 shadow-sm bg-white hover-zoom">
+                                    <i class="fas fa-calendar-plus fa-lg text-success me-3"></i>
+                                    <div>
+                                        <strong class="d-block">Submit Leave Request</strong>
+                                        <small class="text-muted">Need a day off? Click here to apply.</small>
+                                    </div>
+                                    <i class="fas fa-chevron-right ms-auto text-muted"></i>
+                                </div>
+                            </a>
+                        </Authorized>
+                    </AuthorizeView>
+                </div>
+            </div>
+        </div>
+    </div>
+    </Authorized>
+    <NotAuthorized>
+      <p class="alert alert-danger">Access Denied: You Are Not an Employee.</p>
+    </NotAuthorized>
+  </AuthorizeView>
+  }
+  @* ===========END OF EMPLOYEE DASHBOARD VIEW=========== *@
+}
+
+@code {
+
+  private DashboardTotals? totals;
+  [CascadingParameter]
+  private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+  private AdvanceChartDataDto AdvanceChartData = new();
+  // ⭐ FIX 2: DECLARE THE RENDER FLAG FIELD ⭐
+  private bool ShowEmployeeView = false;
+  protected override async Task OnInitializedAsync()
+  {
+    var authState = await AuthStateTask;
+    var user = authState.User;
+
+    // An Admin only sees the Employee View IF they are impersonating.
+    // A non-Admin employee always sees the Employee View.
+    bool isAdmin = user.HasClaim("Permission", AppPermissions.ViewAdminDashboard); // Check for an Admin-only permission/claim
+
+    // Set the flag for rendering the Employee Dashboard
+    ShowEmployeeView = Impersonation.IsImpersonating || !isAdmin;
+
+    await LoadDashboardSafeAsync();
+
+    // We use the method name you defined: GetMyLeaveBalanceAsync()
+    totals!.LeaveBalance = await DashboardService.GetMyLeaveBalanceAsync();
+
+    // 3. Fetch Leaves Taken 
+    totals.LeavesTaken = await DashboardService.GetMyLeavesTakenAsync();
+
+    // 4. Fetch other required data (JobTitle, PendingTasks, etc.)
+    // totals.JobTitle = await DashboardService.GetMyJobTitleAsync();
+    // totals.PendingTasks = await DashboardService.GetMyPendingTasksAsync();
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender && totals is not null)
+    {
+      try
+      {
+        await JS.InvokeVoidAsync(
+      "renderAdvanceChart",
+      new object[] {
+        totals.AdvanceChartData.Approved, // ⭐ Access the nested property ⭐
+        totals.AdvanceChartData.PendingOrRejected // ⭐ Access the nested property ⭐
+      }
+  );
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"JS Error rendering chart: {ex.Message}");
+      }
+    }
+  }
+
+  private async Task LoadDashboardSafeAsync()
+  {
+    try
+    {
+      totals = await LoadDashboardAsync();
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+      totals = new DashboardTotals(); // fallback
+    }
+  }
+
+  private async Task<DashboardTotals> LoadDashboardAsync()
+  {
+    try
+    {
+      return new DashboardTotals
+      {
+        Employees = await DashboardService.GetTotalEmployeesAsync(),
+        Departments = await DashboardService.GetTotalDepartmentsAsync(),
+        Leaves = await DashboardService.GetTotalLeavesAsync(),
+        Advances = await DashboardService.GetTotalAdvancesAsync(),
+        OnLeave = await DashboardService.GetEmployeesOnLeaveAsync(),
+        NotOnLeave = await DashboardService.GetEmployeesNotOnLeaveAsync(),
+        LeaveBalance = await DashboardService.GetMyLeaveBalanceAsync(), // Parameter REMOVED
+        LeavesTaken = await DashboardService.GetMyLeavesTakenAsync(),
+        PendingTasks = await DashboardService.GetMyPendingTasksAsync(),
+        JobTitle = await DashboardService.GetMyJobTitleAsync(),
+        Department = await DashboardService.GetMyDepartmentAsync(),
+        AdvanceChartData = await DashboardService.GetAdvanceStatusChartDataAsync(),
+        LeaveChartData = await DashboardService.GetLeaveStatusChartDataAsync()
+        //LastPayslipDate = await DashboardService.GetMyLastPayslipDateAsync()
+      };
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine("🔥 FATAL DASHBOARD ERROR:");
+      Console.WriteLine(ex.ToString());
+      throw;
+    }
+  }
+
+  @code {
+    private bool showAnalyticsPage = false;
+
+    private void TogglePage()
+    {
+        showAnalyticsPage = !showAnalyticsPage;
+    }
+}
+
+  // Helper to determine if the Employee Dashboard View should be visible
+  private bool ShouldShowEmployeeView(System.Security.Claims.ClaimsPrincipal user)
+  {
+    // Condition 1: Is a regular Employee (i.e., NOT an Admin)
+    bool isRegularEmployee = !user.IsInRole(AppRoles.Admin);
+
+    // Condition 2: Is an Admin currently impersonating
+    // The Impersonation service (which is injected at the component level) is accessible here.
+    bool isImpersonatingAdmin = user.IsInRole(AppRoles.Admin) && Impersonation.IsImpersonating;
+
+    return isRegularEmployee || isImpersonatingAdmin;
+  }
+
+}

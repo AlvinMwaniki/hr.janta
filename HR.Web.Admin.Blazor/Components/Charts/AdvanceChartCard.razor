@@ -1,0 +1,56 @@
+﻿@* /Components/Charts/AdvanceChartCard.razor *@
+
+@using HR.Services.DTO
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+@if (AdvanceData is null)
+{
+  <div class="card shadow-sm h-100"><div class="card-body"><p>Loading advance data...</p></div></div>
+}
+else
+{
+<div @attributes="AdditionalAttributes"> 
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+      @* The canvas ID must be unique. Using a static ID is fine here. *@
+      <div style="height: 300px; width: 100%;">
+      <canvas id="AdvanceChartData"></canvas>
+        </div>
+
+    </div>
+  </div>
+  </div>
+}
+
+@code {
+  // ⭐ 1. Parameter to receive the Advance data from the parent Dashboard.razor ⭐
+  [Parameter]
+  public AdvanceChartDataDto AdvanceData { get; set; } = new();
+  private Dictionary<string, object> AdditionalAttributes =
+        new Dictionary<string, object> { { "autofocus", "false" } };
+  // 2. Use the chart's specific lifecycle hook for rendering the JS chart
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    // We only render on the first pass when the component loads
+    if (firstRender)
+    {
+      try
+      {
+        // This call only passes the two required data points
+        await JS.InvokeVoidAsync(
+            "renderAdvanceChart",
+            new object[] {
+                        AdvanceData.Approved,
+                        AdvanceData.PendingOrRejected
+            }
+        );
+      }
+      catch (Exception ex)
+      {
+        // Log the error locally to this component
+        Console.WriteLine($"Advance Chart JS Error: {ex.Message}");
+      }
+    }
+  }
+}

@@ -1,0 +1,183 @@
+﻿@page "/employees/additional/workhistory/{employeeId:guid}"
+@using HR.Data
+@using HR.Data.Models.Employees
+@using Microsoft.EntityFrameworkCore
+@using HR.Services.Services
+@inject EmployeeTempService TempService
+@inject HRDbContext Db
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Forms
+
+<h3>Additional Employee Details - Step 2: Work History</h3>
+
+@if (employee == null)
+{
+  <p>Loading...</p>
+}
+else
+{
+  <EditForm Model="@workModel" OnValidSubmit="@AddOrUpdateWork">
+    <DataAnnotationsValidator />
+
+    <div class="form-card">
+      <h4 class="mb-4">Work History</h4>
+
+      <!-- Row 1: Job Title, Company Name -->
+      <div class="row mb-2">
+        <div class="col-md-6">
+          <label class="form-label">Job Title</label>
+          <InputText @bind-Value="workModel.JobTitle" class="form-control" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Company Name</label>
+          <InputText @bind-Value="workModel.CompanyName" class="form-control" />
+        </div>
+      </div>
+
+      <!-- Row 2: City, Country -->
+      <div class="row mb-2">
+        <div class="col-md-6">
+          <label class="form-label">City</label>
+          <InputText @bind-Value="workModel.CompanyCity" class="form-control" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Country</label>
+          <InputText @bind-Value="workModel.CompanyCountry" class="form-control" />
+        </div>
+      </div>
+
+      <!-- Row 3: From Date, To Date -->
+      <div class="row mb-2">
+        <div class="col-md-6">
+          <label class="form-label">From Date</label>
+          <InputDate @bind-Value="workModel.JobFromDate" class="form-control" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">To Date</label>
+          <InputDate @bind-Value="workModel.JobToDate" class="form-control" />
+        </div>
+      </div>
+
+      <!-- Current Job Checkbox -->
+      <div class="row mb-3">
+        <div class="col-md-12">
+          <div class="form-check">
+            <InputCheckbox @bind-Value="workModel.IsCurrentJob" class="form-check-input" />
+            <label class="form-check-label ms-2">Current Job</label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary mb-3">
+        @((editingWorkIndex >= 0) ? "Update" : "Add")
+      </button>
+    </div>
+  </EditForm>
+
+
+  @if (workHistories.Any())
+  {
+    <table class="table mt-3">
+      <thead>
+        <tr>
+          <th>Job Title</th>
+          <th>Company</th>
+          <th>City</th>
+          <th>Country</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Current</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (int i = 0; i < workHistories.Count; i++)
+        {
+          var work = workHistories[i];
+          <tr>
+            <td>@work.JobTitle</td>
+            <td>@work.CompanyName</td>
+            <td>@work.CompanyCity</td>
+            <td>@work.CompanyCountry</td>
+            <td>@work.JobFromDate.ToShortDateString()</td>
+            <td>@work.JobToDate.ToShortDateString()</td>
+            <td>@(work.IsCurrentJob ? "Yes" : "No")</td>
+            <td>
+              <button class="btn btn-sm btn-warning me-1" @onclick="() => EditWork(i)">Edit</button>
+              <button class="btn btn-sm btn-danger" @onclick="() => DeleteWork(i)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="mt-2">
+      <button class="btn btn-secondary me-2" @onclick="GoBack">Back</button>
+      <button class="btn btn-success" @onclick="NextStep">Next</button>
+    </div>
+  }
+}
+
+@code {
+  [Parameter] public Guid employeeId { get; set; }
+
+  private Employee? employee;
+
+  // Use fully qualified model to avoid conflicts
+  private HR.Data.Models.Employees.WorkHistory workModel = new();
+  private List<HR.Data.Models.Employees.WorkHistory> workHistories = new();
+  private int editingWorkIndex = -1;
+
+  protected override async Task OnInitializedAsync()
+  {
+    employee = await Db.Employees
+        .Include(e => e.WorkHistory)
+        .FirstOrDefaultAsync(e => e.Id == employeeId);
+
+    if (employee == null)
+    {
+      Navigation.NavigateTo("/employees");
+      return;
+    }
+
+    workHistories = employee.WorkHistory.ToList();
+  }
+
+  private void AddOrUpdateWork()
+  {
+    if (editingWorkIndex >= 0)
+    {
+      workHistories[editingWorkIndex] = workModel;
+      editingWorkIndex = -1;
+    }
+    else
+    {
+      workHistories.Add(workModel);
+    }
+
+    workModel = new HR.Data.Models.Employees.WorkHistory(); // Reset form
+  }
+
+  private void EditWork(int index)
+  {
+    workModel = workHistories[index];
+    editingWorkIndex = index;
+  }
+
+  private void DeleteWork(int index)
+  {
+    workHistories.RemoveAt(index);
+  }
+  private void GoBack()
+  {
+    // Navigate back to Step 1 (Create)
+    Navigation.NavigateTo("/employees/create");
+  }
+
+
+  private void NextStep()
+  {
+    employee!.WorkHistory = workHistories;
+    Navigation.NavigateTo($"/employees/additional/nextofkin/{employeeId}");
+  }
+}

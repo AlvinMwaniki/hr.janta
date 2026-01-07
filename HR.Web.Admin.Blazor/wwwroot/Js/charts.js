@@ -1,93 +1,125 @@
 ﻿// wwwroot/js/charts.js
+// Helper to get colors based on theme
+const getChartTheme = () => {
+  const isDark = document.body.classList.contains('dark');
+  return {
+    primary: isDark ? '#030391' : '#222240', // High contrast blue for Dark Mode
+    text: isDark ? '#FCFCFC' : '#1e293b',
+    subText: isDark ? 'rgba(255,255,255,0.6)' : '#64748b'
+  };
+};
+// Keep the helper function
+const getThemeColor = (variableName) => {
+  const root = document.documentElement;
+  const body = document.body;
+
+  // Check if dark mode is active on body or html
+  const isDark = body.classList.contains('dark') || root.getAttribute('data-bs-theme') === 'dark';
+
+  // Get the actual computed color
+  let color = getComputedStyle(body).getPropertyValue(variableName).trim();
+
+  // Hard fallback: If color is empty or we are in dark mode, force white/light gray
+  if (!color || color === "") {
+    return isDark ? '#FCFCFC' : '#212529';
+  }
+  return color;
+};
+
+// Define as a standard object so your existing code doesn't break
 
 // Global variable to store the chart instance for proper destruction/re-rendering
 window.advanceChartInstance = null;
+window.leaveChartInstance = null;
+// Function for a modern, rounded doughnut look
+const centerTextPlugin = {
+  id: 'centerText',
+  afterDraw: (chart) => {
+    const { ctx, chartArea: { left, top, right, bottom } } = chart;
+    const data = chart.data.datasets[0].data;
+    const total = data.reduce((a, b) => a + b, 0);
+    const secondaryValue = data[1] || 0;
+    const subLabel = chart.canvas.id.includes('Advance') ? "Pending" : "Total";
+
+    // DYNAMIC COLOR FETCH
+    const mainColor = getThemeColor('--text-main');
+    const subColor = document.body.classList.contains('dark') ? 'rgba(255,255,255,0.6)' : '#64748b';
+
+    ctx.save();
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+
+    // 1. Main Number - Now flips to white in dark mode
+    ctx.font = 'bold 2.5rem sans-serif';
+    ctx.fillStyle = mainColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(total, centerX, centerY - 5);
+
+    // 2. Sub-Label - Now readable in dark mode
+    ctx.font = '600 0.85rem sans-serif';
+    ctx.fillStyle = subColor;
+    ctx.fillText(`${secondaryValue} ${subLabel}`, centerX, centerY + 25);
+    ctx.restore();
+  }
+};
+const getModernOptions = () => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '70%', // Even thinner for that 2026 look
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: { color: getThemeColor('--text-main'), usePointStyle: true, padding: 25, font: { size: 12, weight: '600' } }
+    }
+  }
+});
 
 window.renderAdvanceChart = function (approved, pendingOrRejected) {
-
-  // 1. Get the Canvas Element using the ID defined in AdvanceChartCard.razor
   const ctx = document.getElementById('AdvanceChartData');
+  if (!ctx) return;
+  // HIGH CONTRAST COLOR LOGIC
 
-  // Safety check
-  if (!ctx) {
-    console.error("Advance Chart: Canvas element with ID 'AdvanceChartData' not found.");
-    return;
-  }
+  const theme = getChartTheme(); // Fetch colors right before rendering
 
-  // 2. Destroy any existing chart instance to prevent errors (crucial in Blazor)
-  if (window.advanceChartInstance) {
-    window.advanceChartInstance.destroy();
-  }
+  if (window.advanceChartInstance) window.advanceChartInstance.destroy();
 
-  // 3. Create the new chart instance
   window.advanceChartInstance = new Chart(ctx, {
     type: 'doughnut',
+    plugins: [centerTextPlugin], // Apply the plugin here
     data: {
       labels: ['Approved', 'Pending / Rejected'],
       datasets: [{
         data: [approved, pendingOrRejected],
-        backgroundColor: [
-          '#4BC0C0', // Teal/Green for Approved
-          '#FF6384'  // Red for Pending/Rejected
-        ],
-        hoverOffset: 8
+        backgroundColor: ['#222240', '#0EA5E9'],
+        hoverOffset: 20,
+        borderWidth: 0,
+        borderRadius: 1
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-        },
-        title: {
-          display: true,
-          text: 'Advance Approval Status'
-        }
-      }
-    }
+    options: getModernOptions()
   });
 };
-//===============LEAVE CHAAART=================================
-// Global variable for the leave chart
-window.leaveChartInstance = null;
 
 window.renderLeaveStatusChart = function (approved, pending, rejected) {
-
   const ctx = document.getElementById('LeaveStatusChartData');
-
-  if (!ctx) {
-    console.error("Leave Status Chart: Canvas element not found.");
-    return;
-  }
-
-  if (window.leaveChartInstance) {
-    window.leaveChartInstance.destroy();
-  }
+  if (!ctx) return;
+  const theme = getChartTheme(); // Fetch colors right before rendering
+  if (window.leaveChartInstance) window.leaveChartInstance.destroy();
 
   window.leaveChartInstance = new Chart(ctx, {
     type: 'doughnut',
+    plugins: [centerTextPlugin], // Apply the plugin here
     data: {
       labels: ['Approved', 'Pending', 'Rejected'],
       datasets: [{
         data: [approved, pending, rejected],
-        backgroundColor: [
-          '#4BC0C0', // Approved (Teal)
-          '#FFCE56', // Pending (Yellow)
-          '#FF6384'  // Rejected (Red)
-        ],
-        hoverOffset: 4
+        backgroundColor: ['#0EA5E9', '#222240', '#7863FF'],
+        hoverOffset: 20,
+        borderWidth: 0,
+        borderRadius: 1
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom' },
-        title: { display: true, text: 'Leave Request Status' }
-      }
-    }
+    options: getModernOptions()
   });
 };
-
-

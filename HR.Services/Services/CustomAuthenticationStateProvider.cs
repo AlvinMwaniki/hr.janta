@@ -1,14 +1,14 @@
 ﻿// HR.Services/Services/CustomAuthenticationStateProvider.cs
 
 using HR.Data;
-using HR.Services.Constants; // ⭐ NEW: Needed for AppRoles and AppPermissions ⭐
+using HR.Services.Constants; 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-using System.Linq; // ⭐ NEW: Needed for .Where() and .ToList() ⭐
+using System.Linq; 
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -17,13 +17,13 @@ namespace HR.Services.Services;
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
 	private readonly IHttpContextAccessor _httpContextAccessor;
-	private readonly ImpersonationService _impersonationService; // ⭐ NEW FIELD ⭐
+	private readonly ImpersonationService _impersonationService; 
 	private readonly IServiceProvider _serviceProvider;
 	private readonly IServiceScopeFactory _serviceScopeFactory;
 	private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
 	private readonly IEmployeeDataCacheService _cacheService;
 
-	// ⭐ UPDATED CONSTRUCTOR: Now injects ImpersonationService ⭐
+	//  UPDATED CONSTRUCTOR: Now injects ImpersonationService will implement baadaye
 	public CustomAuthenticationStateProvider(IHttpContextAccessor httpContextAccessor,
 											 ImpersonationService impersonationService,
 											 IServiceProvider serviceProvider, IEmployeeDataCacheService cacheService, 
@@ -67,7 +67,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 			var finalClaims = await GetFullClaimsSet(userId, baseIdentity);
 			var fullPrincipal = new ClaimsPrincipal(new ClaimsIdentity(finalClaims, "CustomAuth"));
 
-			// 3. ⭐ CHECK IMPERSONATION STATE AND APPLY FILTERING ⭐
+			// 3.  CHECK IMPERSONATION STATE AND APPLY FILTERING ⭐
 			if (_impersonationService.IsImpersonating)
 			{
 				// 3a. Get only the identity claims (NameId, Name, Email)
@@ -83,9 +83,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 				impersonatedClaims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, AppRoles.Employee));
 
 				// 3c. Manually add the base permissions needed for the employee view
-				// CRITICAL: Load all permissions associated with the Employee Role ID to mimic the employee.
-				// To do this cleanly, we need to access the database again inside this block.
-
+			
 				using (var scope = _serviceProvider.CreateScope())
 				{
 					var dbContext = scope.ServiceProvider.GetRequiredService<HR.Data.HRDbContext>();
@@ -125,11 +123,9 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
 				if (fallbackUserIdClaim != null && Guid.TryParse(fallbackUserIdClaim.Value, out Guid fallbackUserId))
 				{
-					// WARNING: This requires injecting HRDbContext into the AuthenticationStateProvider, 
-					// which is often unavoidable in this situation.
-
-					// Assume you have HRDbContext injected:
-					using var scope = _serviceScopeFactory.CreateScope(); // Use scope factory for safe DB access
+					// WARNING: wueh This requires injecting HRDbContext into the AuthenticationStateProvider, 
+					
+					using var scope = _serviceScopeFactory.CreateScope(); // Used scope factory for safe DB access
 					var dbContext = scope.ServiceProvider.GetRequiredService<HRDbContext>();
 
 					var employee = await dbContext.Employees
@@ -139,12 +135,11 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 					if (employee != null)
 					{
 						_cacheService.SetEmployeeId(employee.Id);
-						// Optional: You could now notify state change to update the principal, but we rely on the cache.
+						
 					}
 				}
 			}
 			// --- END CACHE POPULATION LOGIC ---
-			// 4. Return the full principal with up-to-date permissions
 			return new AuthenticationState(fullPrincipal);
 		}
 
@@ -157,7 +152,6 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 	// Helper method to fetch and merge claims using IServiceProvider scope
 	private async Task<IEnumerable<System.Security.Claims.Claim>> GetFullClaimsSet(Guid userId, System.Security.Claims.ClaimsIdentity baseIdentity)
 	{
-		// CRITICAL: I created a scope because HRDbContext is scoped, and we are not in the standard HTTP request scope.
 		using (var scope = _serviceProvider.CreateScope())
 		{
 			// Resolve the required dependencies

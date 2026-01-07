@@ -9,13 +9,20 @@ a, .btn-link {
 }
 
 .btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+  box-shadow: 0 6px 12px rgba(16, 100, 238, 0.35);
+  transition: all 0.25s ease;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(16, 100, 238, 0.25);
 }
 
 /*=========END BUTTONS STYLING=========*/
@@ -25,49 +32,86 @@ a, .btn-link {
 
 /* 1. The Container Card */
 .form-card {
-    background: #ffffff;
-    padding: 32px; /* More breathing room */
-    border-radius: 16px; /* Softer corners */
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); /* Very soft, modern shadow */
-    margin-bottom: 30px;
+  background: var(--bg-card-gradient); /* gradient adds depth */
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.6), 0 5px 10px rgba(0,0,0,0.3);
+  padding: 36px;
+  transition: all 0.3s ease;
+}
+
+body.dark {
+  --bg-card: #1a1a1a; /* deep charcoal base */
+  --bg-card-gradient: linear-gradient(145deg, #1a1a1a, #252525); /* soft 3D vibe */
+  --input-bg: #2d2d2d; /* inputs remain darker for contrast */
+  --text-main: #f5f5f5; /* labels and text in white */
+  --border: #444; /* subtle border */
 }
 
 /* 2. Modern Labels */
+/* Current label */
 .form-label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 8px;
-    display: block;
-    transition: color 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #495057; /* Light mode default */
+  margin-bottom: 8px;
+  display: block;
+  transition: color 0.2s ease;
 }
 
-/* 3. The Input Field Transformation */
-.form-control, .form-select {
-    height: calc(3rem + 2px); /* Slightly taller for luxury feel */
-    padding: 0.75rem 1rem;
-    background-color: #f8f9fa; /* Light grey background */
-    border: 1.5px solid #e9ecef;
-    border-radius: 10px;
-    font-size: 0.95rem;
-    color: #212529;
-    transition: all 0.2s ease-in-out;
+/* Dark mode override - place this AFTER the above */
+body.dark .form-card .form-label,
+[data-bs-theme="dark"] .form-card .form-label {
+  color: #CED3D6 !important; /* Whitish in dark mode */
 }
+
+
+/* 3. The Input Field Transformation */
+/* --- 1. Define shadow variable --- */
+:root, [data-bs-theme="light"] {
+  --input-shadow: inset 0 0.2px 0.2px rgba(0,0,0,0.3), 0 0.2px 0.2px rgba(0,0,0,0.3);
+}
+
+body.dark, [data-bs-theme="dark"] {
+  --input-shadow: inset 0 2px 3px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.4);
+}
+.form-control, .form-select {
+  height: calc(3rem + 1.5px); /* Slightly taller for luxury feel */
+  padding: 0.75rem 1rem;
+  background-color: var(--input-bg);
+  border: 1.5px solid #e9ecef;
+  box-shadow: var(--input-shadow) !important;
+  transition: all 0.10s ease;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  transition: all 0.2s ease-in-out;
+}
+
+
 
 /* 4. The "Magic" Focus State */
 .form-control:focus, .form-select:focus {
-    background-color: #fff;
     border-color: #1064ee; /* Match your brand blue */
     box-shadow: 0 0 0 4px rgba(16, 100, 238, 0.1); /* Soft blue outer glow */
     outline: 0;
 }
 
 /* 5. Placeholder Styling */
-.form-control::placeholder {
-    color: #adb5bd;
+  /* Light mode placeholder */
+  .form-control::placeholder {
+    color: #adb5bd; /* Light grey for light mode */
     font-weight: 400;
+  }
+
+/* Dark mode placeholder */
+body.dark .form-control::placeholder,
+[data-bs-theme="dark"] .form-control::placeholder {
+  color: #b0b0b0; /* Slightly lighter grey for dark mode */
+  font-weight: 400;
 }
+
 
 /* 6. Section Titles inside Forms */
 .form-section-title {
@@ -93,6 +137,21 @@ a, .btn-link {
 }
 
 /*=========== END OF MODERN FORM CSS ========*/
+/* 🔍 Compact search input – real fix */
+.search-bar .form-control {
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+
+/* Match the icon container */
+.search-bar .input-group-text {
+  padding: 0.25rem 0.5rem !important;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+}
+
 /*===========END OF FORM FIELDS CSS========*/
 
 .content {
@@ -267,6 +326,12 @@ body {
     height: 100%;
     /* Keep the card shadow and background, but let it expand */
   }
+/* Dark mode labels inside login form panel */
+body.dark .login-form-panel .form-label,
+[data-bs-theme="dark"] .login-form-panel .form-label {
+  color: #f5f5f5; /* Whitish for dark mode */
+}
+
 .portal-content .portal-title {
   /* Optional: Ensure no other padding/margin is pushing the title down */
   margin-top: 0;
@@ -432,6 +497,9 @@ body.dark .notification-btn {
   --input-bg: #ffffff;
   --bg-header: #1a1a1a; /* Dark Header */
   --brand-title: #2596be; /* Strong Blue for Light Mode */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --card-shadow: rgba(0, 0, 0, 0.08);
 }
 
 /* DARK MODE (Forced & System-Dark) */
@@ -444,21 +512,15 @@ body.dark, [data-bs-theme="dark"] {
   --border: #444444;
   --sidebar-bg: linear-gradient(180deg, #1a1a1a 0%, #1a1a1a 100%) !important;
   --brand-title: #ffffff; /* Pure White for Dark Mode */
+  --glass-bg: rgba(30, 30, 30, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --card-shadow: rgba(0, 0, 0, 0.6);
 }
 
 /* Global Application */
 
 
-.form-card {
-  background-color: var(--bg-card) !important;
-  color: var(--text-main) !important;
-  border: 1px solid var(--border, #dee2e6);
-}
 
-.form-control {
-  background-color: var(--input-bg) !important;
-  color: var(--text-main) !important;
-}
 
 /* Header persistence across all pages 
 .top-row {
@@ -518,3 +580,11 @@ body.dark .custom-header {
 .settings-icon:hover {
     cursor: pointer;
 }
+.emp-list-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* This prevents the image from stretching */
+  border-radius: 50%;
+  border: 1px solid #dee2e6;
+}
+

@@ -150,14 +150,12 @@ namespace HR.Services
 			var approvedRequests = await _db.LeaveRequests
 					.Where(l => l.EmployeeId == employeeId &&
 								l.Status == "Approved" &&
-								// NOTE: Ensure you add your LeaveType filter here if needed, e.g.,
 								// l.LeaveType == HR.Core.Enums.LeaveType.Annual.ToString() && 
 								l.FromDate >= startOfYear &&
 								l.ToDate <= endOfYear)
-					// CRITICAL: Pull the list into memory before calculating the sum!
+					//  Pull the list into memory before calculating the sum!
 					.ToListAsync();
 
-			// ⭐ FIX: 2. Calculate the sum in C# memory (Client side) ⭐
 			// Use the Enumerable.Sum extension method, which is the C# in-memory version.
 			var totalDaysTaken = approvedRequests.Sum(l =>
 				(int)Math.Ceiling((l.ToDate - l.FromDate).TotalDays) + 1
@@ -185,7 +183,6 @@ namespace HR.Services
 
 		public async Task<string?> GetMyDepartmentAsync()
 		{
-			// ⭐ FIX: Use the existing, reliable details method ⭐
 			var details = await _currentUser.GetCurrentEmployeeDetailsAsync();
 
 			// The details object is structured to handle the lookup safely.
@@ -242,7 +239,7 @@ namespace HR.Services
 			// Combine all non-approved statuses into one category
 			var pendingOrRejected = requests.Count(a => a.Status != "Approved");
 
-			// ⭐ FIX: Return a tuple directly ⭐
+			//  Return a tuple directly 
 			return new AdvanceChartDataDto
 			{
 				Approved = approved,
@@ -255,22 +252,20 @@ namespace HR.Services
 		// ⭐ NEW: CHART METHOD FOR LEAVE STATUS ⭐
 		public async Task<LeaveChartDataDto> GetLeaveStatusChartDataAsync()
 		{
-			// Query all leave requests in the database for the Admin view.
-			var requests = await _db.LeaveRequests
-				.AsNoTracking()
-                .Where(l => l.FromDate.Year == DateTime.Today.Year)
-                .ToListAsync();
+			var year = DateTime.Today.Year;
 
-			// Group and count the requests by status
-			var approved = requests.Count(l => l.Status == "Approved");
-			var pending = requests.Count(l => l.Status == "Pending");
-			var rejected = requests.Count(l => l.Status == "Rejected");
+			// Use a single query to get all counts at once for performance
+			var stats = await _db.LeaveRequests
+				.Where(l => l.FromDate.Year == year)
+				.GroupBy(l => l.Status)
+				.Select(g => new { Status = g.Key, Count = g.Count() })
+				.ToListAsync();
 
 			return new LeaveChartDataDto
 			{
-				LeavesApproved = approved,
-				LeavesPending = pending,
-				LeavesRejected = rejected
+				LeavesApproved = stats.FirstOrDefault(s => s.Status == "Approved")?.Count ?? 0,
+				LeavesPending = stats.FirstOrDefault(s => s.Status == "Pending")?.Count ?? 0,
+				LeavesRejected = stats.FirstOrDefault(s => s.Status == "Rejected")?.Count ?? 0
 			};
 		}
 

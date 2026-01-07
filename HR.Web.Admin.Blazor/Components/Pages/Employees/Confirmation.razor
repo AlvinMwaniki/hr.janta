@@ -34,7 +34,16 @@
     <p><strong>Full Name:</strong> @TempService.TempEmployee.FirstName @TempService.TempEmployee.MiddleName @TempService.TempEmployee.LastName</p>
     <p><strong>Email:</strong> @TempService.TempEmployee.Email</p>
     <p><strong>Phone:</strong> @TempService.TempEmployee.Phone</p>
-    <p><strong>Address:</strong> @TempService.TempEmployee.Address</p>
+    <p>
+      <strong>County:</strong>
+      @Db.Counties.FirstOrDefault(c => c.Id == TempService.TempEmployee.CountyId)?.Name
+    </p>
+    <p>
+      <strong>SubCounty:</strong>
+      @Db.SubCounties.FirstOrDefault(s => s.Id == TempService.TempEmployee.SubCountyId)?.Name
+    </p>    
+    <p><strong>Estate:</strong> @TempService.TempEmployee.Estate</p>
+    <p><strong>PO-Box:</strong> @TempService.TempEmployee.POBox</p>
     <p><strong>Date of Birth:</strong> @TempService.TempEmployee.DOB.ToShortDateString()</p>
     <p><strong>National ID:</strong> @TempService.TempEmployee.NationalID</p>
     <p><strong>Gender:</strong> @TempService.TempEmployee.Gender</p>

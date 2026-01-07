@@ -2,10 +2,11 @@
 using HR.Data.Models.Advances;
 using HR.Data.Models.Auth;
 using HR.Data.Models.BANKING;
+using HR.Data.Models.Country;
+using HR.Data.Models.County;
 using HR.Data.Models.Departments;
 using HR.Data.Models.Employees;
 using HR.Data.Models.Leaves;
-
 
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +20,11 @@ namespace HR.Data
 
 		// DbSets
 		public DbSet<Employee> Employees { get; set; }
+		public DbSet<Country> Countries { get; set; }
+		public DbSet<County> Counties { get; set; }
+		public DbSet<SubCounty> SubCounties { get; set; }
 		public DbSet<Department> Departments { get; set; }
+		public DbSet<Ethnicity> Ethnicities { get; set; }
 		public DbSet<EducationHistory> EducationHistories { get; set; }
 		public DbSet<WorkHistory> WorkHistories { get; set; }
 		public DbSet<NextOfKin> NextOfKins { get; set; }
@@ -56,6 +61,54 @@ namespace HR.Data
 				entity.Property(d => d.Description).HasMaxLength(250);
 			});
 
+			// Ethnicities Table Configuration
+			modelBuilder.Entity<Ethnicity>(entity =>
+			{
+				entity.ToTable("Ethnicities");
+				entity.HasKey(e => e.Id);
+				entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+			});
+
+			// -----------------------------
+			//Countries
+			modelBuilder.Entity<Country>(entity =>
+			{
+				entity.ToTable("Countries");
+				entity.HasKey(c => c.Id);
+				entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
+				entity.Property(c => c.IsoCode).IsRequired().HasMaxLength(5);
+				entity.Property(c => c.DialCode).IsRequired().HasMaxLength(10);
+			});
+
+			// -----------------------------
+			// Counties
+			modelBuilder.Entity<County>(entity =>
+			{
+				entity.ToTable("Counties");
+				entity.HasKey(c => c.Id);
+				entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
+				entity.Property(c => c.Code).IsRequired().HasMaxLength(10);
+			});
+			// -----------------------------
+			// SubCounties
+			// Define the One-to-Many Relationship
+			modelBuilder.Entity<SubCounty>(entity =>
+			{
+				entity.HasKey(e => e.Id);
+				entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+
+				// Link SubCounty to County
+				entity.HasOne(d => d.County)
+					  .WithMany(p => p.SubCounties)
+					  .HasForeignKey(d => d.CountyId)
+					  .OnDelete(DeleteBehavior.Restrict);
+			});
+			// Link Employee to Country
+			modelBuilder.Entity<Employee>()
+				.HasOne(e => e.Country)
+				.WithMany()
+				.HasForeignKey(e => e.CountryId)
+				.OnDelete(DeleteBehavior.Restrict);
 			// -----------------------------
 			// Employees
 			modelBuilder.Entity<Employee>(entity =>
@@ -68,18 +121,37 @@ namespace HR.Data
 				entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
 				entity.Property(e => e.Email).IsRequired().HasMaxLength(150);
 				entity.Property(e => e.Phone).IsRequired().HasMaxLength(20);
-				entity.Property(e => e.Address).IsRequired().HasMaxLength(250);
+				//entity.Property(e => e.Address).IsRequired().HasMaxLength(250);
+				// Link Employee to County
+				entity.HasOne(e => e.County)
+					  .WithMany() // We don't necessarily need a list of Employees inside the County class
+					  .HasForeignKey(e => e.CountyId)
+					  .IsRequired(false); // <--- Add this temporarily
+
+				// Link Employee to SubCounty
+				entity.HasOne(e => e.SubCounty)
+					  .WithMany()
+					  .HasForeignKey(e => e.SubCountyId)
+					  .IsRequired(false); // <--- Add this temporarily
+
+				entity.Property(e => e.Estate).IsRequired(false).HasMaxLength(250);
+				entity.Property(e => e.POBox).IsRequired(false).HasMaxLength(50); 
+				entity.Property(e => e.NationalID).HasMaxLength(50);
 				entity.Property(e => e.Gender).HasMaxLength(20);
 				entity.Property(e => e.JobTitle).HasMaxLength(100);
 				entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
 				entity.Property(e => e.Disability).HasMaxLength(100);
-				entity.Property(e => e.Ethnicity).HasMaxLength(100);
 
 				// Department FK
 				entity.HasOne(e => e.Department)
 					  .WithMany(d => d.Employees)
 					  .HasForeignKey(e => e.DepartmentId)
 					  .OnDelete(DeleteBehavior.Restrict);
+				// Ethnicirty FK
+				entity.HasOne(e => e.Ethnicity)
+			  .WithMany() // Ethnicity doesn't need a list of Employees
+			  .HasForeignKey(e => e.EthnicityId)
+			  .OnDelete(DeleteBehavior.Restrict);
 
 				// PaymentData 1:1
 				entity.HasOne(e => e.PaymentData)
@@ -238,7 +310,7 @@ namespace HR.Data
 
 				// Foreign Key setup
 				entity.HasOne(up => up.User)
-					  .WithMany() // User can have many permissions, but we don't need a collection on the User model
+					  .WithMany(u => u.UserPermissions) // User can have many permissions, but we don't need a collection on the User model
 					  .HasForeignKey(up => up.UserId)
 					  .OnDelete(DeleteBehavior.Cascade);
 

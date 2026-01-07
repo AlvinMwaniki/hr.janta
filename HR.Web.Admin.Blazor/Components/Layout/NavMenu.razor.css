@@ -75,8 +75,21 @@
   }
 
   .nav-item ::deep a.active {
-    background-color: rgba(21, 207, 174, 0.57);
-    color: white;
+    background-color: rgba(14, 165, 233, 0.7) !important;
+    backdrop-filter: blur(8px);
+    width: auto;
+    -webkit-backdrop-filter: blur(8px); /* Safari support */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    /* 3. Softening the shape */
+    border-radius: 12px;
+    margin-right: 12px; 
+    margin-left: 12px;
+
+    padding-right: 16px; 
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.1);
+    color: #ffffff !important;
+    font-weight: 600;
   }
 
   .nav-item ::deep .nav-link:hover {

@@ -20,7 +20,6 @@ public class CaptchaService
 		return Task.FromResult(result);
 	}
 
-	// ⭐ CRITICAL FIX: Replace the failing async method with a simple sync method ⭐
 	// This new method takes the expected code (from the cookie) and the user's input.
 	public bool ValidateCaptcha(string expectedCode, string userInput)
 	{
@@ -30,9 +29,8 @@ public class CaptchaService
 			return false;
 		}
 
-		// Use the correct comparison
+		// Used the correct comparison
 		return expectedCode.Equals(userInput, StringComparison.OrdinalIgnoreCase);
 	}
 
-	// ⭐ DELETE the entire obsolete ValidateCaptchaAsync method that used ProtectedSessionStorage ⭐
 }

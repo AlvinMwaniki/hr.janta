@@ -4,6 +4,7 @@ using HR.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HR.Data.Migrations
 {
     [DbContext(typeof(HRDbContext))]
-    partial class HRDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251230161505_AddLocationDetailsToEmployee")]
+    partial class AddLocationDetailsToEmployee
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -260,38 +263,15 @@ namespace HR.Data.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("varchar(10)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Counties", (string)null);
-                });
-
-            modelBuilder.Entity("HR.Data.Models.County.SubCounty", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("CountyId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CountyId");
-
-                    b.ToTable("SubCounties");
+                    b.ToTable("Counties");
                 });
 
             modelBuilder.Entity("HR.Data.Models.Departments.Department", b =>
@@ -362,6 +342,11 @@ namespace HR.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)");
+
                     b.Property<int>("AnnualLeaveBalanceDays")
                         .HasColumnType("int");
 
@@ -396,6 +381,7 @@ namespace HR.Data.Migrations
                         .HasColumnType("varchar(50)");
 
                     b.Property<string>("Estate")
+                        .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("varchar(250)");
 
@@ -434,6 +420,7 @@ namespace HR.Data.Migrations
                         .HasColumnType("varchar(50)");
 
                     b.Property<string>("POBox")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
@@ -450,8 +437,10 @@ namespace HR.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<Guid?>("SubCountyId")
-                        .HasColumnType("char(36)");
+                    b.Property<string>("SubCounty")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("char(36)");
@@ -465,8 +454,6 @@ namespace HR.Data.Migrations
                     b.HasIndex("DepartmentId");
 
                     b.HasIndex("EthnicityId");
-
-                    b.HasIndex("SubCountyId");
 
                     b.ToTable("Employees", (string)null);
                 });
@@ -741,17 +728,6 @@ namespace HR.Data.Migrations
                     b.Navigation("Employee");
                 });
 
-            modelBuilder.Entity("HR.Data.Models.County.SubCounty", b =>
-                {
-                    b.HasOne("HR.Data.Models.County.County", "County")
-                        .WithMany("SubCounties")
-                        .HasForeignKey("CountyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("County");
-                });
-
             modelBuilder.Entity("HR.Data.Models.Employees.EducationHistory", b =>
                 {
                     b.HasOne("HR.Data.Models.Employees.Employee", "Employee")
@@ -786,10 +762,6 @@ namespace HR.Data.Migrations
                         .HasForeignKey("EthnicityId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("HR.Data.Models.County.SubCounty", "SubCounty")
-                        .WithMany()
-                        .HasForeignKey("SubCountyId");
-
                     b.Navigation("Country");
 
                     b.Navigation("County");
@@ -797,8 +769,6 @@ namespace HR.Data.Migrations
                     b.Navigation("Department");
 
                     b.Navigation("Ethnicity");
-
-                    b.Navigation("SubCounty");
                 });
 
             modelBuilder.Entity("HR.Data.Models.Employees.Hobby", b =>
@@ -870,11 +840,6 @@ namespace HR.Data.Migrations
             modelBuilder.Entity("HR.Data.Models.BANKING.BankDetail", b =>
                 {
                     b.Navigation("PaymentData");
-                });
-
-            modelBuilder.Entity("HR.Data.Models.County.County", b =>
-                {
-                    b.Navigation("SubCounties");
                 });
 
             modelBuilder.Entity("HR.Data.Models.Departments.Department", b =>

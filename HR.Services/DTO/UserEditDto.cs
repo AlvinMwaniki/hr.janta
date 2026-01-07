@@ -14,13 +14,12 @@ public class UserEditDto
 	[Required]
 	public string Username { get; set; } = default!;
 
-	// ⭐ FIX: ADD THIS MISSING PROPERTY ⭐
 	[Required(ErrorMessage = "Role is required.")]
 	public string RoleName { get; set; } = default!;
 
 
 
-	// Optional: Only include if the employee data is part of the UserEdit scope
+	// hii ni Optional: Only include if the employee data is part of the UserEdit scope
 	public Guid? LinkedEmployeeId { get; set; }
 }
 

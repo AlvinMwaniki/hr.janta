@@ -30,43 +30,62 @@ else
   <div class="row g-3">
     <!-- Total Employees Card -->
         <div class="col-md-3">
-          <div class="card shadow-sm text-white bg-primary">
-            <div class="card-body">
-              <h5 class="card-title"><i class="fas fa-users me-2"></i> Total Employees</h5>
-              <h3>@totals.Employees</h3>
+          <div class="card shadow-sm text-white" style="background: linear-gradient(135deg, #0EA5E9 0%, #0284c7 100%); border: none; border-radius: 20px; position: relative; overflow: hidden; min-height: 140px;">
+            <div class="card-body" style="position: relative; z-index: 2;">
+              <h6 style="font-weight: 500; opacity: 0.9; margin-bottom: 8px;">Total Employees</h6>
+              <h2 style="font-weight: 800; font-size: 2.2rem;">@totals.Employees</h2>
+            </div>
+            <div style="position: absolute; bottom: 0; right: 0; width: 60%; opacity: 0.4;">
+              <svg viewBox="0 0 100 40" preserveAspectRatio="none" style="width: 100%; height: 60px;">
+                <path d="M0,30 Q15,5 30,20 T60,10 T100,25" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
+              </svg>
             </div>
           </div>
         </div>
     <!-- Total Departments Card -->
-    <div class="col-md-3">
-      <div class="card shadow-sm text-white bg-success">
-        <div class="card-body">
-        <h5 class="card-title"><i class="fas fa-building me-2"></i> Total Departments</h5>
-          <h3>@totals.Departments</h3>
+        <div class="col-md-3">
+          <div class="card shadow-sm text-white" style="background: rgba(14, 165, 233, 0.85); border: none; border-radius: 20px; position: relative; overflow: hidden; min-height: 140px; backdrop-filter: blur(10px);">
+            <div class="card-body" style="position: relative; z-index: 2;">
+              <h6 style="font-weight: 500; opacity: 0.9; margin-bottom: 8px;">Total Departments</h6>
+              <h2 style="font-weight: 800; font-size: 2.2rem;">@totals.Departments</h2>
+              <p style="font-size: 0.75rem; margin-top: 5px; opacity: 0.8;">Pending Updates</p>
+            </div>
+            <div style="position: absolute; bottom: 10px; right: 15px; opacity: 0.3;">
+              <i class="fas fa-building fa-3x"></i>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
     <!-- Leaves Card -->
-    <div class="col-md-3">
-      <div class="card shadow-sm text-white bg-warning">
-        <div class="card-body">
-          <h5 class="card-title"><i class="fas fa-calendar-day me-2"></i> Leaves</h5>
-          <h3>@totals.Leaves</h3>
+        <div class="col-md-3">
+          <div class="card shadow-sm text-white" style="background: rgba(14, 165, 233, 0.85); border: none; border-radius: 20px; position: relative; overflow: hidden; min-height: 140px; backdrop-filter: blur(10px);">
+            <div class="card-body" style="position: relative; z-index: 2;">
+              <h6 style="font-weight: 500; opacity: 0.9; margin-bottom: 8px;">Leave Requests</h6>
+              <h2 style="font-weight: 800; font-size: 2.2rem;">@totals.Leaves</h2>
+              <p style="font-size: 0.75rem; margin-top: 5px; opacity: 0.8;">4 Pending</p>
+            </div>
+            <div style="position: absolute; bottom: 0; right: 0; width: 60%; opacity: 0.4;">
+              <svg viewBox="0 0 100 40" preserveAspectRatio="none" style="width: 100%; height: 50px;">
+                <path d="M0,35 Q20,35 40,15 T80,25 T100,5" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
     <!-- Advances Card -->
-    <div class="col-md-3">
-      <div class="card shadow-sm text-white bg-danger">
-        <div class="card-body">
-          <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i> Advances</h5>
-          <h3>@totals.Advances</h3>
+        <div class="col-md-3">
+          <div class="card shadow-sm text-white" style="background: linear-gradient(135deg, #0EA5E9 0%, #0284c7 100%); border: none; border-radius: 20px; position: relative; overflow: hidden; min-height: 140px;">
+            <div class="card-body" style="position: relative; z-index: 2;">
+              <h6 style="font-weight: 500; opacity: 0.9; margin-bottom: 8px;">Advance Payments</h6>
+              <h2 style="font-weight: 800; font-size: 2.2rem;">@totals.Advances</h2>
+              <p style="font-size: 0.75rem; margin-top: 5px; opacity: 0.8;">Outstanding</p>
+            </div>
+            <div style="position: absolute; bottom: 10px; right: 15px; opacity: 0.3;">
+              <i class="fas fa-money-bill-wave fa-3x"></i>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 <!-- Charts -->
       <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
         <h4 class="mb-0">@(showAnalyticsPage ? "Detailed Analytics" : "Quick Overview")</h4>
@@ -86,17 +105,17 @@ else
         @if (!showAnalyticsPage)
         {
           <div class="col-md-6">
-            <div class="card shadow-sm h-100">
+            <div class="card h-100" style="background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 10px 30px var(--card-shadow);">
               <div class="card-body">
-                <h5 class="card-title">Leaves Overview</h5>
+                <h5 class="card-title" style="font-weight: 700; color: #1e293b;">Leaves Overview</h5>                
                 <LeaveChartCard LeaveData="@totals.LeaveChartData" />
               </div>
             </div>
           </div>
           <div class="col-md-6">
-            <div class="card shadow-sm h-100">
+            <div class="card h-100" style="background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 10px 30px var(--card-shadow);">
               <div class="card-body">
-                <h5 class="card-title">Advance Overview</h5>
+                <h5 class="card-title" style="font-weight: 700; color: #1e293b;">Advance Overview</h5>                
                 <AdvanceChartCard AdvanceData="@totals.AdvanceChartData" />
               </div>
             </div>
@@ -271,26 +290,7 @@ else
     // totals.PendingTasks = await DashboardService.GetMyPendingTasksAsync();
   }
 
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    if (firstRender && totals is not null)
-    {
-      try
-      {
-        await JS.InvokeVoidAsync(
-      "renderAdvanceChart",
-      new object[] {
-        totals.AdvanceChartData.Approved, // ⭐ Access the nested property ⭐
-        totals.AdvanceChartData.PendingOrRejected // ⭐ Access the nested property ⭐
-      }
-  );
-      }
-      catch (Exception ex)
-      {
-        Console.WriteLine($"JS Error rendering chart: {ex.Message}");
-      }
-    }
-  }
+  
 
   private async Task LoadDashboardSafeAsync()
   {
@@ -335,14 +335,14 @@ else
     }
   }
 
-  @code {
+ 
     private bool showAnalyticsPage = false;
 
     private void TogglePage()
     {
         showAnalyticsPage = !showAnalyticsPage;
     }
-}
+
 
   // Helper to determine if the Employee Dashboard View should be visible
   private bool ShouldShowEmployeeView(System.Security.Claims.ClaimsPrincipal user)

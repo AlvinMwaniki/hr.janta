@@ -61,9 +61,13 @@
     <div class="row mb-3">
       <div class="col-md-4">
         <label class="form-label">KRA PIN</label>
-        <InputText @bind-Value="pageModel.KRA_PIN" class="form-control" />
-        <ValidationMessage For="@(() => pageModel.KRA_PIN)" />
+        <InputText @bind-Value="pageModel.KRA_PIN"
+                   class="form-control text-uppercase"
+                   maxlength="11"
+                   placeholder="A000000000X" />
 
+        @* This will display the prompt if they don't start with A or hit 11 chars *@
+        <ValidationMessage For="@(() => pageModel.KRA_PIN)" />
       </div>
       <div class="col-md-4">
         <label class="form-label">NSSF Number</label>
@@ -121,6 +125,12 @@
 
   void SaveAndNextStep()
   {
+    if (editContext != null && !editContext.Validate())
+    {
+      // If validation fails, stop here.
+      // Blazor will automatically show the red error messages.
+      return;
+    }
     // Map the combined model data back to the two service models
     var bankDetail = new BankDetail
     {

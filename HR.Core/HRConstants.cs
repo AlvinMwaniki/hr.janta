@@ -1,4 +1,4 @@
-﻿// HR.Core/HRConstants.cs (or similar utility folder)
+﻿// HR.Core/HRConstants.cs 
 
 namespace HR.Core
 {

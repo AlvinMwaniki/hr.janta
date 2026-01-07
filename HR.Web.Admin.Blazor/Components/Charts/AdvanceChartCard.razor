@@ -1,5 +1,4 @@
 ﻿@* /Components/Charts/AdvanceChartCard.razor *@
-
 @using HR.Services.DTO
 @inject IJSRuntime JS
 @rendermode InteractiveServer
@@ -38,12 +37,12 @@ else
       try
       {
         // This call only passes the two required data points
+        await Task.Delay(50);
         await JS.InvokeVoidAsync(
             "renderAdvanceChart",
-            new object[] {
                         AdvanceData.Approved,
                         AdvanceData.PendingOrRejected
-            }
+            
         );
       }
       catch (Exception ex)

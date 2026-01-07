@@ -1,5 +1,5 @@
 ﻿@* /Components/Charts/LeaveChartCard.razor *@
-
+@rendermode InteractiveServer
 @using HR.Services.DTO
 @inject IJSRuntime JS
 
@@ -30,18 +30,15 @@ else
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
-    if (firstRender && LeaveData is not null && LeaveData.HasData)
+    if (LeaveData is not null)
     {
       try
       {
-        await JS.InvokeVoidAsync(
-            "renderLeaveStatusChart",
-            new object[] {
-                        LeaveData.LeavesApproved,
-                        LeaveData.LeavesPending,
-                        LeaveData.LeavesRejected
-            }
-        );
+        await Task.Delay(50);
+        await JS.InvokeVoidAsync("renderLeaveStatusChart",
+            LeaveData.LeavesApproved,
+            LeaveData.LeavesPending,
+            LeaveData.LeavesRejected);
       }
       catch (Exception ex)
       {

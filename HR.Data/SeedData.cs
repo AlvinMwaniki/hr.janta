@@ -7,10 +7,10 @@ public static class SeedData
 	{
 		try
 		{
-			// ❌ DO NOT MIGRATE ON STARTUP — causes fatal crash
+			// ❌ DO NOT MIGRATE ON STARTUP — ita cause fatal crash
 			// context.Database.Migrate();
 
-			// ✔ Just ensure DB exists
+			//   ensures DB exists
 			context.Database.EnsureCreated();
 		}
 		catch (Exception ex)

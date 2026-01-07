@@ -1,6 +1,7 @@
 ﻿// HR.Web.Admin.Services/EmployeeTempService.cs
-using HR.Data.Models.Employees;
 using HR.Data.Models.BANKING;
+using HR.Data.Models.Employees;
+using HR.Data.Models.County;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,8 +17,7 @@ namespace HR.Services.Services
 			Reset();
 		}
 
-		/// <summary>
-		/// Create a fresh temp employee with all required collections / objects initialized.
+		
 		/// This mirrors the fields used across Create -> Additional -> WorkHistory -> NHS -> BankPayment -> Confirm.
 		/// </summary>
 		public void Reset()
@@ -33,17 +33,22 @@ namespace HR.Services.Services
 				LastName = string.Empty,
 				Email = string.Empty,
 				Phone = string.Empty,
-				Address = string.Empty,
+				CountyId = default,      // Start with no selection
+				SubCountyId = default,   // Start with no selection
+				Estate = string.Empty,
+				POBox = string.Empty,
 				NationalID = string.Empty,
 				Gender = string.Empty,
 				JobTitle = string.Empty,
-				Status = string.Empty,
+				Status = "Active",
 				Disability = string.Empty,
-				Ethnicity = string.Empty,
 
 				// Dates - keep nullable if model is nullable; otherwise default to Today or MinValue
 				DOB = DateTime.Today,
 				HireDate = DateTime.Today,
+
+				//Ethnicity relation (if you store Id as Guid/int adapt accordingly)
+				EthnicityId = default,
 
 				// Department relation (if you store Id as Guid/int adapt accordingly)
 				DepartmentId = default,

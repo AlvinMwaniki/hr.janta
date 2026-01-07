@@ -9,14 +9,63 @@
 @using HR.Data.Models.Departments
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.Forms
+@using HR.Data.Models.Country;
+@using HR.Data.Models.County;
+
+@inject IJSRuntime JS
 
 
 
 <h3>Create Employee</h3>
 
 <EditForm Model="@TempService.TempEmployee" OnValidSubmit="Save" OnInvalidSubmit="OnInvalidSubmit" FormName="Step1">
-  <DataAnnotationsValidator /> 
+  <DataAnnotationsValidator />
+  <!--IMAGE UPLOAD-->
+  <div class="form-card text-center mb-4 shadow-sm p-3">
+    <h3 class="form-section-title" style="color: #2596be; font-weight: bold;">Employee Photo</h3>
+  <div class="d-flex flex-column align-items-center">
+    <div style="position: relative; width: 160px; height: 160px; margin-bottom: 20px;">
 
+      <div style="width: 100%; height: 100%; border-radius: 50%; border: 4px solid #2596be; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8f9fa; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        @if (TempService.TempEmployee.Photo != null)
+        {
+          <img src="@TempService.TempEmployee.PhotoBase64"
+               style="width: 100%; height: 100%; object-fit: cover;" />
+        }
+        else
+        {
+          <i class="fas fa-camera fa-3x text-muted"></i>
+        }
+      </div>
+      @if (TempService.TempEmployee.Photo != null)
+      {
+        <button type="button" @onclick="RemoveImage"
+                class="btn btn-secondary shadow-sm"
+                style="position: absolute; top: 0; right: 0; border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 10;"
+                title="Remove Image">
+          <i class="fas fa-times" style="font-size: 11px;"></i>
+        </button>
+      }
+    </div>
+
+      <div class="col-md-8">
+        @* We use @ref to clear the input manually from C# *@
+        <input type="file" @ref="fileInput" id="profileInput" accept="image/*"
+               class="form-control" required
+               onchange="window.processProfileImage(this)" />
+
+      <div class="mt-2 d-flex flex-column align-items-center">
+        <small class="text-muted d-block">
+            <i class="fas fa-magic"></i> AI automatically detects and centers the face.
+          </small>
+          @if (TempService.TempEmployee.Photo == null)
+          {
+            <span class="badge bg-warning text-dark">Required</span>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!--Basic Info-->
 
@@ -52,24 +101,107 @@
     <!-- Row 3: Email, Phone, Address -->
     <div class="row form-row mb-2">
       <div class="col-md-4">
-        <label class="form-label">Email</label>
-        <InputText @bind-Value="TempService.TempEmployee.Email" class="form-control" />
+        <label class="form-label">
+          Email
+          @if (isCheckingEmail)
+          {
+            <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+          }
+        </label>
+        <div class="input-group">
+          <span class="input-group-text @GetEmailStatusClass()">
+            <i class="@GetEmailIconClass()"></i>
+          </span>
+        <InputText @bind-Value="TempService.TempEmployee.Email" @onblur="CheckEmailUniqueness" class="form-control" placeholder="yourmail@gmail.com"/>
+        </div>
+        @if (!string.IsNullOrEmpty(emailErrorMessage))
+        {
+          <div class="text-danger small mt-1 animated fadeIn">
+            <i class="fas fa-exclamation-circle"></i> @emailErrorMessage
+          </div>
+        }
         <ValidationMessage For="@(() => TempService.TempEmployee.Email)" />
       </div>
-      <div class="col-md-4">
-        <label class="form-label">Phone</label>
-        <InputText @bind-Value="TempService.TempEmployee.Phone" class="form-control" />
-        <ValidationMessage For="@(() => TempService.TempEmployee.Phone)" />
 
+      <div class="col-md-4">
+        <label class="form-label fw-bold">Phone Number</label>
+        <div class="input-group mb-3">
+          <button class="btn btn-light border-secondary-subtle dropdown-toggle d-flex align-items-center"
+          type="button" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 90px;">
+            @if (selectedCountry != null)
+            {
+              <img src="@selectedCountry.FlagUrl" class="me-2" style="width: 20px; height: 14px; border: 1px solid #dee2e6;" />
+              <span class="fw-bold">@selectedCountry.IsoCode</span>
+            }
+          </button>
+
+          <ul class="dropdown-menu shadow" style="max-height: 300px; overflow-y: auto;">
+            @foreach (var c in countries.OrderBy(x => x.Name))
+            {
+              <li>
+                <button type="button" class="dropdown-item d-flex align-items-center" @onclick="() => SelectCountry(c)">
+                  <img src="@c.FlagUrl" class="me-2" style="width: 20px; border: 1px solid #eee;" />
+                  <span>@c.Name (@c.DialCode)</span>
+                </button>
+              </li>
+            }
+          </ul>
+
+          <InputText @bind-Value="TempService.TempEmployee.Phone"
+                     class="form-control"
+                     placeholder="712 345 678" 
+                     maxlength="10" />
+        </div>
+        <ValidationMessage For="@(() => TempService.TempEmployee.Phone)" class="text-danger small" />
       </div>
-      <div class="col-md-4">
-        <label class="form-label">Address</label>
-        <InputText @bind-Value="TempService.TempEmployee.Address" class="form-control" />
-        <ValidationMessage For="@(() => TempService.TempEmployee.Address)" />
 
+      <div class="col-md-4">
+        <label class="form-label fw-bold">County of Residence</label>
+        <select class="form-select"
+                style="color: @(TempService.TempEmployee.CountyId == null ? "grey" : "black");"
+                value="@TempService.TempEmployee.CountyId"
+                @onchange="HandleCountyChange" >
+          <option value="" disabled selected hidden>-- Select County --</option>         
+          @if (countiesList != null)
+          {
+            @foreach (var c in countiesList)
+            {
+              <option value="@c.Id">@c.Name</option>
+            }
+          }
+        </select>
+        <ValidationMessage For="@(() => TempService.TempEmployee.CountyId)" />
       </div>
     </div>
+    <!-- Row 3.5: Subcounty, Estate, pobox -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label fw-bold">Sub-County / Area</label>
+        <select @bind="TempService.TempEmployee.SubCountyId" class="form-select"
+                style="color: @(TempService.TempEmployee.SubCountyId == null ? "grey" : "black");">
+          
+          <option value="" disabled selected hidden>-- Select Sub-County --</option>
+          @if (filteredSubCounties != null)
+          {
+            @foreach (var sub in filteredSubCounties)
+            {
+              <option value="@sub.Id">@sub.Name</option>
+            }
+          }
+        </select>
+        <ValidationMessage For="@(() => TempService.TempEmployee.SubCountyId)" />
+      </div>
 
+      <div class="col-md-4">
+        <label class="form-label fw-bold">Estate / Street</label>
+        <InputText @bind-Value="TempService.TempEmployee.Estate" class="form-control" />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label fw-bold">P.O. Box</label>
+        <InputText @bind-Value="TempService.TempEmployee.POBox" class="form-control" />
+      </div>
+    </div>
     <!-- Row 4: DOB, National ID, Gender -->
     <div class="row form-row mb-2">
       <div class="col-md-4">
@@ -80,7 +212,8 @@
       </div>
       <div class="col-md-4">
         <label class="form-label">National ID</label>
-        <InputText @bind-Value="TempService.TempEmployee.NationalID" class="form-control" />
+        <InputText @bind-Value="TempService.TempEmployee.NationalID" class="form-control" maxlength="10"
+                   placeholder="Enter 10 digits" />
         <ValidationMessage For="@(() => TempService.TempEmployee.NationalID)" />
 
       </div>
@@ -117,28 +250,18 @@
       </div>
       <div class="col-md-4">
         <label class="form-label">Ethnicity</label>
-        <InputSelect @bind-Value="TempService.TempEmployee.Ethnicity" class="form-control">
-          <option value="">Select</option>
-          <option value="Kikuyu">Kikuyu</option>
-          <option value="Luo">Luo</option>
-          <option value="Luhya">Luhya</option>
-          <option value="Kalenjin">Kalenjin</option>
-          <option value="Kamba">Kamba</option>
-          <option value="Maasai">Maasai</option>
-          <option value="Meru">Meru</option>
-          <option value="Embu">Embu</option>
-          <option value="Turkana">Turkana</option>
-          <option value="Somali">Somali</option>
-          <option value="Mijikenda">Mijikenda</option>
-          <option value="Taita">Taita</option>
-          <option value="Kisii">Kisii</option>
-          <option value="Giriama">Giriama</option>
-          <option value="Borana">Borana</option>
-          <option value="Pokot">Pokot</option>
-          <option value="Samburu">Samburu</option>
-          <option value="Others">Others</option>
+        <InputSelect @bind-Value="TempService.TempEmployee.EthnicityId" class="form-control">
+          <option value="">Select Ethnicity</option>
+          @if (ethnicities != null)
+          {
+            @foreach (var eth in ethnicities)
+            {
+              // We use eth.Id for the value and eth.Name for the display text
+              <option value="@eth.Id">@eth.Name</option>
+            }
+          }
         </InputSelect>
-
+        <ValidationMessage For="@(() => TempService.TempEmployee.EthnicityId)" />
       </div>
     </div>
 
@@ -153,7 +276,7 @@
       <div class="col-md-4">
         <label class="form-label">Status</label>
         <InputSelect @bind-Value="TempService.TempEmployee.Status" class="form-control">
-          <option value="Active">Active</option>
+          <option value="Active">Active </option>
           <option value="Inactive">Inactive</option>
         </InputSelect>
         <ValidationMessage For="@(() => TempService.TempEmployee.Status)" />
@@ -179,10 +302,74 @@
 
 
 @code {
-  //private Employee employee = new Employee();
- // private EditContext? editContext;
-  List<Department> departments = new();
+  // For phone country code selection
+  List<Country> countries = new();
+  List<County> countiesList = new();
+  private List<SubCounty> filteredSubCounties = new();
+  private Country? selectedCountry;
+  private void SelectCountry(Country country)
+  {
+    selectedCountry = country;
+    TempService.TempEmployee.CountryId = country.Id;
+  }
+  // Handle county change event
+  private async Task HandleCountyChange(ChangeEventArgs e)
+  {
+    var selectedId = e.Value?.ToString();
 
+    if (Guid.TryParse(selectedId, out Guid countyId))
+    {
+      // 1. Manually update your TempService (since we aren't using @bind)
+      TempService.TempEmployee.CountyId = countyId;
+      TempService.TempEmployee.County = countiesList?.FirstOrDefault(c => c.Id == countyId);
+
+      // 2. Filter the subcounties for the UI
+      filteredSubCounties = await Db.SubCounties
+          .Where(s => s.CountyId == countyId)
+          .OrderBy(s => s.Name)
+          .ToListAsync();
+    }
+    else
+    {
+      TempService.TempEmployee.CountyId = null;
+      TempService.TempEmployee.County = null; // Clear the object
+      filteredSubCounties.Clear();
+    }
+
+    // 3. Clear the SubCountyId in TempEmployee so the user is forced to pick a new one
+    TempService.TempEmployee.SubCountyId = null;
+    TempService.TempEmployee.SubCounty = null; // Clear the object
+  }
+  // Update subcounties when county changes
+  private async Task OnCountyChanged(ChangeEventArgs e)
+  {
+    var value = e.Value?.ToString();
+
+    if (Guid.TryParse(value, out Guid selectedCountyId))
+    {
+      TempService.TempEmployee.CountyId = selectedCountyId;
+
+
+      // SMART FILTER: Only get SubCounties where CountyId matches
+      filteredSubCounties = await Db.SubCounties
+          .Where(s => s.CountyId == selectedCountyId)
+          .OrderBy(s => s.Name)
+          .ToListAsync();
+    }
+    else
+    {
+      filteredSubCounties.Clear();
+    }
+
+    // Reset SubCounty selection so they don't have an old one from a different county
+    TempService.TempEmployee.SubCountyId = null;
+  }
+
+
+  //private Employee employee = new Employee();
+  // private EditContext? editContext;
+  List<Department> departments = new();
+  List<Ethnicity> ethnicities = new();
   // We need this to manage component state during navigation
 
   protected override async Task OnInitializedAsync()
@@ -196,13 +383,49 @@
 
     // Load departments
     departments = await Db.Departments.ToListAsync();
+    // Load ethnicities
+    ethnicities = await Db.Ethnicities.ToListAsync();
+    // Load countries for phone codes
+    countries = await Db.Countries.OrderBy(c => c.Name).ToListAsync();
+    // Load the 47 counties
+    countiesList = await Db.Counties.OrderBy(c => c.Name).ToListAsync();
+    // SET DEFAULT TO KENYA if it's a new employee
+    var kenya = countries.FirstOrDefault(c => c.IsoCode == "KE");
+    if (kenya != null)
+    {
+      SelectCountry(kenya);
+    }
+
   }
 
-  private void Save()
+  private async Task Save()
   {
     // Since all inputs bind directly to TempService.TempEmployee,
     // The service already has the updated values.
+    //Na ongeza validation hapa ya email unique kabla ya ku navigate
+    // Re-run check just in case mtu aweke enye iko ndani form na asubmit
+    await CheckEmailUniqueness();
 
+    // SMART CLEANING LOGIC
+    if (selectedCountry != null && !string.IsNullOrWhiteSpace(TempService.TempEmployee.Phone))
+    {
+      // Format phone number to 
+      // Clean: Remove '0' and all non-numeric chars
+      var digitsOnly = new string(TempService.TempEmployee.Phone.Where(char.IsDigit).ToArray());
+      // STRICT CHECK: If it's not 9 or 10 digits, STOP HERE.
+      if (digitsOnly.Length < 9 || digitsOnly.Length > 10)
+      {
+        return; // The UI validation message will already be showing the error
+      }
+
+      if (digitsOnly.StartsWith("0")) digitsOnly = digitsOnly.Substring(1);
+
+      // Result: 254712345678
+      string dial = selectedCountry.DialCode.Replace("+", "");
+      TempService.TempEmployee.Phone = dial + digitsOnly;
+    }
+
+    if (!isEmailValid) return; // Stop if email is bad
     // Just navigate to the next step:
     Navigation.NavigateTo($"/employees/additional");
   }
@@ -213,6 +436,103 @@
     foreach (var m in ctx.GetValidationMessages())
       Console.WriteLine("Validation: " + m);
   }
+
+  // Handle image file selection=========IMAGE UPLOAD==================PICHA===========================
+  private DotNetObjectReference<Create>? _objRef;
+  private ElementReference fileInput; // For clearing the input
+  private async Task RemoveImage()
+  {
+    // 1. Clear the data in the service
+    TempService.TempEmployee.Photo = null;
+
+    // 2. Clear the actual HTML input so it doesn't show the old filename
+    await JS.InvokeVoidAsync("eval", "document.getElementById('profileInput').value = ''");
+
+    StateHasChanged();
+  }
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender)
+    {
+      // Create the reference to THIS component instance
+      _objRef = DotNetObjectReference.Create(this);
+
+      // Pass the reference to your JS file so it can "call back" to C#
+      // 'setImageHelper' is the function in your imageManager.js
+      await JS.InvokeVoidAsync("setImageHelper", _objRef);
+    }
+  }
+
+  [JSInvokable]
+  public void OnImageProcessed(string base64Data)
+  {
+    if (string.IsNullOrWhiteSpace(base64Data)) return;
+
+    // Split the "data:image/webp;base64," part
+    var parts = base64Data.Split(',');
+    if (parts.Length > 1)
+    {
+      TempService.TempEmployee.Photo = Convert.FromBase64String(parts[1]);
+      StateHasChanged();
+    }
+  }
+
+  public void Dispose()
+  {
+    // Important: Free up memory when the user leaves the page
+    _objRef?.Dispose();
+  }
+  //=================END IMAGE UPLOAD========================
+  //=================EMAIL UNIQUE CHECK========================
+  private bool isCheckingEmail = false;
+  private string? emailErrorMessage = null;
+  private bool isEmailValid = false;
+
+  private async Task CheckEmailUniqueness()
+  {
+    var email = TempService.TempEmployee.Email;
+    emailErrorMessage = null;
+    isEmailValid = false;
+
+    if (string.IsNullOrWhiteSpace(email)) return;
+
+    // 1. Basic Format Regex Check (Fast)
+    var emailRegex = new System.Text.RegularExpressions.Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+    if (!emailRegex.IsMatch(email))
+    {
+      emailErrorMessage = "Invalid email format.";
+      return;
+    }
+
+    // 2. Database Uniqueness Check
+    isCheckingEmail = true;
+    try
+    {
+      // Check if any employee (excluding the one being edited if applicable) has this email
+      var exists = await Db.Employees.AnyAsync(e => e.Email.ToLower() == email.ToLower());
+
+      if (exists)
+      {
+        emailErrorMessage = "This email is already assigned to an employee.";
+        isEmailValid = false;
+      }
+      else
+      {
+        isEmailValid = true;
+      }
+    }
+    finally
+    {
+      isCheckingEmail = false;
+    }
+  }
+
+  // Helpers for the UI Icons
+  private string GetEmailStatusClass() => isEmailValid ? "bg-success text-white" : (emailErrorMessage != null ? "bg-danger text-white" : "bg-light");
+  private string GetEmailIconClass() => isEmailValid ? "fas fa-check" : (emailErrorMessage != null ? "fas fa-times" : "fas fa-envelope");
+  //=================END EMAIL UNIQUE CHECK========================
 }
+
+
 
 

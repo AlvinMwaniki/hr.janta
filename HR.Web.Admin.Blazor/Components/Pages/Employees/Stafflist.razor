@@ -8,9 +8,10 @@
 
 <h3>Employees</h3>
 
-<table class="table">
+<table class="table align-middle">
   <thead>
     <tr>
+      <th>Photo</th>
       <th>Name</th>
       <th>Department</th>
       <th>Job Title</th>
@@ -21,10 +22,19 @@
     @foreach (var emp in employees)
     {
       <tr>
+        <td>
+          <img src="@emp.PhotoBase64"
+               class="rounded-circle border"
+               style="width: 45px; height: 45px; object-fit: cover;" />
+        </td>
         <td>@($"{emp.FirstName} {emp.LastName}")</td>
         <td>@emp.Department?.Name</td>
         <td>@emp.JobTitle</td>
-        <td>@emp.Status</td>
+        <td>
+          <span class="badge @(emp.Status == "Active" ? "bg-success" : "bg-secondary")">
+            @emp.Status
+          </span>
+        </td>
       </tr>
     }
   </tbody>

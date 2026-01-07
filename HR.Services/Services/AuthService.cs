@@ -131,7 +131,7 @@ public class AuthService : IAuthService
 			throw new InvalidOperationException($"Could not generate setup token for user {userId}.");
 		}
 
-		// 2. Construct the setup link (e.g., https://yourportal.com/set-password?token=XYZ)
+		// 2. Construct the setup link (e.g., https://hr.prox.com/set-password?token=XYZ)
 		// NavigationManager builds the correct absolute URL for the employee to click.
 		var setupUri = _navigationManager.ToAbsoluteUri($"/set-password?token={token}");
 

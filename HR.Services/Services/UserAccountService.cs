@@ -65,7 +65,7 @@ public class UserAccountService : IUserAccountService
 			Id = user.Id,
 			Username = user.Username,
 			Email = user.Email,
-			// We now know RoleName exists in UserEditDto
+			// I now know RoleName exists in UserEditDto
 			RoleName = user.Role?.Name ?? AppRoles.Employee
 		};
 	}
@@ -83,7 +83,7 @@ public class UserAccountService : IUserAccountService
 			throw new InvalidOperationException($"User with ID {dto.Id} could not be found for update.");
 		}
 
-		// ⭐ 1. CRITICAL CHECK: Look for email duplication before proceeding ⭐
+		// 1. CRITICAL CHECK: Look for email duplication before proceeding ⭐
 		// Check if any OTHER user (whose Id is NOT the current user's Id) 
 		// already has the new email address.
 		if (user.Email != dto.Email) // Only run the check if the email address has actually changed

@@ -8,7 +8,7 @@ namespace HR.Data.Models.Auth;
 public class UserPermission
 {
 	public Guid Id { get; set; }
-
+	[ForeignKey("User")]
 	public Guid UserId { get; set; } // FK to the User table
 	public string PermissionCode { get; set; } = default!; // Stores "Permissions.Leave.Submit"
 

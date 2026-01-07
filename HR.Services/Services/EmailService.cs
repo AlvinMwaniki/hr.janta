@@ -7,7 +7,7 @@ namespace HR.Services.Services
 		public Task SendSetupPasswordEmailAsync(string recipientEmail, string recipientName, string setupLink)
 		{
 			// --- MOCK IMPLEMENTATION ---
-			// In production, this is where you'd use a real client (SendGrid, SMTP, etc.)
+			//  (SendGrid, SMTP, etc.)
 
 			Console.WriteLine("=============================================");
 			Console.WriteLine($"EMAIL SIMULATION: Employee Setup Initiated");

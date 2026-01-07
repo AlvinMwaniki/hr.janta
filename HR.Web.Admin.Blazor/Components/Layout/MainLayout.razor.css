@@ -10,7 +10,7 @@ main {
 
 .sidebar {
   /* Use the variable with your blue gradient as the default fallback */
-  background-image: var(--sidebar-bg, linear-gradient(180deg, rgb(0, 2, 105) 50%, #093AAB 100%));
+  background-image: var(--sidebar-bg, linear-gradient(180deg, rgb(34,34, 64) 50%, #282842 100%));
 }
 
 .top-row {

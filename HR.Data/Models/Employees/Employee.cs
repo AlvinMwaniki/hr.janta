@@ -2,6 +2,7 @@
 using HR.Data.Models.BANKING;
 using HR.Data.Models.Departments;
 using HR.Data.Models.Leaves;
+using HR.Data.Models.County;
 
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,24 @@ namespace HR.Data.Models.Employees
 {
 	public class Employee
 	{
+		// CHAPI
+		public byte[]? Photo { get; set; }
+
+		// Helper to display the image in the UI
+		public string PhotoBase64
+		{
+			get
+			{
+				if (Photo != null && Photo.Length > 0)
+				{
+					return $"data:image/png;base64,{Convert.ToBase64String(Photo)}";
+				}
+				// Fallback to the physical file in wwwroot/
+				return "lib\\Images\\user.png";
+			}
+		}
+
+
 		public Guid Id { get; set; }
 		[Required(ErrorMessage = "Employee Code is required")]
 		public string EmployeeCode { get; set; } = default!;
@@ -25,18 +44,40 @@ namespace HR.Data.Models.Employees
 
 		[Required(ErrorMessage = "Email is required")]
 		[EmailAddress(ErrorMessage = "Invalid email address")]
+		[RegularExpression(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", ErrorMessage = "Please enter a valid email address")]
 		public string Email { get; set; } = default!;
 
+		// Inside Employee.cs
+
+		[Required(ErrorMessage = "Country code is required")]
+		public Guid? CountryId { get; set; }
+		// Navigation property (Optional but good for reporting)
+		public HR.Data.Models.Country.Country? Country { get; set; }
+
+		public Guid? CountyId { get; set; }
+		public HR.Data.Models.County.County? County { get; set; }
+		// Location Row 2
+		// Link to SubCounty
+		public Guid? SubCountyId { get; set; }
+		public SubCounty? SubCounty { get; set; }
+
+		public string? Estate { get; set; }      // e.g., Clay City, Nyayo Estate, Milimani
+		public string? POBox { get; set; }       // e.g., 00100-54321
+
 		[Required(ErrorMessage = "Phone number is required")]
+		[StringLength(10, MinimumLength = 9, ErrorMessage = "Phone number is invalid. Should be 9 or 10 digits.")]
+		[RegularExpression(@"^[0-9]*$", ErrorMessage = "Only numbers are allowed.")] 
 		public string Phone { get; set; } = default!;
 
-		[Required(ErrorMessage = "Address is required")]
-		public string Address { get; set; } = default!;
+		/*[Required(ErrorMessage = "Address is required")]
+		public string Address { get; set; } = default!;*/
 
 		[Required(ErrorMessage = "Date of Birth is required")]
 		public DateTime DOB { get; set; }
 
 		[Required(ErrorMessage = "National ID is required")]
+		[StringLength(10, MinimumLength = 10, ErrorMessage = "National ID must be exactly 10 digits.")]
+		[RegularExpression(@"^\d{10}$", ErrorMessage = "National ID must contain only numbers.")]
 		public string? NationalID { get; set; }
 
 		[Required(ErrorMessage = "Gender is required")]
@@ -49,7 +90,8 @@ namespace HR.Data.Models.Employees
 		public string? Disability { get; set; }
 
 		// Ethnicity is optional
-		public string? Ethnicity { get; set; }
+		public Guid? EthnicityId { get; set; }
+		public Ethnicity? Ethnicity { get; set; }
 
 		// Department FK
 		[Required(ErrorMessage = "Department is required")]

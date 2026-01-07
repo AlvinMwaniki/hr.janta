@@ -1,6 +1,6 @@
 ﻿// HR.Services/Services/ClaimService.cs 
 
-using HR.Data.Models.Auth; // Your Role model
+using HR.Data.Models.Auth; //  Role model
 using HR.Services.Constants;
 using HR.Data;
 using System.Security.Claims;
@@ -67,7 +67,7 @@ public class ClaimService
 
 
 
-		// FUTURE: If you implement custom delegation, query the DB here for extra permissions and add them.
+		// FUTURE: If I implement custom delegation, query the DB here for extra permissions and add them.
 
 		var identity = new ClaimsIdentity(claims, "CustomAuth");
 		return new ClaimsPrincipal(identity);

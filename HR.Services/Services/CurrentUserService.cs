@@ -57,7 +57,6 @@ namespace HR.Services.Services
 				{
 					FullName = e.FirstName + " " + e.LastName,
 
-					// This line is correct
 					JobTitle = e.JobTitle ?? "Not Assigned",
 
 					DepartmentName = e.Department.Name

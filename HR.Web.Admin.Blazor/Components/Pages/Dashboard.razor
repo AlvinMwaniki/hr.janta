@@ -105,17 +105,17 @@ else
         @if (!showAnalyticsPage)
         {
           <div class="col-md-6">
-            <div class="card h-100" style="background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 10px 30px var(--card-shadow);">
+            <div class="card h-90" style="background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 10px 40px var(--card-shadow);">
               <div class="card-body">
-                <h5 class="card-title" style="font-weight: 700; color: #1e293b;">Leaves Overview</h5>                
+                <h5 class="card-title" style="font-weight: 500; color: var(--text-main);">Leaves Overview</h5>
                 <LeaveChartCard LeaveData="@totals.LeaveChartData" />
               </div>
             </div>
           </div>
           <div class="col-md-6">
-            <div class="card h-100" style="background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 10px 30px var(--card-shadow);">
+            <div class="card h-90" style="background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 10px 40px var(--card-shadow);">
               <div class="card-body">
-                <h5 class="card-title" style="font-weight: 700; color: #1e293b;">Advance Overview</h5>                
+                <h5 class="card-title" style="font-weight: 500; color: var(--text-main);">Advance Overview</h5>
                 <AdvanceChartCard AdvanceData="@totals.AdvanceChartData" />
               </div>
             </div>

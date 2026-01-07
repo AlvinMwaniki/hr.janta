@@ -498,8 +498,8 @@ body.dark .notification-btn {
   --bg-header: #1a1a1a; /* Dark Header */
   --brand-title: #2596be; /* Strong Blue for Light Mode */
   --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --card-shadow: rgba(0, 0, 0, 0.08);
+  --glass-border: rgba(255, 255, 255, 3.4);
+  --card-shadow: rgba(14, 165, 233, 0.18);
 }
 
 /* DARK MODE (Forced & System-Dark) */
@@ -516,6 +516,8 @@ body.dark, [data-bs-theme="dark"] {
   --glass-border: rgba(255, 255, 255, 0.2);
   --card-shadow: rgba(0, 0, 0, 0.6);
 }
+
+
 
 /* Global Application */
 

@@ -151,10 +151,10 @@
   private string subCountyName = "";
   private string ethnicityName = "";
   private string departmentName = "";
-  private bool isLoading = true;
 
   protected override async Task OnInitializedAsync()
   {
+
 
     // Check if the service data is empty/null, if so, redirect back to start
     if (TempService.TempEmployee.Id == Guid.Empty)
@@ -175,7 +175,6 @@
     }
     finally
     {
-      isLoading = false;
     }
   }
 

@@ -269,7 +269,7 @@ body {
     width: 100px; /* Width of the dotted area */
     height: 100px; /* Height of the dotted area */
     /* This creates the polka dot pattern using your color #131494 */
-    background-image: radial-gradient(#131494 20%, transparent 20%);
+    background-image: radial-gradient(#222240 20%, transparent 20%);
     background-size: 12px 12px; /* Controls how close the dots are */
     z-index: 0; /* Sits behind your text but above the background gradient */
     opacity: 0.4; /* Makes the dots subtle against the gradient */

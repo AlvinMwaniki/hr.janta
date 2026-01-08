@@ -9,15 +9,15 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using HR.Data.Models.Country;
 @inject HRDbContext Db
+@inject IJSRuntime JSRuntime
 
-<h3>Step 3: Next of Kin</h3>
+<h3>Step 4: Next of Kin</h3>
 
 <EditForm EditContext="@editContext" OnValidSubmit="AddOrUpdateNextOfKin" FormName="Step4">
   <DataAnnotationsValidator />
   <Microsoft.AspNetCore.Components.Forms.ValidationSummary />
 
   <div class="form-card">
-    <h4 class="mb-4">Next of Kin Details</h4>
 
     <!-- Row 1: Full Name, Relationship -->
     <div class="row mb-2">
@@ -81,23 +81,33 @@
       </div>
     </div>
 
-    <button type="submit" class="btn btn-primary mb-3">
-      @((editingNokIndex >= 0) ? "Update" : "Add")
+    <div class="mt-3">
+      <button type="submit" class="btn btn-primary px-4 shadow-sm">
+        <i class="fas @(editingNokIndex >= 0 ? "fa-save" : "fa-plus") me-2"></i>
+        @((editingNokIndex >= 0) ? "Update" : "Add")
     </button>
+      @* Show BACK button here ONLY if no education has been added yet *@
+      @if (!TempService.TempEmployee.NextOfKin.Any())
+      {
+        <button type="button" class="btn btn-outline-secondary ms-2" @onclick="GoBack">Back</button>
+      }
+    </div>
   </div>
 </EditForm>
 
 
 @if (TempService.TempEmployee.NextOfKin.Any())
 {
-  <table class="table mt-3">
-    <thead>
+  <div class="card shadow-sm border-0 mt-5 overflow-hidden" style="border-radius: 12px;">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead style="background-color: #222240; color: white;">
       <tr>
-        <th>Full Name</th>
-        <th>Relationship</th>
-        <th>Phone</th>
-        <th>Address</th> 
-        <th>Actions</th>
+            <th class="ps-4 py-3" style="background-color: #222240; color: white;">Full Name</th>
+            <th class="py-3" style="background-color: #222240; color: white;">Relationship</th>
+            <th class="py-3" style="background-color: #222240; color: white;">Phone</th>
+            <th class="py-3" style="background-color: #222240; color: white;">Address</th>
+            <th class="py-3" style="background-color: #222240; color: white;">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -108,7 +118,7 @@
           <td>@nok.FullName</td>
           <td>@nok.Relationship</td>
           <td>@nok.Phone</td>
-          <td>@nok.Address</td> {{-- Updated table cell --}}
+          <td>@nok.Address</td>
           <td>
             <button class="btn btn-sm btn-warning me-1" @onclick="() => EditNok(nok)">Edit</button>
             <button class="btn btn-sm btn-danger" @onclick="() => DeleteNok(nok)">Delete</button>
@@ -117,10 +127,16 @@
       }
     </tbody>
   </table>
+  </div>
+  </div>
 
-  <div class="mt-2">
-    <button class="btn btn-secondary me-2" @onclick="GoBack">Back</button>
-    <button class="btn btn-success" @onclick="NextStep">Next</button>
+  <div class="d-flex justify-content-between mt-4 pb-5">
+    <button class="btn btn-secondary me-2" @onclick="GoBack">
+      <i class="fas fa-arrow-left me-2"></i> Back
+    </button>
+    <button class="btn btn-success" @onclick="NextStep">
+      Next <i class="fas fa-arrow-right ms-2"></i>
+    </button>
   </div>
 }
 
@@ -143,7 +159,7 @@
     selectedCountry = countries.FirstOrDefault(c => c.DialCode == "+254" || c.IsoCode == "KE");
   }
 
-  private void AddOrUpdateNextOfKin(EditContext context)
+  private async Task AddOrUpdateNextOfKin(EditContext context)
   {
 
     // smart for phone
@@ -180,6 +196,8 @@
     editContext = new EditContext(nokModel)!;
     selectedCountry = countries.FirstOrDefault(x => x.IsoCode == "KE");
     StateHasChanged(); // Update UI
+    await Task.Delay(100);
+    await JSRuntime.InvokeVoidAsync("scrollToBottom");
 
 
   }

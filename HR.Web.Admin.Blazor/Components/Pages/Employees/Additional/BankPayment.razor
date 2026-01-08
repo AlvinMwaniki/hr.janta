@@ -10,7 +10,6 @@
 @rendermode @(new Microsoft.AspNetCore.Components.Web.InteractiveServerRenderMode(prerender: true))
 
 
-<h3>Bank Details & Payment Information</h3>
 
 <p>
    Step 5: Bank & Payment Data 💵
@@ -60,24 +59,67 @@
     <!-- ONE ROW WITH 3 COLUMNS -->
     <div class="row mb-3">
       <div class="col-md-4">
-        <label class="form-label">KRA PIN</label>
-        <InputText @bind-Value="pageModel.KRA_PIN"
-                   class="form-control text-uppercase"
-                   maxlength="11"
-                   placeholder="A000000000X" />
-
-        @* This will display the prompt if they don't start with A or hit 11 chars *@
+        <label class="form-label">
+          KRA PIN
+          @if (isCheckingKra)
+          {
+            <span class="spinner-border spinner-border-sm text-primary"></span>
+          }
+        </label>
+        <div class="input-group">
+          <span class="input-group-text @GetKraStatusClass()">
+            <img src="/lib/Images/Kaisari/download (4)-Photoroom.png" style="height: 22px; margin-right: 5px;" />
+            <i class="@GetKraIconClass()" style="font-size: 0.8rem;"></i>
+          </span>
+          <InputText @bind-Value="pageModel.KRA_PIN"
+                     @onblur="ValidateKraPin"
+                     class="form-control text-uppercase"
+                     maxlength="11"
+                     placeholder="A000000000X" />
+        </div>
+        @if (!string.IsNullOrEmpty(kraErrorMessage))
+        {
+          <div class="text-danger small mt-1 animated fadeIn">
+            <i class="fas fa-exclamation-circle"></i> @kraErrorMessage
+          </div>
+        }
         <ValidationMessage For="@(() => pageModel.KRA_PIN)" />
       </div>
       <div class="col-md-4">
         <label class="form-label">NSSF Number</label>
-        <InputText @bind-Value="pageModel.NSSF_Number" class="form-control" />
+        <div class="input-group">
+          <span class="input-group-text @GetNssfStatusClass()">
+            <img src="/lib/Images/Kaisari/CLOSED - 2 - Edited-Photoroom.png" style="height: 22px; margin-right: 5px;" />
+            <i class="@GetNssfIconClass()" style="font-size: 0.8rem;"> </i>
+          </span>
+          <InputText @bind-Value="pageModel.NSSF_Number"
+                     @onblur="ValidateNssf"
+                     class="form-control"
+                     maxlength="10"
+                     placeholder="9-10 digits" />
+        </div>
+        @if (!string.IsNullOrEmpty(nssfErrorMessage))
+        {
+          <div class="text-danger small mt-1 animated fadeIn">
+            <i class="fas fa-exclamation-circle"></i> @nssfErrorMessage
+          </div>
+        }
         <ValidationMessage For="@(() => pageModel.NSSF_Number)" />
-
       </div>
+
+
       <div class="col-md-4">
         <label class="form-label">NHIF/SHA Number</label>
-        <InputText @bind-Value="pageModel.NHIF_Number" class="form-control" />
+        <div class="input-group">
+          <span class="input-group-text @GetNhifStatusClass()">
+            <img src="/lib/Images/Kaisari/01K8QA9WNKSVM8PBHHF0X3RW3M-Photoroom.png" style="height: 38px; margin-right: 5px;" />
+            <i class="@GetNhifIconClass()" style="font-size: 0.8rem;"></i>
+          </span>
+          <InputText @bind-Value="pageModel.NHIF_Number"
+                     @onblur="ValidateNhifSimple"
+                     class="form-control"
+                     placeholder="Enter NHIF or SHA number" />
+        </div>
         <ValidationMessage For="@(() => pageModel.NHIF_Number)" />
 
       </div>
@@ -95,6 +137,13 @@
 @code {
   private BankPaymentCombinedModel pageModel = new();
   private EditContext? editContext;
+  private string? kraErrorMessage;
+  private bool isKraValid = false;
+  private bool isCheckingKra = false;
+  private string? nssfErrorMessage;
+  private bool isNssfValid = false;
+  private bool isNhifValid = false;
+  private bool nhifTouched = false;
 
   protected override void OnInitialized()
   {
@@ -170,4 +219,102 @@
     public string NSSF_Number { get; set; } = string.Empty;
     public string NHIF_Number { get; set; } = string.Empty;
   }
+  //=========KAISARI KRA VALIDATION LOGIC================
+  private void ValidateKraPin()
+  {
+    var pin = pageModel.KRA_PIN?.ToUpper();
+    kraErrorMessage = null;
+    isKraValid = false;
+
+    if (string.IsNullOrWhiteSpace(pin)) return;
+
+    // 1. Check Total Length
+    if (pin.Length != 11)
+    {
+      kraErrorMessage = "KRA PIN must be exactly 11 characters.";
+      return;
+    }
+
+    // 2. Check if starts with 'A'
+    if (!pin.StartsWith("A"))
+    {
+      kraErrorMessage = "Incorrect format: KRA PIN must start with letter 'A'.";
+      return;
+    }
+
+    // 3. Check if ends with a letter
+    if (char.IsDigit(pin[10]))
+    {
+      kraErrorMessage = "Incorrect format: KRA PIN must end with a letter.";
+      return;
+    }
+
+    // 4. Final Regex Check (A + 9 digits + Letter)
+    var kraRegex = new System.Text.RegularExpressions.Regex(@"^A\d{9}[A-Z]$");
+    if (!kraRegex.IsMatch(pin))
+    {
+      kraErrorMessage = "Invalid KRA PIN format (Expected: A + 9 digits + Letter(e.g., A123456789B)).";
+      return;
+    }
+
+    // If it passes all checks
+    isKraValid = true;
+    pageModel.KRA_PIN = pin; // Ensure it's saved as Uppercase
+  }
+
+  // Helpers for the UI Icons KAMA EMAIL
+  private string GetKraStatusClass() => isKraValid ? "bg-success text-white" : (kraErrorMessage != null ? "bg-danger text-white" : "bg-light");
+  private string GetKraIconClass() => isKraValid ? "fas fa-check" : (kraErrorMessage != null ? "fas fa-times" : "fas fa-id-card");
+
+  //=========KAISARI NSSF VALIDATION LOGIC================
+  private void ValidateNssf()
+  {
+    var nssf = pageModel.NSSF_Number;
+    nssfErrorMessage = null;
+    isNssfValid = false;
+
+    if (string.IsNullOrWhiteSpace(nssf)) return;
+
+    // 1. Check if it's numeric only
+    if (!nssf.All(char.IsDigit))
+    {
+      nssfErrorMessage = "NSSF must contain numbers only.";
+      return;
+    }
+
+    // 2. Enforce 9 to 10 digit rule
+    if (nssf.Length < 9)
+    {
+      nssfErrorMessage = "NSSF number must be at least 9 digits.";
+      return;
+    }
+
+    if (nssf.Length > 10)
+    {
+      nssfErrorMessage = "NSSF number cannot exceed 10 digits.";
+      return;
+    }
+
+    // Success!
+    isNssfValid = true;
+  }
+
+  // Helpers for the NSSF UI Icons
+  private string GetNssfStatusClass() => isNssfValid ? "bg-success text-white" : (nssfErrorMessage != null ? "bg-danger text-white" : "bg-light text-muted");
+  private string GetNssfIconClass() => isNssfValid ? "fas fa-check" : (nssfErrorMessage != null ? "fas fa-times" : "fas fa-shield-alt");
+
+  //=========KAISARI NHIF SIMPLE VALIDATION LOGIC================
+  private void ValidateNhifSimple()
+  {
+    nhifTouched = true;
+    // It's valid if it's not just whitespace
+    isNhifValid = !string.IsNullOrWhiteSpace(pageModel.NHIF_Number);
+  }
+
+  // Helpers for the NHIF/SHA UI Icons
+  private string GetNhifStatusClass() =>
+      isNhifValid ? "bg-success text-white" : (nhifTouched ? "bg-danger text-white" : "bg-light text-muted");
+
+  private string GetNhifIconClass() =>
+      isNhifValid ? "fas fa-check" : (nhifTouched ? "fas fa-times" : "fas fa-hospital-symbol");
 }

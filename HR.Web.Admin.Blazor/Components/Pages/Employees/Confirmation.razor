@@ -35,13 +35,8 @@
     <p><strong>Email:</strong> @TempService.TempEmployee.Email</p>
     <p><strong>Phone:</strong> @TempService.TempEmployee.Phone</p>
     <p>
-      <strong>County:</strong>
-      @Db.Counties.FirstOrDefault(c => c.Id == TempService.TempEmployee.CountyId)?.Name
-    </p>
-    <p>
-      <strong>SubCounty:</strong>
-      @Db.SubCounties.FirstOrDefault(s => s.Id == TempService.TempEmployee.SubCountyId)?.Name
-    </p>    
+      <strong>County:</strong>@countyName </p>
+    <p><strong>SubCounty:</strong> @subCountyName</p>
     <p><strong>Estate:</strong> @TempService.TempEmployee.Estate</p>
     <p><strong>PO-Box:</strong> @TempService.TempEmployee.POBox</p>
     <p><strong>Date of Birth:</strong> @TempService.TempEmployee.DOB.ToShortDateString()</p>
@@ -49,11 +44,24 @@
     <p><strong>Gender:</strong> @TempService.TempEmployee.Gender</p>
     <p><strong>Job Title:</strong> @TempService.TempEmployee.JobTitle</p>
     <p><strong>Disability:</strong> @TempService.TempEmployee.Disability</p>
-    <p><strong>Ethnicity:</strong> @TempService.TempEmployee.Ethnicity</p>
+    <div class="alert @(TempService.TempEmployee.Disability == "Yes" ? "alert-warning" : "alert-light border")">
+      <p><strong>Disability:</strong> @TempService.TempEmployee.Disability</p>
+      @if (TempService.TempEmployee.Disability == "Yes" && TempService.TempEmployee.DisabilityDetail != null)
+      {
+        <p><strong>Nature of Disability:</strong> @TempService.TempEmployee.DisabilityDetail.DisabilityNature</p>
+        <p><strong>NCPWD Number:</strong> @TempService.TempEmployee.DisabilityDetail.NCPWD_Number</p>
+        <p><strong>KRA Exemption:</strong> @TempService.TempEmployee.DisabilityDetail.KRA_ExemptionNumber</p>
+        @if (!string.IsNullOrEmpty(TempService.TempEmployee.DisabilityDetail.CertificateFileName))
+        {
+          <p class="text-success"><i class="fas fa-file-pdf"></i> Certificate: @TempService.TempEmployee.DisabilityDetail.CertificateFileName</p>
+        }
+      }
+    </div>
+    <p><strong>Ethnicity:</strong> @ethnicityName</p>
     <p><strong>Hire Date:</strong> @TempService.TempEmployee.HireDate.ToShortDateString()</p>
     <p><strong>Status:</strong> @TempService.TempEmployee.Status</p>
     @* We cannot display the Department Name directly here as the Service doesn't load navigation properties from the DB *@
-    <p><strong>Department ID:</strong> @TempService.TempEmployee.DepartmentId</p> 
+    <p><strong>Department:</strong> @departmentName</p>
   </div>
 </div>
 
@@ -139,14 +147,35 @@
 
 
 @code {
-  
+  private string countyName = "";
+  private string subCountyName = "";
+  private string ethnicityName = "";
+  private string departmentName = "";
+  private bool isLoading = true;
 
-  protected override void OnInitialized()
+  protected override async Task OnInitializedAsync()
   {
+
     // Check if the service data is empty/null, if so, redirect back to start
     if (TempService.TempEmployee.Id == Guid.Empty)
     {
       Navigation.NavigateTo("/employees/create");
+      return;
+    }
+    try
+    {
+      countyName = (await Db.Counties.FindAsync(TempService.TempEmployee.CountyId))?.Name ?? "N/A";
+      subCountyName = (await Db.SubCounties.FindAsync(TempService.TempEmployee.SubCountyId))?.Name ?? "N/A";
+      ethnicityName = (await Db.Ethnicities.FindAsync(TempService.TempEmployee.EthnicityId))?.Name ?? "N/A";
+      departmentName = (await Db.Departments.FindAsync(TempService.TempEmployee.DepartmentId))?.Name ?? "N/A";
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Error loading names: {ex.Message}");
+    }
+    finally
+    {
+      isLoading = false;
     }
   }
 
@@ -162,16 +191,15 @@
     // The TempService.TempEmployee object is fully assembled in memory now.
     var employeeToSave = TempService.TempEmployee;
 
-    // --- A. ID Initialization ---
-    // Ensure the new Employee's ID is set (or generated)
+    // Ensures the new Employee's ID is set 
     if (employeeToSave.Id == Guid.Empty)
     {
       employeeToSave.Id = Guid.NewGuid();
     }
 
-    // 🔑 CRITICAL NEW STEP: Retrieve the default role ID
+    //  NOMA NEW STEP: KU Retrieve the default role ID
     var employeeRole = await Db.Roles
-        .FirstOrDefaultAsync(r => r.Name == "Employee"); // ⭐ Query the DB for the "Employee" Role ID
+        .FirstOrDefaultAsync(r => r.Name == "Employee"); 
 
     if (employeeRole == null)
     {
@@ -192,8 +220,31 @@
     Db.Users.Add(newUser);
     // ***************************************************************
 
-    // --- B. Circular Dependency Fixes (Your existing logic) ---
+    // --- B. Circular Dependency Fixes ---
     employeeToSave.Department = null!;
+    employeeToSave.County = null!;
+    employeeToSave.SubCounty = null!;
+    employeeToSave.Ethnicity = null!;
+
+    // Disability Detail logic
+    if (employeeToSave.Disability == "Yes" && employeeToSave.DisabilityDetail != null)
+    {
+      // Ensure the IDs are linked
+      employeeToSave.DisabilityDetail.EmployeeId = employeeToSave.Id;
+
+      if (employeeToSave.DisabilityDetail.Id == Guid.Empty)
+      {
+        employeeToSave.DisabilityDetail.Id = Guid.NewGuid();
+      }
+
+      // Prevent circular reference
+      employeeToSave.DisabilityDetail.Employee = null!;
+    }
+    else
+    {
+      // If the status is "No", we don't want to save any accidental detail records
+      employeeToSave.DisabilityDetail = null;
+    }
 
     // Education History
     foreach (var edu in employeeToSave.Education)
@@ -245,14 +296,13 @@
     // --- End of Existing Logic ---
 
     // --- C. Save to Database ---
-    // This line already existed in your code:
     Db.Employees.Add(TempService.TempEmployee);
 
     // This single call saves ALL tracked entities (Employee, related entities, AND User)
     await Db.SaveChangesAsync();
 
     // ***************************************************************
-    // --- 2. INITIATE SECURE SETUP EMAIL (POST-SAVE) ---
+    // --- 2. INITIATE SECURE SETUP EMAIL (POST-SAVE ya baadaye) ---
     // If Db.SaveChangesAsync succeeded, we initiate the setup.
     try
     {

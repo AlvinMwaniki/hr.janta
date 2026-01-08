@@ -158,7 +158,7 @@
       <div class="col-md-4">
         <label class="form-label fw-bold">County of Residence</label>
         <select class="form-select"
-                style="color: @(TempService.TempEmployee.CountyId == null ? "grey" : "black");"
+                style="color: @(TempService.TempEmployee.CountyId == null ? "#989A9C" : "black");"
                 value="@TempService.TempEmployee.CountyId"
                 @onchange="HandleCountyChange" >
           <option value="" disabled selected hidden>-- Select County --</option>         
@@ -178,7 +178,7 @@
       <div class="col-md-4">
         <label class="form-label fw-bold">Sub-County / Area</label>
         <select @bind="TempService.TempEmployee.SubCountyId" class="form-select"
-                style="color: @(TempService.TempEmployee.SubCountyId == null ? "grey" : "black");">
+                style="color: @(TempService.TempEmployee.SubCountyId == null ? "#989A9C" : "black");">
           
           <option value="" disabled selected hidden>-- Select Sub-County --</option>
           @if (filteredSubCounties != null)
@@ -206,21 +206,28 @@
     <div class="row form-row mb-2">
       <div class="col-md-4">
         <label class="form-label">Date of Birth</label>
-        <InputDate @bind-Value="TempService.TempEmployee.DOB" class="form-control" />
+       <InputDate @bind-Value="TempService.TempEmployee.DOB" 
+           class="form-control"
+           
+           />
         <ValidationMessage For="@(() => TempService.TempEmployee.DOB)" />
 
       </div>
       <div class="col-md-4">
         <label class="form-label">National ID</label>
-        <InputText @bind-Value="TempService.TempEmployee.NationalID" class="form-control" maxlength="10"
+        <InputText @bind-Value="TempService.TempEmployee.NationalID" class="form-control"
+                   style="@(string.IsNullOrEmpty(TempService.TempEmployee.NationalID) ? "color: #989A9C;" : "color: #212529;")" maxlength="10"
                    placeholder="Enter 10 digits" />
         <ValidationMessage For="@(() => TempService.TempEmployee.NationalID)" />
 
       </div>
       <div class="col-md-4">
         <label class="form-label">Gender</label>
-        <InputSelect @bind-Value="TempService.TempEmployee.Gender" class="form-control">
-          <option value="">Select Gender</option>
+        <InputSelect @bind-Value="TempService.TempEmployee.Gender"
+                     class="form-control"
+                     style="@(string.IsNullOrEmpty(TempService.TempEmployee.Gender) ? "color: #989A9C;" : "color: #212529;")">
+
+          <option value="" selected hidden>Select Gender</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
         </InputSelect>
@@ -238,20 +245,49 @@
 
       </div>
       <div class="col-md-4">
-        <label class="form-label">Disability</label>
-        <InputSelect @bind-Value="TempService.TempEmployee.Disability" class="form-control">
-          <option value="">Select</option>
-          <option value="Yes">Yes</option>
+        <label class="form-label font-weight-bold">Are you a Person with Disability?</label>
+        <InputSelect @bind-Value="TempService.TempEmployee.Disability" class="form-control"
+                     style="@(string.IsNullOrEmpty(TempService.TempEmployee.Disability) ? "color: #989A9C;" : "color: #212529;")">
+
+        >
+          <option value="" selected hidden>Select Disability</option>
           <option value="No">No</option>
+          <option value="Yes">Yes</option>
         </InputSelect>
-        <ValidationMessage For="@(() => TempService.TempEmployee.Disability)" />
-
-
       </div>
+
+      @if (TempService.TempEmployee.Disability == "Yes")
+      {
+        <div class="row mt-3 border p-3 rounded bg-light">
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Nature of Disability (Describe your condition)</label>
+            <InputText @bind-Value="TempService.TempEmployee.DisabilityDetail!.DisabilityNature"
+                       class="form-control" placeholder="e.g. Physical - Mobility Impairment" />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">NCPWD Number</label>
+            <InputText @bind-Value="TempService.TempEmployee.DisabilityDetail.NCPWD_Number"
+                       class="form-control" />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">KRA Exemption Number</label>
+            <InputText @bind-Value="TempService.TempEmployee.DisabilityDetail.KRA_ExemptionNumber"
+                       class="form-control" />
+          </div>
+
+          <div class="col-md-12 mt-3">
+            <label class="form-label">Upload Exemption Certificate (PDF/Image)</label>
+            <InputFile OnChange="HandleFileSelected" class="form-control" />
+          </div>
+        </div>
+      }
       <div class="col-md-4">
         <label class="form-label">Ethnicity</label>
-        <InputSelect @bind-Value="TempService.TempEmployee.EthnicityId" class="form-control">
-          <option value="">Select Ethnicity</option>
+        <InputSelect @bind-Value="TempService.TempEmployee.EthnicityId" class="form-control"
+                     style="@(TempService.TempEmployee.EthnicityId == null || TempService.TempEmployee.EthnicityId == Guid.Empty ? "color: #989A9C;" : "color: #212529;")">
+          <option value=""selected hidden>Select Ethnicity</option>
           @if (ethnicities != null)
           {
             @foreach (var eth in ethnicities)
@@ -284,8 +320,9 @@
       </div>
       <div class="col-md-4">
         <label class="form-label">Department</label>
-        <InputSelect @bind-Value="TempService.TempEmployee.DepartmentId" class="form-control">
-          <option value="">Select Department</option>
+        <InputSelect @bind-Value="TempService.TempEmployee.DepartmentId" class="form-control"
+                     style="@(TempService.TempEmployee.DepartmentId == Guid.Empty ? "color: #989A9C;" : "color: #212529;")">
+          <option value="" selected hidden>Select Department</option>
           @foreach (var d in departments)
           {
             <option value="@d.Id">@d.Name</option>
@@ -531,6 +568,48 @@
   private string GetEmailStatusClass() => isEmailValid ? "bg-success text-white" : (emailErrorMessage != null ? "bg-danger text-white" : "bg-light");
   private string GetEmailIconClass() => isEmailValid ? "fas fa-check" : (emailErrorMessage != null ? "fas fa-times" : "fas fa-envelope");
   //=================END EMAIL UNIQUE CHECK========================
+
+  //=================DISABILITY CERT UPLOAD========================
+@using Microsoft.AspNetCore.Hosting
+@inject IWebHostEnvironment Environment
+
+// ... inside @code ...
+
+private async Task HandleFileSelected(InputFileChangeEventArgs e)
+{
+  var file = e.File;
+  if (file != null)
+  {
+    // 1. Define the folder path
+    var folderPath = Path.Combine(Environment.WebRootPath, "uploads", "disability_certs");
+
+    // 2. Ensure folder exists
+    if (!Directory.Exists(folderPath))
+    {
+      Directory.CreateDirectory(folderPath);
+    }
+
+    // 3. Create a secure File Name (EmployeeID + Original Extension)
+    // Using a Guid or Temp ID since the employee might not be saved yet
+    var extension = Path.GetExtension(file.Name);
+    var fileName = $"CERT_{Guid.NewGuid()}{extension}";
+    var fullPath = Path.Combine(folderPath, fileName);
+
+    // 4. Save to Disk
+    using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 5); // 5MB limit
+    using var fileStream = new FileStream(fullPath, FileMode.Create);
+    await stream.CopyToAsync(fileStream);
+
+    // 5. Store ONLY the relative path in your model
+    if (TempService.TempEmployee.DisabilityDetail == null)
+      TempService.TempEmployee.DisabilityDetail = new();
+
+    TempService.TempEmployee.DisabilityDetail.CertificateFileName = file.Name;
+    TempService.TempEmployee.DisabilityDetail.CertificateFilePath = $"/uploads/disability_certs/{fileName}";
+
+    Console.WriteLine($"✅ File saved to: {fullPath}");
+  }
+}
 }
 
 

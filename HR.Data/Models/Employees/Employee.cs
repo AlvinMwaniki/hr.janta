@@ -88,7 +88,7 @@ namespace HR.Data.Models.Employees
 
 		[Required(ErrorMessage = "Disability is required")]
 		public string? Disability { get; set; }
-
+		public virtual DisabilityDetail? DisabilityDetail { get; set; } = new();
 		// Ethnicity is optional
 		public Guid? EthnicityId { get; set; }
 		public Ethnicity? Ethnicity { get; set; }

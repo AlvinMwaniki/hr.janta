@@ -34,7 +34,7 @@ namespace HR.Data
 		public DbSet<SalaryAdvance> SalaryAdvances { get; set; }
 		public DbSet<PaymentData> PaymentData { get; set; }
 		public DbSet<BankDetail> BankDetails { get; set; }
-
+		public DbSet<DisabilityDetail> DisabilityDetails { get; set; }
 		// 2. Add DbSets for Auth models
 		public DbSet<User> Users { get; set; } 
 		public DbSet<Role> Roles { get; set; }
@@ -124,15 +124,15 @@ namespace HR.Data
 				//entity.Property(e => e.Address).IsRequired().HasMaxLength(250);
 				// Link Employee to County
 				entity.HasOne(e => e.County)
-					  .WithMany() // We don't necessarily need a list of Employees inside the County class
+					  .WithMany() // 
 					  .HasForeignKey(e => e.CountyId)
-					  .IsRequired(false); // <--- Add this temporarily
+					  .IsRequired(false); // 
 
 				// Link Employee to SubCounty
 				entity.HasOne(e => e.SubCounty)
 					  .WithMany()
 					  .HasForeignKey(e => e.SubCountyId)
-					  .IsRequired(false); // <--- Add this temporarily
+					  .IsRequired(false); //
 
 				entity.Property(e => e.Estate).IsRequired(false).HasMaxLength(250);
 				entity.Property(e => e.POBox).IsRequired(false).HasMaxLength(50); 
@@ -141,6 +141,7 @@ namespace HR.Data
 				entity.Property(e => e.JobTitle).HasMaxLength(100);
 				entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
 				entity.Property(e => e.Disability).HasMaxLength(100);
+
 
 				// Department FK
 				entity.HasOne(e => e.Department)
@@ -161,6 +162,33 @@ namespace HR.Data
 			});
 
 			// -----------------------------
+			// DISABILITYDETAILS
+			modelBuilder.Entity<DisabilityDetail>(entity =>
+			{
+				entity.HasKey(d => d.Id);
+
+				// Nature can be long since it's a manual description
+				entity.Property(d => d.DisabilityNature)
+					.HasMaxLength(500)
+					.IsRequired();
+
+				entity.Property(d => d.NCPWD_Number)
+					.HasMaxLength(50)
+					.IsRequired();
+
+				entity.Property(d => d.KRA_ExemptionNumber)
+					.HasMaxLength(50);
+
+				// Paths can be long
+				entity.Property(d => d.CertificateFilePath)
+					.HasMaxLength(1000);
+
+				// Configure the One-to-One relationship
+				entity.HasOne(d => d.Employee)
+					  .WithOne(e => e.DisabilityDetail)
+					  .HasForeignKey<DisabilityDetail>(d => d.EmployeeId)
+					  .OnDelete(DeleteBehavior.Cascade);
+			});
 			// EducationHistory
 			modelBuilder.Entity<EducationHistory>(entity =>
 			{

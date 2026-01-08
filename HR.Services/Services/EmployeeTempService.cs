@@ -47,10 +47,10 @@ namespace HR.Services.Services
 				DOB = DateTime.Today,
 				HireDate = DateTime.Today,
 
-				//Ethnicity relation (if you store Id as Guid/int adapt accordingly)
+				//Ethnicity relation 
 				EthnicityId = default,
 
-				// Department relation (if you store Id as Guid/int adapt accordingly)
+				// Department relation 
 				DepartmentId = default,
 
 				// Collections used by multi-step pages
@@ -62,13 +62,23 @@ namespace HR.Services.Services
 
 				// Payment/Bank objects
 				BankDetail = new BankDetail(),
-				PaymentData = new PaymentData()
+				PaymentData = new PaymentData(),
+
+				DisabilityDetail = new DisabilityDetail()
 			};
 		}
 
 		public void Clear() => Reset();
 
 		// ---------- Helpers for working with lists from pages ----------
+		// ---------- NEW: Helper for Disability Details ----------
+		public void SetDisabilityDetail(DisabilityDetail detail)
+		{
+			if (detail == null) return;
+
+			detail.EmployeeId = TempEmployee.Id;
+			TempEmployee.DisabilityDetail = detail;
+		}
 
 		// Education
 		public void AddEducation(EducationHistory edu)

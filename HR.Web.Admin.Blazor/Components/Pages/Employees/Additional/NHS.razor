@@ -7,6 +7,8 @@
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.Forms
+@using HR.Data.Models.Country;
+@inject HRDbContext Db
 
 <h3>Step 3: Next of Kin</h3>
 
@@ -34,12 +36,38 @@
 
     <!-- Row 2: Phone -->
     <div class="row mb-2">
-      <div class="col-md-6">
-        <label class="form-label">Phone</label>
-        <InputText @bind-Value="nokModel.Phone" class="form-control" />
-        <ValidationMessage For="@(() => nokModel.Phone)" />
+      <div class="col-md-4">
+        <label class="form-label fw-bold">Phone Number</label>
+        <div class="input-group mb-3">
+          <button class="btn btn-light border-secondary-subtle dropdown-toggle d-flex align-items-center"
+                  type="button" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 90px;">
+            @if (selectedCountry != null)
+            {
+              <img src="@selectedCountry.FlagUrl" class="me-2" style="width: 20px; height: 14px; border: 1px solid #dee2e6;" />
+              <span class="fw-bold">@selectedCountry.IsoCode</span>
+            }
+          </button>
 
+          <ul class="dropdown-menu shadow" style="max-height: 300px; overflow-y: auto;">
+            @foreach (var c in countries.OrderBy(x => x.Name))
+            {
+              <li>
+                <button type="button" class="dropdown-item d-flex align-items-center" @onclick="() => SelectCountry(c)">
+                  <img src="@c.FlagUrl" class="me-2" style="width: 20px; border: 1px solid #eee;" />
+                  <span>@c.Name (@c.DialCode)</span>
+                </button>
+              </li>
+            }
+          </ul>
+
+          <InputText @bind-Value="nokModel.Phone"
+                     class="form-control"
+                     placeholder="712 345 678"
+                     maxlength="10" />
+        </div>
+        <ValidationMessage For="@(() => nokModel.Phone)" class="text-danger small" />
       </div>
+
       <!-- Removed the Email input field -->
     </div>
 
@@ -98,18 +126,45 @@
 
 
 @code {
+
+
   // Use the alias when declaring the model type
   private DataModels.NextOfKin nokModel = new();
   private int editingNokIndex = -1;
   private EditContext? editContext;
 
-  protected override void OnInitialized()
+  protected override async Task OnInitializedAsync()
   {
     editContext = new EditContext(nokModel)!;
+    // Load country data
+    // Load countries for phone codes
+    countries = await Db.Countries.OrderBy(c => c.Name).ToListAsync();
+    // SET DEFAULT TO KENYA if it's a new employee
+    selectedCountry = countries.FirstOrDefault(c => c.DialCode == "+254" || c.IsoCode == "KE");
   }
 
   private void AddOrUpdateNextOfKin(EditContext context)
   {
+
+    // smart for phone
+    if (selectedCountry != null && !string.IsNullOrWhiteSpace(nokModel.Phone))
+    {
+      // Format phone number to
+      // Clean: Remove '0' and all non-numeric chars
+      var digitsOnly = new string(nokModel.Phone.Where(char.IsDigit).ToArray());   
+      // STRICT CHECK: If it's not 9 or 10 digits, STOP HERE.
+      if (digitsOnly.Length < 9 || digitsOnly.Length > 10)
+      {
+        return; // The UI validation message will already be showing the error
+      }
+
+      if (digitsOnly.StartsWith("0")) digitsOnly = digitsOnly.Substring(1);
+
+      // Result: 254712345678
+      string dial = selectedCountry.DialCode.Replace("+", "");
+      nokModel.Phone = dial + digitsOnly;
+    }
+    // Check if we are editing or adding new
     if (editingNokIndex >= 0)
     {
       TempService.UpdateNextOfKin(editingNokIndex, nokModel);
@@ -123,7 +178,10 @@
     // Reset the form model and the EditContext
     nokModel = new DataModels.NextOfKin();
     editContext = new EditContext(nokModel)!;
+    selectedCountry = countries.FirstOrDefault(x => x.IsoCode == "KE");
     StateHasChanged(); // Update UI
+
+
   }
 
   private void EditNok(DataModels.NextOfKin itemToEdit)
@@ -177,5 +235,13 @@
     // Navigate to the next step, assuming Hobbies page now
     Navigation.NavigateTo($"/employees/additional/bankpayment/");
     StateHasChanged();
+  }
+  // Country data for phone number dropdown
+  List<Country> countries = new();
+  private Country? selectedCountry;
+  private void SelectCountry(Country country)
+  {
+    selectedCountry = country;
+    TempService.TempEmployee.CountryId = country.Id;
   }
 }

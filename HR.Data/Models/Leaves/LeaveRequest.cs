@@ -20,4 +20,5 @@ public class LeaveRequest
 
 	public Guid? ApprovedByUserId { get; set; }
 	public User? ApprovedBy { get; set; }
+	public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

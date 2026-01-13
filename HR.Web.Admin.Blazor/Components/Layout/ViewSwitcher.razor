@@ -1,0 +1,29 @@
+﻿@using HR.Services.Services
+@rendermode InteractiveServer
+@inject ImpersonationService Impersonation
+@inject NavigationManager Navigation
+
+<div class="dropdown-item d-flex align-items-center justify-content-between py-2"
+     style="cursor: pointer;" @onclick="ToggleView">
+  <span class="user-select-none">
+    <i class="fas @(Impersonation.IsInEmployeeView ? "fa-user-tie" : "fa-user-shield") me-2 text-dark"></i>
+    @(Impersonation.IsInEmployeeView ? "Switch to Admin View" : "Switch to Employee View")
+  </span>
+
+  <div class="form-check form-switch mb-0">
+    @* Warning removed: role="switch" removed as Bootstrap .form-switch handles it *@
+    <input class="form-check-input" type="checkbox"
+           checked="@Impersonation.IsInEmployeeView"
+           @onclick:stopPropagation
+           readonly>
+  </div>
+</div>
+
+@code {
+  private void ToggleView()
+  {
+    Impersonation.ToggleViewMode();
+    // Force a refresh of the current page to re-evaluate the AuthorizeViews
+    Navigation.NavigateTo(Navigation.Uri, forceLoad: false);
+  }
+}

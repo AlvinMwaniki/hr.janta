@@ -1,0 +1,119 @@
+﻿@page "/leaves/my-requests"
+@using HR.Core.Enums
+@using HR.Services.DTO
+@using HR.Services.Interfaces
+@inject ILeaveService LeaveService
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<div class="container mt-4">
+  <div class="glass-card shadow-sm p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="mb-0">My Leave Applications</h3>
+      <a href="/leave/submit" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> New Request
+      </a>
+    </div>
+
+    @if (myRequests == null)
+    {
+      <div class="text-center p-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">Fetching your history...</p>
+      </div>
+    }
+    else if (!myRequests.Any())
+    {
+      <div class="alert alert-light text-center border">
+        No leave requests found for 2026.
+      </div>
+    }
+    else
+    {
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead class="text-secondary small text-uppercase">
+            <tr>
+              <th>Type</th>
+              <th>Period</th>
+              <th>Days</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (var req in myRequests)
+            {
+              <tr>
+                <td>
+                  <span class="fw-bold">@req.LeaveType</span>
+                  <div class="small text-muted">Submitted @req.CreatedAt.ToShortDateString()</div>
+                </td>
+                <td>
+                  <div class="small">@req.FromDate.ToShortDateString() - @req.ToDate.ToShortDateString()</div>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">@req.DurationInDays Days</span>
+                </td>
+                <td>
+                  <span class="@GetStatusBadgeClass(req.Status)">@req.Status</span>
+                </td>
+                <td class="text-end">
+                  @if (req.Status == LeaveStatus.Pending)
+                  {
+                    <button class="btn btn-sm btn-outline-danger"
+                            @onclick="() => HandleCancel(req.Id)"
+                            disabled="@isProcessing">
+                      Cancel
+                    </button>
+                  }
+                  else
+                  {
+                    <span class="text-muted small">No actions</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@code {
+  private List<LeaveRequestViewDto>? myRequests;
+  private bool isProcessing = false;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await LoadMyRequests();
+  }
+
+  private async Task LoadMyRequests()
+  {
+    // We will add this specific method to your Service to filter by logged-in user
+    myRequests = await LeaveService.GetMyLeaveRequestsAsync();
+  }
+
+  private async Task HandleCancel(Guid id)
+  {
+    isProcessing = true;
+    var confirmed = await LeaveService.CancelLeaveRequestAsync(id);
+    if (confirmed)
+    {
+      await LoadMyRequests(); // Refresh the list
+    }
+    isProcessing = false;
+  }
+
+  private string GetStatusBadgeClass(LeaveStatus status) => status switch
+  {
+    LeaveStatus.Pending => "badge bg-warning text-dark",
+    LeaveStatus.Approved => "badge bg-success",
+    LeaveStatus.Rejected => "badge bg-danger",
+    LeaveStatus.Cancelled => "badge bg-secondary",
+    _ => "badge bg-light text-dark"
+  };
+}

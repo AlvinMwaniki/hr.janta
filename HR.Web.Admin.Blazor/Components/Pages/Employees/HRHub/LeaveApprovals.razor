@@ -1,0 +1,67 @@
+﻿@page "/admin/leaves"
+@using HR.Core.Enums
+@using HR.Services.DTO
+@using HR.Services.Interfaces
+@inject ILeaveService LeaveService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<div class="glass-card shadow-sm p-4">
+  <h3>Pending Leave Applications</h3>
+
+  @if (pendingRequests == null)
+  {
+    <p>Loading...</p>
+  }
+  else
+  {
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Type</th>
+          <th>Duration</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var req in pendingRequests)
+        {
+          <tr>
+            <td>@req.EmployeeName</td>
+            <td>@req.LeaveType</td>
+            <td>@req.DurationInDays Days</td>
+            <td>
+              <button class="btn btn-success btn-sm" @onclick="() => Process(req.Id, LeaveStatus.Approved)">Approve</button>
+              <button class="btn btn-danger btn-sm" @onclick="() => Process(req.Id, LeaveStatus.Rejected)">Reject</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@code {
+  private List<LeaveRequestViewDto>? pendingRequests;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await LoadData();
+  }
+
+  private async Task LoadData()
+  {
+    pendingRequests = await LeaveService.GetPendingRequestsAsync();
+  }
+
+  private async Task Process(Guid id, LeaveStatus status)
+  {
+    var success = await LeaveService.ReviewLeaveRequestAsync(id, status);
+    if (success)
+    {
+      await LoadData(); // Refresh list
+                        // TODO: Trigger SignalR notification here
+    }
+  }
+}

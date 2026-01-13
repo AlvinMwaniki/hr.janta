@@ -7,13 +7,17 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using HR.Services.Constants
 @using HR.Web.Admin.Blazor.Components.Charts
+@using HR.Services.Interfaces
+@using HR.Web.Admin.Blazor.Infrastructure
+@using HR.Web.Admin.Blazor.Components.Widgets
 @rendermode InteractiveServer
 @attribute [Authorize]
 @inject DashboardService DashboardService
 @inject HR.Services.Services.ImpersonationService Impersonation
-
+@implements IDisposable
 @inject IJSRuntime JS
-
+@inject ILeaveService LeaveService
+@inject ILeaveNotificationService NotificationService
 
 
 <h3 class="mb-4">Dashboard</h3>
@@ -25,9 +29,10 @@
 else
 {
   // ===========ADMIN DASHBOARD VIEW===========
+  @if (!ShowEmployeeView){
   <AuthorizeView Policy="@AppPermissions.ViewAdminDashboard">
     <Authorized>
-  <div class="row g-3">
+  <div class="row g-2">
     <!-- Total Employees Card -->
         <div class="col-md-3">
           <div class="card shadow-sm text-white" style="background: linear-gradient(135deg, #0EA5E9 0%, #0284c7 100%); border: none; border-radius: 20px; position: relative; overflow: hidden; min-height: 140px;">
@@ -87,56 +92,81 @@ else
         </div>
       </div>
 <!-- Charts -->
-      <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
-        <h4 class="mb-0">@(showAnalyticsPage ? "Detailed Analytics" : "Quick Overview")</h4>
-        <button class="btn btn-outline-primary btn-sm" @onclick="TogglePage">
-          @if (showAnalyticsPage)
-          {
-            <span><i class="fas fa-arrow-left"></i> Back to Overview</span>
-          }
-          else
-          {
-            <span>View Trends <i class="fas fa-arrow-right"></i></span>
-          }
-        </button>
+        <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+          <h4 class="fw-bold text-dark mb-0">@GetPageTitle()</h4>
+
+          <div class="d-flex align-items-center bg-light p-1 rounded-pill shadow-sm border">
+            <ul class="nav nav-pills ms-auto" id="pills-tab" role="tablist">
+              <li class="nav-item">
+                <button class="nav-link py-1 px-3 rounded-pill @(activePage == 1 ? "active shadow-sm" : "text-muted")"
+                        @onclick="() => SetPage(1)">
+                  Overview
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link py-1 px-3 rounded-pill @(activePage == 2 ? "active shadow-sm" : "text-muted")"
+                        @onclick="() => SetPage(2)">
+                  Approvals @if(adminPendingList?.Any() == true) {
+                  <span class="badge bg-danger rounded-pill ms-1">@adminPendingList.Count</span>
+                }
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link py-1 px-3 rounded-pill @(activePage == 3 ? "active shadow-sm" : "text-muted")"
+                      @onclick="() => SetPage(3)">
+                Trends
+              </button>
+            </li>
+          </ul>
+        </div>
       </div>
 
-      <div class="row">
-        @if (!showAnalyticsPage)
+      <div class="glass-stage shadow-lg border-0 rounded-4 mb-5 p-4"
+           @onmouseenter="StopCycle"
+           @onmouseleave="StartCycle">
+        
+        @if (activePage == 1)
         {
-          <div class="col-md-6">
-            <div class="card h-90" style="background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 10px 40px var(--card-shadow);">
-              <div class="card-body">
-                <h5 class="card-title" style="font-weight: 500; color: var(--text-main);">Leaves Overview</h5>
-                <LeaveChartCard LeaveData="@totals.LeaveChartData" />
+          <div class="row g-3 animate-fade-in">
+            <div class="col-md-6">
+              <div class="card h-100 border-0 shadow-sm rounded-4 bg-white bg-opacity-75">
+                <div class="card-body">
+                  <h6 class="text-muted fw-bold mb-3"><i class="fas fa-chart-pie me-2 text-info"></i>Leaves Distribution</h6>
+                  <LeaveChartCard LeaveData="@totals.LeaveChartData" />
+                </div>
               </div>
             </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card h-90" style="background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 10px 40px var(--card-shadow);">
-              <div class="card-body">
-                <h5 class="card-title" style="font-weight: 500; color: var(--text-main);">Advance Overview</h5>
-                <AdvanceChartCard AdvanceData="@totals.AdvanceChartData" />
+            <div class="col-md-6">
+              <div class="card h-100 border-0 shadow-sm rounded-4 bg-white bg-opacity-75">
+                <div class="card-body">
+                  <h6 class="text-muted fw-bold mb-3"><i class="fas fa-chart-line me-2 text-primary"></i>Salary Advance Insights</h6>
+                  <AdvanceChartCard AdvanceData="@totals.AdvanceChartData" />
+                </div>
               </div>
             </div>
           </div>
         }
-        else
+        else if (activePage == 2)
         {
-          <div class="col-md-12">
-            <div class="card shadow-sm border-primary">
-              <div class="card-body text-center py-5">
-                <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
-                <h5>Monthly Attendance & Leave Trends</h5>
-                <p class="text-muted">Coming Soon.</p>
-                @* <MonthlyTrendChart /> *@
+          <div class="animate-fade-in h-100">
+            <div class="card border-0 shadow-sm rounded-4 bg-white bg-opacity-75 h-100">
+              <div class="card-body p-0">
+                <AdminApprovalsWidget Applications="adminPendingList" OnAction="HandleAdminAction" />
               </div>
             </div>
+          </div>
+        }
+        else if (activePage == 3)
+        {
+          <div class="animate-fade-in text-center py-5 bg-white bg-opacity-50 rounded-4">
+            <i class="fas fa-chart-bar fa-4x text-primary opacity-25 mb-3"></i>
+            <h5 class="fw-bold">Strategic Growth Analytics</h5>
+            <p class="text-muted">Attrition rates and hiring trends will appear here.</p>
           </div>
         }
       </div>
     </Authorized>
-  </AuthorizeView>
+  </AuthorizeView>}
   // ===========END OF ADMIN DASHBOARD VIEW===========
 
   // ===========EMPLOYEE DASHBOARD VIEW (Visible to all)===========
@@ -248,6 +278,18 @@ else
             </div>
         </div>
     </div>
+    @* --- FULL WIDTH SECTION BELOW --- *@
+@* --- FULL WIDTH SECTION BELOW --- *@
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body p-4">
+                @* Changed from RecentLeavesWidget to MyApplicationsWidget *@
+                <MyApplicationsWidget Applications="myApplications" OnCancel="HandleCancelRequest" />
+            </div>
+        </div>
+    </div>
+</div>
     </Authorized>
     <NotAuthorized>
       <p class="alert alert-danger">Access Denied: You Are Not an Employee.</p>
@@ -263,21 +305,34 @@ else
   [CascadingParameter]
   private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
   private AdvanceChartDataDto AdvanceChartData = new();
-  // ⭐ FIX 2: DECLARE THE RENDER FLAG FIELD ⭐
-  private bool ShowEmployeeView = false;
+  private List<UnifiedRequestDto> myApplications = new();
+  private ClaimsPrincipal? _user = default!;
+  private List<UnifiedRequestDto> adminPendingList = new();
+  private int activePage = 1;
+  private bool isAutoCycling = false;
+  private System.Timers.Timer? cycleTimer;
+
+  private void SetPage(int page) => activePage = page;
+  // This is the "Modern" reactive property. It always knows the truth.
+  private bool ShowEmployeeView =>
+      !(_user?.HasClaim("Permission", AppPermissions.ViewAdminDashboard) ?? false)
+      || Impersonation.IsInEmployeeView
+      || Impersonation.IsImpersonating;
+
   protected override async Task OnInitializedAsync()
   {
+
     var authState = await AuthStateTask;
-    var user = authState.User;
+    _user = authState.User;
 
-    // An Admin only sees the Employee View IF they are impersonating.
-    // A non-Admin employee always sees the Employee View.
-    bool isAdmin = user.HasClaim("Permission", AppPermissions.ViewAdminDashboard); // Check for an Admin-only permission/claim
+    //  Subscribe to  Internal Event (The SignalR Replacement)
+    NotificationService.OnLeaveUpdated += HandleLeaveNotification;
+    // 1. "The Wake-Up Call": Subscribe to the toggle event
+    Impersonation.OnStateChanged += HandleStateChange;
 
-    // Set the flag for rendering the Employee Dashboard
-    ShowEmployeeView = Impersonation.IsImpersonating || !isAdmin;
-
+    // 2. Fetch all your data
     await LoadDashboardSafeAsync();
+
 
     // We use the method name you defined: GetMyLeaveBalanceAsync()
     totals!.LeaveBalance = await DashboardService.GetMyLeaveBalanceAsync();
@@ -288,9 +343,80 @@ else
     // 4. Fetch other required data (JobTitle, PendingTasks, etc.)
     // totals.JobTitle = await DashboardService.GetMyJobTitleAsync();
     // totals.PendingTasks = await DashboardService.GetMyPendingTasksAsync();
+    await RefreshAll();
+    StartCycle(); // Start rotating immediately
   }
 
-  
+  private async Task RefreshAll()
+  {
+    await LoadDashboardSafeAsync();
+    myApplications = await DashboardService.GetMyRecentApplicationsAsync(5);
+    if (!ShowEmployeeView)
+    {
+      adminPendingList = await DashboardService.GetAllPendingApplicationsAsync();
+    }
+    StateHasChanged();
+  }
+  private async Task HandleAdminAction((UnifiedRequestDto Request, HR.Core.Enums.LeaveStatus Status) args)
+  {
+    bool success = false;
+    if (args.Request.RequestType == "Leave")
+    {
+      success = await LeaveService.ReviewLeaveRequestAsync(args.Request.Id, args.Status);
+    }
+    else if (args.Request.RequestType == "Advance")
+    {
+      // success = await AdvanceService.ReviewAdvanceRequestAsync(args.Request.Id, args.Status);
+    }
+
+    if (success) await RefreshAll();
+  }
+  private async Task HandleCancelRequest(UnifiedRequestDto request)
+  {
+    bool success = false;
+
+    if (request.RequestType == "Leave")
+    {
+      success = await LeaveService.CancelLeaveRequestAsync(request.Id);
+    }
+    else if (request.RequestType == "Advance")
+    {
+      //success = await AdvanceService.CancelAdvanceRequestAsync(request.Id);
+    }
+
+    if (success)
+    {
+      // Refresh everything to show the new status and updated balances
+      await RefreshAll();
+    }
+  }
+
+  // This runs whenever an Admin approves/rejects a leave
+  private async void HandleLeaveNotification(string userId, string message)
+  {
+    var currentUserId = _user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+    // Only refresh if the notification is for the logged-in user
+    if (userId == currentUserId)
+    {
+      await InvokeAsync(async () =>
+      {
+        await RefreshAll();
+      });
+    }
+  }
+
+  private void HandleStateChange()
+  {
+    // Re-renders the UI immediately when the service changes
+    InvokeAsync(StateHasChanged);
+  }
+  public void Dispose()
+  {
+    // Professional cleanup to prevent memory leaks
+    Impersonation.OnStateChanged -= HandleStateChange;
+    NotificationService.OnLeaveUpdated -= HandleLeaveNotification;
+  }
 
   private async Task LoadDashboardSafeAsync()
   {
@@ -356,5 +482,68 @@ else
 
     return isRegularEmployee || isImpersonatingAdmin;
   }
+  private string GetPageTitle() => activePage switch
+  {
+    1 => "Operational Overview",
+    2 => "Pending Staff Approvals",
+    3 => "Analytical Trends",
+    _ => "Dashboard"
+  };
+  //=========== AUTO-CYCLING LOGIC ==========KA SLIDER==========
 
+  private void ToggleAutoCycle()
+  {
+    isAutoCycling = !isAutoCycling;
+
+    if (isAutoCycling)
+    {
+      // 5 seconds is usually best for "glanceable" MIS dashboards
+      cycleTimer = new System.Timers.Timer(5000);
+      cycleTimer.Elapsed += OnCycleTimerElapsed;
+      cycleTimer.AutoReset = true;
+      cycleTimer.Enabled = true;
+    }
+    else
+    {
+      if (cycleTimer != null)
+      {
+        cycleTimer.Enabled = false;
+        cycleTimer.Elapsed -= OnCycleTimerElapsed;
+        cycleTimer.Dispose();
+        cycleTimer = null;
+      }
+    }
+  }
+  private void StartCycle()
+  {
+    if (cycleTimer == null)
+    {
+      cycleTimer = new System.Timers.Timer(7000); // 7 seconds
+      cycleTimer.Elapsed += OnCycleTimerElapsed;
+      cycleTimer.AutoReset = true;
+      cycleTimer.Start();
+      isAutoCycling = true;
+    }
+  }
+
+  private void StopCycle()
+  {
+    if (cycleTimer != null)
+    {
+      cycleTimer.Stop();
+      cycleTimer.Elapsed -= OnCycleTimerElapsed;
+      cycleTimer.Dispose();
+      cycleTimer = null;
+      isAutoCycling = false;
+    }
+  }
+  private async void OnCycleTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+  {
+    // Important: Use InvokeAsync to tell Blazor to update the UI from a background thread
+    await InvokeAsync(() =>
+    {
+      activePage = activePage >= 3 ? 1 : activePage + 1;
+      StateHasChanged();
+    });
+  }
 }

@@ -9,54 +9,19 @@ namespace HR.Services.Services;
 
 public class ImpersonationService
 {
-	// ⭐ NEW: Event to notify subscribers (like MainLayout) ⭐
-	public event Action? ImpersonationStateChanged;
+	public bool IsInEmployeeView { get; private set; }
+	public bool IsImpersonating { get; private set; } // Your existing flag
 
-	private readonly IServiceProvider _serviceProvider;
+	public event Action? OnStateChanged;
 
-	// ⭐ REMOVED: NavigationManager _navigationManager; ⭐
-	private bool _isImpersonating = false;
-
-	// ⭐ UPDATED CONSTRUCTOR: Remove NavigationManager parameter ⭐
-	public ImpersonationService(IServiceProvider serviceProvider /* , NavigationManager navigationManager - REMOVED */)
+	public void ToggleViewMode()
 	{
-		_serviceProvider = serviceProvider;
-		// _navigationManager = navigationManager; - REMOVED
+		IsInEmployeeView = !IsInEmployeeView;
+		OnStateChanged?.Invoke();
 	}
 
-	public bool IsImpersonating => _isImpersonating;
+	private void NotifyStateChanged() => OnStateChanged?.Invoke();
 
-	public void ToggleImpersonation()
-	{
-		_isImpersonating = !_isImpersonating;
-
-		// 1. Notify the Authentication State Provider
-		using (var scope = _serviceProvider.CreateScope())
-		{
-			var authStateProvider = scope.ServiceProvider
-				.GetRequiredService<CustomAuthenticationStateProvider>();
-
-			authStateProvider.NotifyStateChange();
-		}
-
-		// ⭐ 2. CRITICAL CHANGE: Notify the component (MainLayout) via event ⭐
-		ImpersonationStateChanged?.Invoke();
-
-		// ⭐ REMOVED: No navigation here. The component handles it. ⭐
-	
-	}
-
-	// ⭐ NEW METHOD: Dedicated refresh for when roles/claims are changed by an Admin ⭐
-	public void ToggleAuthenticationStateRefresh()
-	{
-		// The same notification logic used in ToggleImpersonation, but without toggling the flag/navigation
-		using (var scope = _serviceProvider.CreateScope())
-		{
-			var authStateProvider = scope.ServiceProvider
-				.GetRequiredService<CustomAuthenticationStateProvider>();
-
-			authStateProvider.NotifyStateChange();
-		}
-	}
-
+	// Your existing refresh logic
+	public void ToggleAuthenticationStateRefresh() => NotifyStateChanged();
 }

@@ -37,9 +37,8 @@ const centerTextPlugin = {
   afterDraw: (chart) => {
     const { ctx, chartArea: { left, top, right, bottom } } = chart;
     const data = chart.data.datasets[0].data;
+    const pendingValue = data[1] || 0;
     const total = data.reduce((a, b) => a + b, 0);
-    const secondaryValue = data[1] || 0;
-    const subLabel = chart.canvas.id.includes('Advance') ? "Pending" : "Total";
 
     // DYNAMIC COLOR FETCH
     const mainColor = getThemeColor('--text-main');
@@ -48,18 +47,26 @@ const centerTextPlugin = {
     ctx.save();
     const centerX = (left + right) / 2;
     const centerY = (top + bottom) / 2;
+    ctx.textAlign = 'center';
 
     // 1. Main Number - Now flips to white in dark mode
-    ctx.font = 'bold 2.5rem sans-serif';
+    ctx.font = 'bold 3.2rem sans-serif';
     ctx.fillStyle = mainColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(total, centerX, centerY - 5);
+    ctx.fillText(pendingValue, centerX, centerY );
 
     // 2. Sub-Label - Now readable in dark mode
-    ctx.font = '600 0.85rem sans-serif';
+    ctx.font = '500 0.65rem sans-serif';
     ctx.fillStyle = subColor;
-    ctx.fillText(`${secondaryValue} ${subLabel}`, centerX, centerY + 25);
+    ctx.fillText(`Total: ${total}`, centerX, centerY + 50);
+    ctx.restore();
+
+    // 3. Status Label - Now readable in dark mode
+    ctx.font = '500 0.75rem sans-serif';
+    ctx.fillStyle = subColor;
+    ctx.fillText("Pending", centerX, centerY + 22); // The word "Pending" below
+
     ctx.restore();
   }
 };

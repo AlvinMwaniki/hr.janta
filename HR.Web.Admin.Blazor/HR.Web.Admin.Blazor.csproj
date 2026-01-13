@@ -30,6 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Hubs\" />
     <Folder Include="LoginHandler\" />
     <Folder Include="wwwroot\uploads\disability_certs\" />
   </ItemGroup>

@@ -83,6 +83,9 @@
                 <Authorized>
                   <li><hr class="dropdown-divider"></li>
                   <li>
+                    <ViewSwitcher />
+                  </li>
+                  <li>
                     <a class="dropdown-item" href="/employees/Manage_users">
                       <i class="fas fa-users-cog me-2"></i> User Management
                     </a>
@@ -126,8 +129,6 @@
             </NotAuthorized>
           </AuthorizeView>
 
-          @* ⭐ ADMIN IMPOSTER BUTTON ⭐ *@
-          @*  <ImpersonationButton />*@
           <div class="notification-wrapper me-4">
             <button type="button" class="btn p-0 bg-transparent border-0 position-relative notification-btn">
               <i class="fas fa-bell fa-lg"></i>
@@ -187,20 +188,6 @@
       Email = email ?? "admin@example.com"
     };
   }
-  // Admin impersonation toggle
-  // This calls the service to toggle impersonation mode
-
-
-  private void ToggleImpersonation()
-  {
-    // 1. Toggle the state (This updates the AuthenticationStateProvider)
-    Impersonation.ToggleImpersonation();
-
-    // ⭐ CRITICAL FIX: Force the page to reload to apply the new Impersonation state ⭐
-    // We navigate to /dashboard, forcing a full page reload (bypassing the client-side router)
-    Navigation.NavigateTo("/dashboard", forceLoad: true);
-  }
-
 
 
 
@@ -208,7 +195,6 @@
   protected override void OnInitialized()
   {
     // Subscribe to the service event
-    Impersonation.ImpersonationStateChanged += OnImpersonationStateChanged;
   
     Theme.OnThemeChanged += RefreshUI;
   }
@@ -218,25 +204,9 @@
   // ⭐ CRITICAL 3: Subscription Cleanup (Dispose) ⭐
   public void Dispose()
   {
-    Impersonation.ImpersonationStateChanged -= OnImpersonationStateChanged;
   
     Theme.OnThemeChanged -= RefreshUI;
   }
-
-
-
-  // ⭐ CRITICAL 4: Handler Method ⭐
-  private void OnImpersonationStateChanged()
-  {
-    // This forces the button text to update
-    InvokeAsync(StateHasChanged);
-  }
-
-  // Theme management
-  // This is the simple function that flips the state in the service
-
-  // We call the service method which now handles JS and State logic
-
 
 
 

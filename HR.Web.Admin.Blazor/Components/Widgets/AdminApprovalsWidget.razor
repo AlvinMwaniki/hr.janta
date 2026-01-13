@@ -1,0 +1,53 @@
+﻿@using HR.Core.Enums
+@using HR.Services.DTO
+
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-white py-3">
+    <h5 class="mb-0 text-dark"><i class="fas fa-clipboard-check me-2 text-primary"></i> Pending Staff Approvals</h5>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="bg-light text-secondary small text-uppercase">
+        <tr>
+          <th class="ps-3">Employee & Type</th>
+          <th>Request Detail</th>
+          <th class="text-center">Date</th>
+          <th class="text-end pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var app in Applications)
+        {
+          <tr>
+            <td class="ps-3">
+              <div class="fw-bold">@app.Description</div>
+              @if (app.RequestType == "Leave")
+              {
+                <span class="badge bg-info-subtle text-info small">Leave</span>
+              }
+              else
+              {
+                <span class="badge bg-success-subtle text-success small">Advance</span>
+              }
+            </td>
+            <td><div class="small">@app.Detail</div></td>
+            <td class="text-center small text-muted">@app.Date.ToShortDateString()</td>
+            <td class="text-end pe-3">
+              <button class="btn btn-sm btn-success me-1" @onclick="() => OnAction.InvokeAsync((app, LeaveStatus.Approved))">
+                <i class="fas fa-check"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" @onclick="() => OnAction.InvokeAsync((app, LeaveStatus.Rejected))">
+                <i class="fas fa-times"></i>
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@code {
+  [Parameter] public List<UnifiedRequestDto> Applications { get; set; } = new();
+  [Parameter] public EventCallback<(UnifiedRequestDto Request, LeaveStatus Status)> OnAction { get; set; }
+}

@@ -1,6 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using HR.Services.Constants
+@using HR.Services.Services
+@using HR.Services
+@inject DashboardService DashboardService
 @inject HR.Services.Services.ImpersonationService Impersonation
 @inject HR.Services.Services.ThemeService Theme
 @attribute [Authorize]
@@ -60,6 +63,39 @@
       </div>
     </div>
     </AuthorizeView>
+    <AuthorizeView Policy="@AppPermissions.ManageUsers">
+      <div class="nav-item">
+        <a class="nav-link" data-bs-toggle="collapse" href="#tasksHubMenu" role="button"
+           @onclick="() => isTasksMenuExpanded = !isTasksMenuExpanded"
+           aria-expanded="@isTasksMenuExpanded">
+          <i class="fas fa-tasks me-2"></i> Tasks Hub
+          @if (TotalPendingCount > 0)
+          {
+            <span class="badge rounded-pill bg-danger ms-2 shadow-sm pulse-animation">@TotalPendingCount</span>
+          }
+          <i class="fas fa-chevron-down chevron @(isTasksMenuExpanded ? "open" : "")"></i>
+        </a>
+        <div class="submenu ms-3 @(isTasksMenuExpanded ? "expanded" : "")" id="tasksHubMenu">
+          <nav class="nav flex-column ms-3">
+            <NavLink class="nav-link d-flex justify-content-between align-items-center" href="/admin/leaves">
+              <span>Leave Requests</span>
+              @if (LeavePendingCount > 0)
+              {
+                <span class="badge rounded-pill bg-secondary opacity-75 small">@LeavePendingCount</span>
+              }
+            </NavLink>
+
+            <NavLink class="nav-link d-flex justify-content-between align-items-center" href="/admin/advances">
+              <span>Advance Requests</span>
+              @if (AdvancePendingCount > 0)
+              {
+                <span class="badge rounded-pill bg-secondary opacity-75 small">@AdvancePendingCount</span>
+              }
+            </NavLink>
+          </nav>
+        </div>
+      </div>
+    </AuthorizeView>
 
     <!-- EMPLOYEE SECTION -->
    @* The base permission for this whole section can be ViewEmployeeDashboard. *@
@@ -78,6 +114,12 @@
                                 <NavLink class="nav-link" href="/leave/submit" Match="NavLinkMatch.Prefix">Apply for Leave</NavLink>
                             </Authorized>
                         </AuthorizeView>
+
+            <AuthorizeView Policy="@AppPermissions.SubmitLeave">
+              <Authorized Context="leaveContext">
+                <NavLink class="nav-link" href="/leaves/my-requests" Match="NavLinkMatch.Prefix">My Leave Requests</NavLink>
+              </Authorized>
+            </AuthorizeView>
 
                         <NavLink class="nav-link" href="/advance/apply" Match="NavLinkMatch.Prefix">Request Salary Advance</NavLink>
                         <NavLink class="nav-link" href="/profile" Match="NavLinkMatch.Prefix">Update Profile</NavLink>
@@ -192,6 +234,10 @@
   private bool isTimeMenuExpanded;
   private bool isPayrollMenuExpanded;
   private bool isRecruitmentMenuExpanded;
+  private bool isTasksMenuExpanded;
+  private int LeavePendingCount = 0;
+  private int AdvancePendingCount = 0;
+  private int TotalPendingCount => LeavePendingCount + AdvancePendingCount;
 
   // --- Toggle Functions: Used for manual click (open/close) ---
   private void ToggleHomeMenu() => isHomeMenuExpanded = !isHomeMenuExpanded;
@@ -200,11 +246,16 @@
   private void TogglePayrollMenu() => isPayrollMenuExpanded = !isPayrollMenuExpanded;
   private void ToggleRecruitmentMenu() => isRecruitmentMenuExpanded = !isRecruitmentMenuExpanded;
 
-  protected override void OnInitialized()
-  {
+  protected override async Task OnInitializedAsync(){
     // Subscribe to navigation events to re-check the URL on every navigation
     Navigation.LocationChanged += HandleLocationChanged;
     CheckForInitialExpansion();
+    var counts = await DashboardService.GetPendingCountsAsync();
+    if (counts != null)
+    {
+      LeavePendingCount = counts.Leaves;
+      AdvancePendingCount = counts.Advances;
+    }
   }
   private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
   {
@@ -218,6 +269,8 @@
       await Theme.InitializeThemeAsync();
       StateHasChanged();
     });
+
+
   }
 
   private void CheckForInitialExpansion()

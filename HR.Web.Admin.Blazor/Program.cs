@@ -116,17 +116,14 @@ builder.Services.AddSession(options =>
 	options.Cookie.IsEssential = true;
 });
 builder.Services.AddScoped<ImpersonationService>();
-builder.Services.AddDistributedMemoryCache();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<IPermissionManagementService, PermissionManagementService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddScoped<LeaveService>();
-builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddScoped<ILeaveService, LeaveService>(); 
 builder.Services.AddScoped<HR.Services.Services.ClaimService>();
 builder.Services.AddScoped<IEmployeeDataCacheService, EmployeeDataCacheService>();
-builder.Services.AddHttpContextAccessor();
-
+builder.Services.AddScoped<ILeaveNotificationService, LeaveNotificationService>();
 
 var app = builder.Build();
 
@@ -141,13 +138,13 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthentication(); 
+app.UseSession();
+app.UseAntiforgery();
+app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
-app.UseStaticFiles();
-app.UseAntiforgery();
-
 app.MapStaticAssets();
 // ⭐ FINAL, CLEAN FIX: Map the endpoint to the static handler method ⭐
 app.MapPost("/api/loginhandler", AuthenticationEndpoints.HandleLoginPostAsync)

@@ -1,9 +1,11 @@
 ﻿// HR.Web.Admin.Services/AuthService.cs
+using HR.Data;
 using HR.Data.Models.Auth;
+using HR.Services.Interfaces;
+
+using Microsoft.AspNetCore.Components; // <-- Need this for NavigationManager
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Components; // <-- Need this for NavigationManager
-using HR.Data;
 
 namespace HR.Services.Services;
 public class AuthService : IAuthService

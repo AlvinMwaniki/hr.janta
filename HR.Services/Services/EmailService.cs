@@ -1,9 +1,14 @@
 ﻿// HR.Services/Services/EmailService.cs
+using HR.Services.Interfaces;
+using System;
+using System.Threading.Tasks;
 
 namespace HR.Services.Services
 {
 	public class EmailService : IEmailService
 	{
+
+
 		public Task SendSetupPasswordEmailAsync(string recipientEmail, string recipientName, string setupLink)
 		{
 			// --- MOCK IMPLEMENTATION ---
@@ -18,6 +23,19 @@ namespace HR.Services.Services
 			Console.WriteLine($"LINK: {setupLink}");
 			Console.WriteLine("=============================================");
 
+			return Task.CompletedTask;
+		}
+		public Task SendEmailAsync(string toEmail, string subject, string body)
+		{
+			// --- MOCK IMPLEMENTATION ---
+			//  (SendGrid, SMTP, etc.)
+			Console.WriteLine("=============================================");
+			Console.WriteLine($"EMAIL SIMULATION");
+			Console.WriteLine($"TO: {toEmail}");
+			Console.WriteLine($"SUBJECT: {subject}");
+			Console.WriteLine($"---------------------------------------------");
+			Console.WriteLine(body);
+			Console.WriteLine("=============================================");
 			return Task.CompletedTask;
 		}
 	}

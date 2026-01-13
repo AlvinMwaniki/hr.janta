@@ -268,6 +268,124 @@ namespace HR.Services
 				LeavesRejected = stats.FirstOrDefault(s => s.Status == "Rejected")?.Count ?? 0
 			};
 		}
+		// NEW MYACIVITY EMPLOYEE DASHBOARD METHOD
+		public async Task<List<UnifiedRequestDto>> GetMyRecentApplicationsAsync(int count = 5)
+		{
+			var userId = await _currentUser.GetCurrentUserIdAsync();
+			if (userId == Guid.Empty) return new List<UnifiedRequestDto>();
 
+			// 1. Get Employee ID (Reusable logic from your other methods)
+			var employeeId = await _db.Employees
+				.Where(e => e.UserId == userId)
+				.Select(e => e.Id)
+				.FirstOrDefaultAsync();
+
+			if (employeeId == Guid.Empty) return new List<UnifiedRequestDto>();
+
+			// 2. Fetch Leaves
+			var leaves = await _db.LeaveRequests
+				.Where(l => l.EmployeeId == employeeId)
+				.OrderByDescending(l => l.CreatedAt)
+				.Take(count)
+				.Select(l => new UnifiedRequestDto
+				{
+					Id = l.Id,
+					RequestType = "Leave",
+					Description = l.LeaveType, // e.g., "Annual"
+					Detail = "Time Off Request",
+					Date = l.CreatedAt,
+					Status = Enum.Parse<LeaveStatus>(l.Status)
+				}).ToListAsync();
+
+			// 3. Fetch Salary Advances
+			var advances = await _db.SalaryAdvances
+				.Where(a => a.EmployeeId == employeeId)
+				.OrderByDescending(a => a.RequestDate)
+				.Take(count)
+				.Select(a => new UnifiedRequestDto
+				{
+					Id = a.Id,
+					RequestType = "Advance",
+					Description = "Salary Advance",
+					Detail = a.Amount.ToString("C"), // Formats as Currency
+					Date = a.RequestDate,
+					Status = Enum.Parse<LeaveStatus>(a.Status)
+				}).ToListAsync();
+
+			// 4. Merge, Sort, and Return
+			return leaves.Concat(advances)
+				.OrderByDescending(x => x.Date)
+				.Take(count)
+				.ToList();
+		}
+
+		//PENDING STAFF APPROVALS
+		public async Task<List<UnifiedRequestDto>> GetAllPendingApplicationsAsync()
+		{
+			// 1. Fetch all Pending Leaves (Raw Data)
+			var rawLeaves = await _db.LeaveRequests
+				.Include(l => l.Employee)
+				.Where(l => l.Status == "Pending")
+				.OrderByDescending(l => l.CreatedAt)
+				.Select(l => new
+				{
+					l.Id,
+					l.Employee.FirstName,
+					l.Employee.LastName,
+					l.LeaveType,
+					l.FromDate,
+					l.ToDate,
+					l.CreatedAt
+				}).ToListAsync();
+
+			// Map Leaves to Unified DTO in memory
+			var leaves = rawLeaves.Select(l => new UnifiedRequestDto
+			{
+				Id = l.Id,
+				RequestType = "Leave",
+				Description = $"{l.FirstName} {l.LastName}",
+				// Math and String formatting happen here in C#, avoiding the error
+				Detail = $"{l.LeaveType} ({(int)(l.ToDate - l.FromDate).TotalDays + 1} Days)",
+				Date = l.CreatedAt == default ? DateTime.Now : l.CreatedAt,
+				Status = LeaveStatus.Pending
+			}).ToList();
+
+			// 2. Fetch all Pending Advances
+			var advances = await _db.SalaryAdvances
+				.Include(a => a.Employee)
+				.Where(a => a.Status == "Pending")
+				.OrderByDescending(a => a.RequestDate)
+				.Select(a => new UnifiedRequestDto
+				{
+					Id = a.Id,
+					RequestType = "Advance",
+					Description = $"{a.Employee.FirstName} {a.Employee.LastName}",
+					Detail = $"Salary Advance: {a.Amount.ToString("C")}",
+					Date = a.RequestDate,
+					Status = LeaveStatus.Pending
+				}).ToListAsync();
+
+			// 3. Merge and Sort
+			return leaves.Concat(advances)
+				.OrderByDescending(x => x.Date)
+				.ToList();
+		}
+		public async Task<PendingCountDto> GetPendingCountsAsync()
+		{
+			var leaves = await _db.LeaveRequests.CountAsync(l => l.Status == "Pending");
+			var advances = await _db.SalaryAdvances.CountAsync(a => a.Status == "Pending");
+
+			return new PendingCountDto
+			{
+				Leaves = leaves,
+				Advances = advances
+			};
+		}
+		public class PendingCountDto
+		{
+			public int Leaves { get; set; }
+			public int Advances { get; set; }
+		}
 	}
+
 }

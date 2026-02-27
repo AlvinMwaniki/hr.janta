@@ -25,10 +25,14 @@
     </p>
 
     <p class="mt-4 text-secondary">
-      Redirecting to the **Dashboard** in @secondsRemaining seconds...
+      Redirecting to the <strong>Dashboard</strong> in @secondsRemaining seconds...
     </p>
 
     <div class="mt-4">
+      <button class="btn btn-primary mb-2" @onclick="GoToContract">
+        Generate Employment Contract
+      </button>
+
       <button class="btn btn-outline-secondary btn-sm" @onclick="RedirectNow">
         Go to Dashboard Now
       </button>
@@ -37,14 +41,12 @@
 </div>
 
 @code {
-  // 7 seconds is the requested time for redirection
-  private const int RedirectDelaySeconds = 5;
+  private const int RedirectDelaySeconds = 25;
   private int secondsRemaining = RedirectDelaySeconds;
   private Timer? timer;
 
   protected override void OnInitialized()
   {
-    // 1. Initialize the timer to tick every 1000 milliseconds (1 second)
     timer = new Timer(Tick, null, 1000, 1000);
   }
 
@@ -53,13 +55,10 @@
     if (secondsRemaining > 0)
     {
       secondsRemaining--;
-      // Since this runs on a background thread, we must explicitly call InvokeAsync
-      // to update the UI on the Blazor synchronization context.
       InvokeAsync(StateHasChanged);
     }
     else
     {
-      // 2. Stop the timer and redirect
       timer?.Dispose();
       RedirectNow();
     }
@@ -67,21 +66,22 @@
 
   private void RedirectNow()
   {
-    timer?.Dispose(); // Ensure timer stops if button is clicked
+    timer?.Dispose();
 
-    // CRITICAL FIX: Wrap navigation in try-catch to suppress the internal exception.
     try
     {
       Navigation.NavigateTo("/dashboard", forceLoad: true);
     }
     catch (Microsoft.AspNetCore.Components.NavigationException)
     {
-      // This exception is expected when navigating from a non-UI thread or lifecycle hook.
-      // We catch it and silently let the navigation proceed.
     }
   }
 
-  // 3. CRITICAL: Dispose of the timer when the component is removed to prevent memory leaks/crashes
+  private void GoToContract()
+  {
+    Navigation.NavigateTo("/employees/EmployeeContract");
+  }
+
   public void Dispose()
   {
     timer?.Dispose();

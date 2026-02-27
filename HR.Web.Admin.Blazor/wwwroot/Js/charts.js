@@ -82,26 +82,28 @@ const getModernOptions = () => ({
   }
 });
 
+const isDark = () => document.body.classList.contains('dark');
+
 window.renderAdvanceChart = function (approved, pendingOrRejected) {
   const ctx = document.getElementById('AdvanceChartData');
   if (!ctx) return;
-  // HIGH CONTRAST COLOR LOGIC
-
-  const theme = getChartTheme(); // Fetch colors right before rendering
-
   if (window.advanceChartInstance) window.advanceChartInstance.destroy();
+
+  // COLOR LOGIC: High contrast for your Pure Black background
+  const chartColors = isDark()
+    ? ['#00E5FF', '#376099']
+    : ['#03A9FC', '#23233B'];
 
   window.advanceChartInstance = new Chart(ctx, {
     type: 'doughnut',
-    plugins: [centerTextPlugin], // Apply the plugin here
+    plugins: [centerTextPlugin],
     data: {
       labels: ['Approved', 'Pending / Rejected'],
       datasets: [{
         data: [approved, pendingOrRejected],
-        backgroundColor: ['#222240', '#0EA5E9'],
-        hoverOffset: 20,
+        backgroundColor: chartColors,
         borderWidth: 0,
-        borderRadius: 1
+        hoverOffset: 15
       }]
     },
     options: getModernOptions()
@@ -111,20 +113,23 @@ window.renderAdvanceChart = function (approved, pendingOrRejected) {
 window.renderLeaveStatusChart = function (approved, pending, rejected) {
   const ctx = document.getElementById('LeaveStatusChartData');
   if (!ctx) return;
-  const theme = getChartTheme(); // Fetch colors right before rendering
   if (window.leaveChartInstance) window.leaveChartInstance.destroy();
+
+  // COLOR LOGIC: High contrast for Leave Distribution
+  const leaveColors = isDark()
+    ? ['#00E5FF', '#376099', '#8BF0E6'] // Electric Cyan, Silver, Vivid Rose
+    : ['#03A9FC', '#23233B', '#8BF0E6']; // Royal Blue, Silver, Deep Red
 
   window.leaveChartInstance = new Chart(ctx, {
     type: 'doughnut',
-    plugins: [centerTextPlugin], // Apply the plugin here
+    plugins: [centerTextPlugin],
     data: {
       labels: ['Approved', 'Pending', 'Rejected'],
       datasets: [{
         data: [approved, pending, rejected],
-        backgroundColor: ['#0EA5E9', '#222240', '#7863FF'],
-        hoverOffset: 20,
+        backgroundColor: leaveColors,
         borderWidth: 0,
-        borderRadius: 1
+        hoverOffset: 15
       }]
     },
     options: getModernOptions()

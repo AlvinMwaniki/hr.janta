@@ -9,6 +9,7 @@ public class LeaveRequestViewDto
 	// Employee Info
 	public string EmployeeName { get; set; } = string.Empty;
 	public string EmployeeJobTitle { get; set; } = string.Empty;
+	public string Department {  get; set; } = string.Empty;
 
 	// Leave Details
 	public LeaveType LeaveType { get; set; }

@@ -1,0 +1,194 @@
+﻿@page "/recruitment/onboarding"
+@using HR.Data.Models.Recruitment
+@using HR.Services.Interfaces
+@using HR.Services.Services
+@inject IOnboardingService OnboardingService
+@inject IJobApplicationService JobAppService
+@inject NavigationManager Nav
+@inject EmployeeTempService TempService
+@rendermode InteractiveServer
+
+<div class="container py-4">
+
+  <h2 class="fw-bold mb-4" style="color:#222240;">Candidate Onboarding</h2>
+
+  @if (app == null)
+  {
+    <div class="alert alert-danger">Application not found.</div>
+  }
+  else
+  {
+    <div class="card shadow-sm border-0 rounded-4 p-4">
+
+      <h4 class="fw-bold">@app.FullName</h4>
+      <p class="text-muted">@app.Email</p>
+
+      <hr />
+
+      <h5 class="fw-bold mb-3">Onboarding Checklist</h5>
+
+      <div class="list-group mb-4">
+
+        @ChecklistItem("KRA PIN", () => onboarding.KRAProvided, v => onboarding.KRAProvided = v)
+        @ChecklistItem("NSSF", () => onboarding.NSSFProvided, v => onboarding.NSSFProvided = v)
+        @ChecklistItem("NHIF", () => onboarding.NHIFProvided, v => onboarding.NHIFProvided = v)
+        @ChecklistItem("Bank Details", () => onboarding.BankDetailsProvided, v => onboarding.BankDetailsProvided = v)
+        @ChecklistItem("Background Check", () => onboarding.BackgroundCheckPassed, v => onboarding.BackgroundCheckPassed = v)
+
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-bold">Progress</label>
+        <div class="progress" style="height: 20px;">
+          <div class="progress-bar @ProgressColor()"
+               style="width:@ProgressPercent();">
+            @ProgressPercent()
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between mt-4">
+
+        <button class="btn btn-outline-danger rounded-pill px-4"
+                @onclick="RejectCandidate">
+          Reject
+        </button>
+
+        <button class="btn btn-success rounded-pill px-4"
+                disabled="@(!IsReadyToHire())"
+                @onclick="HireCandidate">
+          Hire Candidate
+        </button>
+
+      </div>
+
+    </div>
+  }
+</div>
+
+@code {
+  private JobApplication? app;
+  private HR.Data.Models.Recruitment.Onboarding onboarding = new();
+  protected override async Task OnInitializedAsync()
+  {
+    var uri = Nav.ToAbsoluteUri(Nav.Uri);
+    var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+    if (query.TryGetValue("appId", out var appIdStr) &&
+        Guid.TryParse(appIdStr, out var appId))
+    {
+      app = await JobAppService.GetByIdAsync(appId);
+
+      var onboardingResult = await OnboardingService.GetByApplicationIdAsync(appId);
+
+      if (onboardingResult == null)
+      {
+        onboarding = new HR.Data.Models.Recruitment.Onboarding
+        {
+          JobApplicationId = appId
+        };
+
+        // Auto-create onboarding record immediately
+        await OnboardingService.CreateOrUpdateAsync(onboarding);
+      }
+      else
+      {
+        onboarding = onboardingResult;
+      }
+    }
+  }
+
+  private RenderFragment ChecklistItem(string label, Func<bool> getter, Action<bool> setter) => builder =>
+  {
+    builder.OpenElement(0, "label");
+    builder.AddAttribute(1, "class", "list-group-item d-flex justify-content-between align-items-center");
+
+    builder.AddContent(2, label);
+
+    builder.OpenElement(3, "input");
+    builder.AddAttribute(4, "type", "checkbox");
+    builder.AddAttribute(5, "checked", getter());
+    builder.AddAttribute(6, "onchange",
+        EventCallback.Factory.Create<ChangeEventArgs>(this, async e =>
+    {
+      setter(Convert.ToBoolean(e.Value));
+      await Save();
+    }));
+    builder.CloseElement();
+
+    builder.CloseElement();
+  };
+
+  private async Task Save()
+  {
+    await OnboardingService.CreateOrUpdateAsync(onboarding);
+    StateHasChanged();
+  }
+
+  private string ProgressPercent()
+  {
+    int total = 5;
+    int done = 0;
+
+    if (onboarding.KRAProvided) done++;
+    if (onboarding.NSSFProvided) done++;
+    if (onboarding.NHIFProvided) done++;
+    if (onboarding.BankDetailsProvided) done++;
+    if (onboarding.BackgroundCheckPassed) done++;
+
+    return $"{(done * 100 / total)}%";
+  }
+
+  private bool IsReadyToHire()
+  {
+    return onboarding.KRAProvided &&
+           onboarding.NSSFProvided &&
+           onboarding.NHIFProvided &&
+           onboarding.BankDetailsProvided &&
+           onboarding.BackgroundCheckPassed;
+  }
+
+  private async Task HireCandidate()
+  {
+    await OnboardingService.MarkAsHiredAsync(onboarding.JobApplicationId);
+
+    // Load the full application
+    var app = await JobAppService.GetByIdAsync(onboarding.JobApplicationId);
+
+    if (app != null)
+    {
+      // Map application → employee temp model
+      TempService.InitializeFromApplication(app);
+    }
+
+    // Redirect to employee creation
+    Nav.NavigateTo("/employees/create");
+  }
+
+  private async Task RejectCandidate()
+  {
+    await OnboardingService.MarkAsRejectedAsync(onboarding.JobApplicationId);
+    Nav.NavigateTo("/admin/recruitment/applications");
+  }
+  private string ProgressColor()
+  {
+    int total = 5;
+    int done = 0;
+
+    if (onboarding.KRAProvided) done++;
+    if (onboarding.NSSFProvided) done++;
+    if (onboarding.NHIFProvided) done++;
+    if (onboarding.BankDetailsProvided) done++;
+    if (onboarding.BackgroundCheckPassed) done++;
+
+    var percent = (done * 100 / total);
+
+    if (percent == 100)
+      return "bg-success";
+
+    if (percent >= 50)
+      return "bg-warning";
+
+    return "bg-danger";
+  }
+}

@@ -23,7 +23,7 @@ else if (CurrentEmployee == null)
 }
 else
 {
-  <div class="card shadow-sm p-3 mb-4 bg-light border-primary">
+  <div class="card shadow-sm p-3 mb-4 border-primary">
     <h5 class="card-title mb-2 text-primary">Your Details</h5>
     <div class="row small">
       <div class="col-md-4"><strong>Employee Name:</strong> @CurrentEmployee.FullName</div>
@@ -72,8 +72,12 @@ else
         </div>
 
         <div class="mb-4">
-          <label for="reason" class="form-label">Reason for Leave</label>
-          <InputTextArea @bind-Value="model.Reason" class="form-control" rows="3" />
+          <label for="reason" class="form-label">Write Official Leave Application /Reason for Leave</label>
+          <InputTextArea id="reason"
+                         @bind-Value="model.Reason"
+                         class="form-control"
+                         rows="4"
+                         placeholder="Type your official request here..." />
           <ValidationMessage For="@(() => model.Reason)" />
         </div>
 

@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f7f9fc;
+      padding: 20px;
+      color: #333;
+    }
+
+    .contract-container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+      .header img {
+        width: 120px;
+        margin-bottom: 10px;
+      }
+
+    h1 {
+      color: #222240;
+      margin-bottom: 5px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 25px;
+      color: #222240;
+      border-left: 5px solid #222240;
+      padding-left: 10px;
+    }
+
+    ul {
+      margin-top: 10px;
+      padding-left: 20px;
+    }
+
+    .signature-block {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .signature {
+      width: 45%;
+      padding-top: 40px;
+      border-top: 1px solid #999;
+      text-align: center;
+    }
+
+    .watermark {
+      position: fixed;
+      top: 40%;
+      left: 20%;
+      opacity: 0.08;
+      font-size: 80px;
+      transform: rotate(-30deg);
+      color: #222240;
+      z-index: -1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="watermark">HR MASTER PROX</div>
+
+  <div class="contract-container">
+
+    <div class="header">
+      <img src="/images/company-logo.png" />
+      <h1>Employment Contract</h1>
+      <p>Generated on {{GeneratedDate}}</p>
+    </div>
+
+    <p>
+      This Employment Agreement is made between <strong>HR Master ProX</strong> and
+      <strong>{{EmployeeName}}</strong>.
+    </p>
+
+    <div class="section-title">Position Details</div>
+    <p><strong>Job Title:</strong> {{JobTitle}}</p>
+    <p><strong>Department:</strong> {{DepartmentName}}</p>
+    <p><strong>Start Date:</strong> {{StartDate}}</p>
+
+    <div class="section-title">Employee Information</div>
+    <p><strong>Email:</strong> {{Email}}</p>
+    <p><strong>Phone:</strong> {{Phone}}</p>
+    <p><strong>Address:</strong> {{Estate}}, {{SubCounty}}, {{County}}</p>
+
+    <div class="section-title">Terms & Conditions</div>
+    <ul>
+      <li><strong>Probation Period:</strong> 3 months unless otherwise stated.</li>
+      <li><strong>Working Hours:</strong> 40 hours per week.</li>
+      <li><strong>Leave Entitlement:</strong> As per company policy.</li>
+      <li><strong>Confidentiality:</strong> Employee agrees to maintain confidentiality of company information.</li>
+      <li><strong>Termination:</strong> Either party may terminate with written notice as per company policy.</li>
+      <li><strong>Code of Conduct:</strong> Employee agrees to follow all company rules and regulations.</li>
+    </ul>
+
+    <div class="section-title">Legal Clauses</div>
+    <p>
+      This agreement is governed by applicable employment laws. Any disputes arising from this contract
+      shall be resolved through the appropriate legal channels. The employee acknowledges that they have
+      read and understood the terms of this agreement.
+    </p>
+
+    <div class="section-title">Signatures</div>
+    <div class="signature-block">
+      <div class="signature">Employee Signature</div>
+      <div class="signature">Employer Signature</div>
+    </div>
+
+  </div>
+
+</body>
+</html>

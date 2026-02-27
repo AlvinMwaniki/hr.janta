@@ -102,6 +102,11 @@ namespace HR.Data.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("longtext");
 
@@ -405,6 +410,14 @@ namespace HR.Data.Migrations
                     b.Property<int>("AnnualLeaveBalanceDays")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("ContractEndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("ContractType")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<Guid>("CountryId")
                         .HasColumnType("char(36)");
 
@@ -485,10 +498,9 @@ namespace HR.Data.Migrations
                     b.Property<byte[]>("Photo")
                         .HasColumnType("longblob");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<int>("Status")
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("int");
 
                     b.Property<Guid?>("SubCountyId")
                         .HasColumnType("char(36)");
@@ -659,6 +671,60 @@ namespace HR.Data.Migrations
                     b.ToTable("WorkHistories", (string)null);
                 });
 
+            modelBuilder.Entity("HR.Data.Models.EmployestatusLog.EmployeeStatusLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .UseCollation("ascii_general_ci");
+
+                    MySqlPropertyBuilderExtensions.HasCharSet(b.Property<Guid>("Id"), "ascii");
+
+                    b.Property<string>("AuthorizedBy")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("char(36)")
+                        .UseCollation("ascii_general_ci");
+
+                    MySqlPropertyBuilderExtensions.HasCharSet(b.Property<Guid>("EmployeeId"), "ascii");
+
+                    b.Property<bool>("FinalPayProcessed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<decimal>("FinalSettlementAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<bool>("IsRehireable")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("LastWorkDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("NewStatus")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("NoticeDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeeStatusLogs", (string)null);
+                });
+
             modelBuilder.Entity("HR.Data.Models.Leaves.LeaveRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -704,6 +770,372 @@ namespace HR.Data.Migrations
                     b.HasIndex("EmployeeId");
 
                     b.ToTable("LeaveRequests", (string)null);
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.ApplicantEducation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Field")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Institution")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<Guid>("JobApplicationId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobApplicationId");
+
+                    b.ToTable("ApplicantEducations", (string)null);
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.ApplicantExperience", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("City")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Company")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("JobApplicationId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("JobTitle")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Responsibilities")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobApplicationId");
+
+                    b.ToTable("ApplicantExperiences", (string)null);
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.Interview", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("InterviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("InterviewTime")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("JobApplicationId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Outcome")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobApplicationId");
+
+                    b.ToTable("Interviews");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.JobApplication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("AIRankingReason")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("AppliedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CVPath")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("CountryId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("CountyId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("CoverLetter")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Estate")
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("JobListingId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("LinkedInProfile")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("POBox")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("SkillsFound")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("SubCountyId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("SuitabilityScore")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountryId");
+
+                    b.HasIndex("CountyId");
+
+                    b.HasIndex("JobListingId");
+
+                    b.HasIndex("SubCountyId");
+
+                    b.ToTable("JobApplications", (string)null);
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.JobListing", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("ClosingDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ExternalDescription")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ExternalTitle")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<Guid>("JobRequisitionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Location")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("PublishedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("RequiredEducationLevel")
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("RequiredExperienceYears")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequiredSkills")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobRequisitionId");
+
+                    b.ToTable("JobListings");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.JobRequisition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("BudgetApproved")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("ContractType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("JobTitle")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("RequiredEducationLevel")
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("RequiredExperienceYears")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequiredSkills")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RequisitionNumber")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("SalaryMax")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("SalaryMin")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.ToTable("JobRequisition");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.Onboarding", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("BackgroundCheckPassed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("BankDetailsProvided")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("JobApplicationId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("KRAProvided")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("NHIFProvided")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("NSSFProvided")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobApplicationId");
+
+                    b.ToTable("Onboardings");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.RequisitionApproval", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("ActionByUserId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("ActionDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("ApprovalLevel")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comments")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("JobRequisitionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActionByUserId");
+
+                    b.HasIndex("JobRequisitionId");
+
+                    b.ToTable("RequisitionApprovals");
                 });
 
             modelBuilder.Entity("HR.Data.Models.Advances.SalaryAdvance", b =>
@@ -895,6 +1327,17 @@ namespace HR.Data.Migrations
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("HR.Data.Models.EmployestatusLog.EmployeeStatusLog", b =>
+                {
+                    b.HasOne("HR.Data.Models.Employees.Employee", "Employee")
+                        .WithMany("StatusLogs")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("HR.Data.Models.Leaves.LeaveRequest", b =>
                 {
                     b.HasOne("HR.Data.Models.Auth.User", "ApprovedBy")
@@ -910,6 +1353,122 @@ namespace HR.Data.Migrations
                     b.Navigation("ApprovedBy");
 
                     b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.ApplicantEducation", b =>
+                {
+                    b.HasOne("HR.Data.Models.Recruitment.JobApplication", "JobApplication")
+                        .WithMany("Education")
+                        .HasForeignKey("JobApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JobApplication");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.ApplicantExperience", b =>
+                {
+                    b.HasOne("HR.Data.Models.Recruitment.JobApplication", "JobApplication")
+                        .WithMany("Experience")
+                        .HasForeignKey("JobApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JobApplication");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.Interview", b =>
+                {
+                    b.HasOne("HR.Data.Models.Recruitment.JobApplication", "JobApplication")
+                        .WithMany()
+                        .HasForeignKey("JobApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JobApplication");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.JobApplication", b =>
+                {
+                    b.HasOne("HR.Data.Models.Country.Country", "Country")
+                        .WithMany()
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HR.Data.Models.County.County", "County")
+                        .WithMany()
+                        .HasForeignKey("CountyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("HR.Data.Models.Recruitment.JobListing", "JobListing")
+                        .WithMany("Applications")
+                        .HasForeignKey("JobListingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HR.Data.Models.County.SubCounty", "SubCounty")
+                        .WithMany()
+                        .HasForeignKey("SubCountyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Country");
+
+                    b.Navigation("County");
+
+                    b.Navigation("JobListing");
+
+                    b.Navigation("SubCounty");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.JobListing", b =>
+                {
+                    b.HasOne("HR.Data.Models.Recruitment.JobRequisition", "JobRequisition")
+                        .WithMany()
+                        .HasForeignKey("JobRequisitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JobRequisition");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.JobRequisition", b =>
+                {
+                    b.HasOne("HR.Data.Models.Departments.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.Onboarding", b =>
+                {
+                    b.HasOne("HR.Data.Models.Recruitment.JobApplication", "JobApplication")
+                        .WithMany()
+                        .HasForeignKey("JobApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JobApplication");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.RequisitionApproval", b =>
+                {
+                    b.HasOne("HR.Data.Models.Auth.User", "ActionByUser")
+                        .WithMany()
+                        .HasForeignKey("ActionByUserId");
+
+                    b.HasOne("HR.Data.Models.Recruitment.JobRequisition", "JobRequisition")
+                        .WithMany("Approvals")
+                        .HasForeignKey("JobRequisitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActionByUser");
+
+                    b.Navigation("JobRequisition");
                 });
 
             modelBuilder.Entity("HR.Data.Models.Auth.User", b =>
@@ -952,7 +1511,26 @@ namespace HR.Data.Migrations
 
                     b.Navigation("Skills");
 
+                    b.Navigation("StatusLogs");
+
                     b.Navigation("WorkHistory");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.JobApplication", b =>
+                {
+                    b.Navigation("Education");
+
+                    b.Navigation("Experience");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.JobListing", b =>
+                {
+                    b.Navigation("Applications");
+                });
+
+            modelBuilder.Entity("HR.Data.Models.Recruitment.JobRequisition", b =>
+                {
+                    b.Navigation("Approvals");
                 });
 #pragma warning restore 612, 618
         }

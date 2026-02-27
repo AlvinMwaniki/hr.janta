@@ -1,0 +1,13 @@
+﻿@inherits LayoutComponentBase
+
+<div class="empty-layout">
+  @Body
+</div>
+
+<style>
+  /* This ensures the report takes up the whole screen without sidebars */
+  .empty-layout {
+    min-height: 100vh;
+    background-color: #fff;
+  }
+</style>

@@ -6,6 +6,8 @@ using HR.Services.DTO;
 using HR.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+
 using System;
 
 using System.Threading.Tasks;
@@ -23,10 +25,10 @@ public class LeaveService : ILeaveService
 	private readonly HRDbContext _db;
 
 	private readonly ICurrentUserService _currentUser;
-
+	private readonly RefreshBroker _broker;
 	private readonly ILeaveNotificationService _notificationService;
-
-	public LeaveService(HRDbContext db, ICurrentUserService currentUser, ILeaveNotificationService notificationService)
+	private readonly IMemoryCache _cache;
+	public LeaveService(HRDbContext db, ICurrentUserService currentUser, ILeaveNotificationService notificationService, IMemoryCache cache, RefreshBroker broker)
 
 	{
 
@@ -35,7 +37,8 @@ public class LeaveService : ILeaveService
 		_currentUser = currentUser;
 
 		_notificationService = notificationService;
-
+		_cache = cache;
+		_broker = broker;
 	}
 
 	// 1. Fetching Pending Requests for Admin
@@ -45,6 +48,7 @@ public class LeaveService : ILeaveService
 		// 1. Fetch raw data from DB first (Simple columns only)
 		var pendingData = await _db.LeaveRequests
 			.Include(l => l.Employee)
+			  .ThenInclude(e => e.Department)
 			.Where(l => l.Status == "Pending")
 			.OrderByDescending(l => l.FromDate)
 			.Select(l => new
@@ -53,6 +57,8 @@ public class LeaveService : ILeaveService
 				FirstName = l.Employee.FirstName,
 				MiddleName = l.Employee.MiddleName,
 				LastName = l.Employee.LastName,
+				JobTitle = l.Employee.JobTitle,           // Added JobTitle
+				DepartmentName = l.Employee.Department.Name,
 				l.LeaveType,
 				l.FromDate,
 				l.ToDate,
@@ -66,6 +72,8 @@ public class LeaveService : ILeaveService
 		{
 			Id = l.Id,
 			EmployeeName = $"{l.FirstName} {l.MiddleName} {l.LastName}".Trim(),
+			EmployeeJobTitle = l.JobTitle ?? "Staff",      // Map to DTO property
+			Department = l.DepartmentName ?? "General",    // Map to DTO property
 			LeaveType = Enum.TryParse<LeaveType>(l.LeaveType, out var type) ? type : LeaveType.Annual,
 			FromDate = l.FromDate,
 			ToDate = l.ToDate,
@@ -93,7 +101,7 @@ public class LeaveService : ILeaveService
 		request.Status = LeaveStatus.Cancelled.ToString();
 
 		await _db.SaveChangesAsync();
-
+		_cache.Remove("PendingCounts");
 		return true;
 
 	}
@@ -224,10 +232,21 @@ public class LeaveService : ILeaveService
 
 		await _db.SaveChangesAsync();
 
+		_cache.Remove("PendingCounts");
 
+		try
+		{
+			// Fetch the name of the person who just applied
+			var empName = await _db.Employees
+				.Where(e => e.Id == employee.Id)
+				.Select(e => $"{e.FirstName} {e.LastName}")
+				.FirstOrDefaultAsync();
+
+			await _broker.NotifyNewRequest("Leave Request", empName ?? "An Employee");
+		}
+		catch { /* Prevent notification failure from breaking the save */ }
 
 		return true;
-
 	}
 
 
@@ -271,6 +290,8 @@ public class LeaveService : ILeaveService
 		await _db.SaveChangesAsync();
 
 		// Notify Employee via SignalR
+		_cache.Remove("PendingCounts");
+		await _broker.CallRequestChanged();
 
 		var employeeUserId = request.Employee.UserId.ToString();
 
@@ -322,4 +343,41 @@ public class LeaveService : ILeaveService
 
 	}
 
+	public async Task<List<LeaveRequestViewDto>> GetAllRequestsAsync()
+	{
+		var allData = await _db.LeaveRequests
+			.Include(l => l.Employee)
+				.ThenInclude(e => e.Department) // CRITICAL: This pulls Department Name
+			.OrderByDescending(l => l.CreatedAt)
+			.Select(l => new
+			{
+				l.Id,
+				l.EmployeeId,
+				FirstName = l.Employee.FirstName,
+				LastName = l.Employee.LastName,
+				JobTitle = l.Employee.JobTitle, // From Employee Table
+				DepartmentName = l.Employee.Department.Name, // From Department Table
+				l.LeaveType,
+				l.FromDate,
+				l.ToDate,
+				l.Reason,
+				l.Status,
+				l.CreatedAt
+			})
+			.ToListAsync();
+
+		return allData.Select(l => new LeaveRequestViewDto
+		{
+			Id = l.Id,
+			EmployeeName = $"{l.FirstName} {l.LastName}",
+			EmployeeJobTitle = l.JobTitle ?? "Staff",
+			Department = l.DepartmentName ?? "General", 
+			LeaveType = Enum.TryParse<LeaveType>(l.LeaveType, out var type) ? type : LeaveType.Annual,
+			FromDate = l.FromDate,
+			ToDate = l.ToDate,
+			Reason = l.Reason ?? string.Empty,
+			Status = Enum.TryParse<LeaveStatus>(l.Status, out var status) ? status : LeaveStatus.Pending,
+			DurationInDays = (int)(l.ToDate - l.FromDate).TotalDays + 1
+		}).ToList();
+	}
 }

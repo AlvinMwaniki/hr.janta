@@ -38,5 +38,16 @@ namespace HR.Services.Services
 			Console.WriteLine("=============================================");
 			return Task.CompletedTask;
 		}
+		public Task SendInterviewInviteAsync(string toEmail, string candidateName, string jobTitle, DateTime date, string? time)
+		{
+			Console.WriteLine("=============================================");
+			Console.WriteLine($"EMAIL SIMULATION");
+			Console.WriteLine($"TO: {toEmail}");
+			Console.WriteLine($"SUBJECT: {candidateName}");
+			Console.WriteLine($"---------------------------------------------");
+			Console.WriteLine(jobTitle);
+			Console.WriteLine("=============================================");
+			return Task.CompletedTask;
+		}
 	}
 }

@@ -1,0 +1,143 @@
+﻿@using MudBlazor
+@using HR.Core.DTOs.Reports
+@* Avoid adding 'using Blazorise' here *@
+
+<MudDialog>
+  <TitleContent>
+    <MudText Typo="MudBlazor.Typo.h6">
+      <MudIcon Icon="@Icons.Material.Filled.Analytics" Class="mr-3 mb-n1" />
+      @ReportName Preview
+    </MudText>
+  </TitleContent>
+  <DialogContent>
+    <div class="d-flex justify-end mb-4 gap-2">
+      <MudButton Variant="MudBlazor.Variant.Filled"
+                 Color="MudBlazor.Color.Success"
+                 StartIcon="@Icons.Custom.FileFormats.FileExcel"
+                 OnClick="ExportExcel">Excel</MudButton>
+
+      <MudButton Variant="MudBlazor.Variant.Filled"
+                 Color="MudBlazor.Color.Error"
+                 StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                 OnClick="ExportPdf">PDF</MudButton>
+    </div>
+
+    @if (_isLoading)
+    {
+      <div class="d-flex flex-column align-center py-10">
+        <MudProgressCircular Color="MudBlazor.Color.Primary" Indeterminate="true" />
+        <MudText Class="mt-4">Fetching Intelligence Data...</MudText>
+      </div>
+    }
+    else if (_data == null || !_data.Any())
+    {
+      <MudAlert Severity="MudBlazor.Severity.Info">No records found for the selected criteria.</MudAlert>
+    }
+    else
+    {
+      <MudTable Items="_data" Dense="true" Hover="true" Striped="true" FixedHeader="true" Height="400px">
+        <HeaderContent>
+          @foreach (var col in _columns)
+          {
+            <MudTh>@col</MudTh>
+          }
+        </HeaderContent>
+        <RowTemplate Context="row">
+          @foreach (var col in _columns)
+          {
+            <MudTd DataLabel="@col">@GetCellValue(row, col)</MudTd>
+          }
+        </RowTemplate>
+      </MudTable>
+    }
+  </DialogContent>
+  <DialogActions>
+    <MudButton OnClick="Close" Color="MudBlazor.Color.Default">Close</MudButton>
+  </DialogActions>
+</MudDialog>
+
+@code {
+  // UPDATED: Using the Interface instead of the Instance class to solve the reference error
+  [CascadingParameter]
+  private MudBlazor.IMudDialogInstance? MudDialog { get; set; }
+
+  [Parameter] public string ReportName { get; set; } = "";
+  [Parameter] public string ReportKey { get; set; } = "";
+  [Parameter] public HR.Core.Enums.DepartmentType? Dept { get; set; }
+  [Parameter] public DateTime? From { get; set; }
+  [Parameter] public DateTime? To { get; set; }
+
+  [Inject] private HR.Data.Reporting.IReportRepository ReportRepo { get; set; } = default!;
+  [Inject] private IJSRuntime JS { get; set; } = default!;
+  [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+  private bool _isLoading = true;
+  private List<IDictionary<string, object>> _data = new();
+  private List<string> _columns = new();
+
+
+
+  protected override async Task OnInitializedAsync()
+  {
+    try
+    {
+      var deptId = Dept.HasValue ? ((int)Dept.Value).ToString() : "All";
+      var result = await ReportRepo.GetDynamicReportAsync(ReportKey, deptId, From, To);
+
+      if (result != null)
+      {
+        _data = result.Data ?? new List<IDictionary<string, object>>();
+        _columns = result.Columns ?? new List<string>();
+      }
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Report Error: {ex.Message}");
+    }
+    finally
+    {
+      _isLoading = false;
+    }
+  }
+
+  private string GetCellValue(IDictionary<string, object> row, string col) =>
+      row.TryGetValue(col, out var val) ? val?.ToString() ?? "" : "";
+
+  // Close the dialog using the interface method
+  private void Close() => MudDialog?.Cancel();
+
+  private async Task ExportExcel()
+  {
+    try
+    {
+      if (_data == null || !_data.Any())
+      {
+        Snackbar.Add("No data available to export", Severity.Warning);
+        return;
+      }
+
+      // 1. Get bytes from Repository
+      byte[] fileBytes = await ReportRepo.GenerateExcelReportAsync(_data, ReportName);
+
+      // 2. Convert to Base64
+      string base64 = Convert.ToBase64String(fileBytes);
+
+      // 3. Trigger JS Download
+      string fileName = $"{ReportName.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.xlsx";
+      await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, base64);
+
+      Snackbar.Add("Excel report generated successfully", Severity.Success);
+    }
+    catch (Exception ex)
+    {
+      Snackbar.Add($"Export Error: {ex.Message}", Severity.Error);
+    }
+  }
+
+  private async Task ExportPdf()
+  {
+    // For a professional PDF in a web app, triggering window.print is the
+    // standard way to use the browser's built-in "Save as PDF" engine.
+    await JS.InvokeVoidAsync("window.print");
+  }
+}

@@ -12,7 +12,7 @@ public class User
 	public string? PasswordHash { get; set; }
 	public Guid RoleId { get; set; }
 	public Role Role { get; set; } = default!;
-
+	public bool IsActive { get; set; } = true;
 	// ⭐ NEW: Navigation property for custom permissions ⭐
 	public ICollection<UserPermission> UserPermissions { get; set; } = new List<UserPermission>();
 

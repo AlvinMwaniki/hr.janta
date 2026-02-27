@@ -54,7 +54,7 @@ body.dark {
 .form-label {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #495057; /* Light mode default */
+  color: #292828; /* Light mode default */
   margin-bottom: 8px;
   display: block;
   transition: color 0.2s ease;
@@ -304,7 +304,14 @@ body {
   justify-content: center;
   align-items: center;
   border-radius: 0 20px 20px 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+
+  .login-form-panel::-webkit-scrollbar {
+    display: none;
+  }
 
   /* Override the margins and width imposed by your Login.razor content */
   .login-form-panel > .row.justify-content-center {
@@ -344,7 +351,27 @@ body.dark .login-form-panel .form-label,
   /* Sets the margin below each item to 25 pixels, which should look like skipping a line */
   margin-bottom: 25px;
 }
+/* Smoothly expand the form when validation messages appear */
+.validation-message {
+  color: #e11d48; /* Premium Rose Red */
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+  animation: fadeInDown 0.3s ease-out;
+}
 
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
   /* Optional: To ensure the icon doesn't look too close to the text */
   .portal-list-spaced li span {
     margin-right: 12px;
@@ -517,8 +544,81 @@ body.dark, [data-bs-theme="dark"] {
   --card-shadow: rgba(0, 0, 0, 0.6);
 }
 
+/* Custom Table styling to bridge your light/dark themes */
+.custom-staff-table {
+  color: var(--text-main) !important;
+}
 
+  /* Light Mode: Header is your requested Navy */
+  .custom-staff-table thead {
+    background-color: #222240 !important;
+    color: white !important;
+  }
 
+/* Dark Mode Overrides */
+body.dark .custom-staff-table thead {
+  background-color: #1a1a1a !important; /* Matches your header variable */
+  border-bottom: 2px solid #444;
+}
+
+body.dark .custom-staff-table tbody tr {
+  background-color: transparent !important;
+  color: var(--text-main) !important;
+  border-bottom: 1px solid #3d3d3d;
+}
+
+  body.dark .custom-staff-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+
+/* Badge for departments in light/dark */
+.bg-navy-subtle {
+  background-color: rgba(34, 34, 64, 0.1);
+  color: #222240;
+}
+
+body.dark .bg-navy-subtle {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f5f5f5;
+}
+
+/* Photo adjustments */
+.emp-list-photo {
+  object-fit: cover;
+  border: 2px solid #fff;
+}
+
+body.dark .emp-list-photo {
+  border-color: #444;
+}
+
+/* Target the "Staff Management" H2 specifically in Dark Mode */
+body.dark h2[style*="color: #222240"] {
+  color: #ffffff !important;
+}
+.btn-prox-outline {
+  color: #222240;
+  border-color: #222240;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+  .btn-prox-outline:hover {
+    background-color: #222240;
+    color: #ffffff;
+  }
+
+/* Dark Mode Override */
+body.dark .btn-prox-outline {
+  color: #f5f5f5 !important; /* Off-white text */
+  border-color: #444 !important; /* Subtle border to match sidebar */
+}
+
+  body.dark .btn-prox-outline:hover {
+    background-color: #f5f5f5 !important;
+    color: #000000 !important; /* Invert on hover for high contrast */
+    border-color: #f5f5f5 !important;
+  }
 /* Global Application */
 
 
@@ -547,6 +647,72 @@ body.dark .custom-header {
   border-bottom: 1px solid #333 !important;
   box-shadow: 0 4px 10px rgba(0,0,0,0.8) !important;
 }
+
+/* LIGHT MODE (Default) */
+.prox-header-text {
+  color: #222240; /* Your brand navy */
+  transition: color 0.3s ease;
+}
+/* 1. The Pill Navigation Container */
+.prox-pill-container {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+}
+
+body.dark .prox-pill-container {
+  background: #1a1a1a !important; /* Matches your header/sidebar style */
+  border: 1px solid #333 !important;
+}
+
+/* 2. The Glass Stage (The main background area) */
+.prox-glass-stage {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+body.dark .prox-glass-stage {
+  background: #000000 !important; /* Pure Black like your body variable */
+  border: 1px solid #222 !important;
+}
+
+/* 3. The Internal Cards (Overview/Chart boxes) */
+.prox-dark-card {
+  background: #ffffff;
+}
+
+body.dark .prox-dark-card {
+  background: #1a1a1a !important; /* Slightly lighter than the black stage for depth */
+  color: #ffffff;
+  border: 1px solid #333 !important;
+}
+
+/* 4. Labels inside the cards */
+.prox-sub-label {
+  color: #6c757d; /* Standard muted */
+}
+
+body.dark .prox-sub-label {
+  color: #CED3D6 !important; /* Whitish gray from your variables */
+}
+
+/* 5. Pill Navigation Active State */
+body.dark .nav-pills .nav-link:not(.active) {
+  color: #888 !important;
+}
+
+body.dark .nav-pills .nav-link.active {
+  background: #2596be !important; /* Your brand blue */
+  color: white !important;
+}
+/* DARK MODE */
+body.dark .prox-header-text {
+  color: #ffffff !important; /* Pure white for dark backgrounds */
+}
+
+/* Optional: Make the Card Header border look better in Dark Mode */
+body.dark .card-header {
+  border-bottom: 1px solid #2d3245 !important;
+}
 /* Ensure the logo container background matches */
 /*body.dark .top-row.navbar {
   background-color: #121212 !important;
@@ -564,7 +730,15 @@ body.dark .custom-header {
     display: block; /* Forces the menu to be visible */
     margin-top: 0;  /* Keeps the menu attached to the button */
 }
+.prox-badge-outline {
+  background-color: #ffffff !important; /* White in light mode */
+}
 
+body.dark .prox-badge-outline {
+  background-color: transparent !important; /* Transparent in dark mode */
+  color: #66b0ff !important; /* Lighter blue for better contrast */
+  border-color: #66b0ff !important;
+}
 /* 2. Nested (Dropend) Menu */
 /* When the 'Theme Settings' link (nested-trigger) is hovered, show the nested menu */
 .dropend:hover > .dropdown-menu {
@@ -638,4 +812,144 @@ body.dark .custom-header {
   }
 
 }
+/* Unique System Pulse Animation */
+.pulse-animation {
+  animation: system-pulse 2s infinite;
+  box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+}
 
+@keyframes system-pulse {
+  0% {
+    transform: translate(100%, -50%) scale(0.95);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+
+  70% {
+    transform: translate(100%, -50%) scale(1.1);
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+
+  100% {
+    transform: translate(100%, -50%) scale(0.95);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+/* Custom Brand Button */
+.btn-brand-navy {
+  background-color: #222240 !important;
+  border-color: #222240 !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+}
+
+  .btn-brand-navy:hover {
+    background-color: #2c2c54 !important; /* Slightly lighter navy for hover */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34, 34, 64, 0.3);
+    color: #ffffff !important;
+  }
+
+/* Ensure it looks sharp in Dark Mode too */
+body.dark .btn-brand-navy {
+  background-color: #222240 !important;
+  border: 1px solid #444;
+}
+
+  body.dark .btn-brand-navy:hover {
+    background-color: #31315a !important;
+    border-color: #13e5bf; /* Optional: Teal border on hover to match your teal dots */
+  }
+@media print {
+  .modal-footer, .btn-close, .sidebar, .nav {
+    display: none !important;
+  }
+
+  .modal-content {
+    border: none !important;
+  }
+}
+
+.detail-label {
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+/*========== DEVICE LAYOUT-SPECIFIC STYLES ==========*/
+/* 1. LARGE SCREEN OPTIMIZATION (Prevent the "Stretched" Look) */
+@media (min-width: 1400px) {
+  /* Keeps the form at a readable width on huge monitors */
+  .container-fluid.container-md {
+    max-width: 1140px !important;
+    margin: 0 auto;
+  }
+}
+
+/* 2. TABLET & MOBILE TWEAKS (Fixing Column Density) */
+@media (max-width: 992px) {
+  /* On tablets, we ensure 3 columns become 2 for better spacing */
+  .col-md-4 {
+    flex: 0 0 auto;
+    width: 50% !important;
+  }
+}
+
+@media (max-width: 576px) {
+  /* On mobile, everything stacks 100% wide */
+  .col-md-4, .col-md-6 {
+    flex: 0 0 auto;
+    width: 100% !important;
+  }
+
+  /* Make buttons full width on mobile for easier tapping */
+  .btn-lg, .btn-brand-navy {
+    width: 100% !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .d-flex.justify-content-between {
+    flex-direction: column !important;
+  }
+}
+
+/* 3. TABLE RESPONSIVENESS (Prevent Screen Breaking) */
+.table-responsive {
+  border-radius: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scroll on iPhones */
+}
+
+/* 4. MODAL ADAPTABILITY */
+.modal-dialog {
+  margin: 1.75rem auto;
+  max-width: 800px; /* Limits width on Desktop */
+}
+
+@media (max-width: 768px) {
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: none;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+}
+
+/* 5. INPUT POLISH (Looks better on High-Res screens) */
+.form-control, .form-select {
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  transition: box-shadow 0.2s ease;
+}
+
+  .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(34, 34, 64, 0.15); /* ProX Brand Glow */
+  }

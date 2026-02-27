@@ -1,0 +1,233 @@
+﻿@page "/recruitment/interviews"
+@using HR.Data.Models.Recruitment
+@using HR.Services.Interfaces
+@inject IJobApplicationService JobAppService
+@inject IInterviewService InterviewService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<div class="container-fluid py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color:#222240;">INTERVIEW MANAGEMENT</h2>
+    <span class="badge bg-primary px-3">@interviews?.Count Shortlisted</span>
+  </div>
+
+  @if (interviews == null)
+  {
+    <div class="text-center p-5">
+      <div class="spinner-border text-primary"></div>
+    </div>
+  }
+  else if (!interviews.Any())
+  {
+    <div class="alert alert-info shadow-sm">
+      No shortlisted candidates yet.
+    </div>
+  }
+  else
+  {
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <table class="table table-hover align-middle mb-0">
+        <thead style="background:#222240;" class="text-white">
+          <tr>
+            <th class="ps-4">Candidate</th>
+            <th>Position</th>
+            <th>Experience</th>
+            <th>Score</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var app in interviews)
+          {
+            <tr>
+              <td class="ps-4">
+                <div class="fw-bold">@app.FullName</div>
+                <div class="text-muted small">@app.Email</div>
+              </td>
+
+              <td>
+                <div class="fw-semibold">@app.JobListing?.ExternalTitle</div>
+              </td>
+
+              <td>
+                <span class="badge bg-secondary">
+                  @CalculateTotalExperience(app) yrs
+                </span>
+              </td>
+
+              <td>
+                <span class="fw-bold">@app.SuitabilityScore%</span>
+              </td>
+
+              <td class="text-end pe-4">
+                <button class="btn btn-sm btn-primary rounded-pill px-3"
+                        @onclick="() => OpenInterviewModal(app)">
+                  MANAGE INTERVIEW
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+@if (selectedApp != null)
+{
+  <div class="modal fade show d-block" style="background:rgba(0,0,0,0.6);">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content rounded-4 shadow-lg">
+
+        <div class="modal-header" style="background:#222240; color:white;">
+          <h5 class="modal-title fw-bold">Interview: @selectedApp.FullName</h5>
+          <button class="btn-close btn-close-white" @onclick="CloseInterviewModal"></button>
+        </div>
+
+        <div class="modal-body p-4">
+
+          <h6 class="fw-bold mb-3">Schedule Interview</h6>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Interview Date</label>
+              <InputDate @bind-Value="interviewDate" class="form-control" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Interview Time</label>
+              <InputText @bind-Value="interviewTime" class="form-control" placeholder="e.g. 10:30 AM" />
+            </div>
+          </div>
+
+          <label class="form-label fw-bold">Interview Notes</label>
+          <InputTextArea @bind-Value="interviewNotes" class="form-control" rows="4"
+                         placeholder="Add notes, expectations, or instructions..." />
+
+        </div>
+
+        <div class="modal-footer bg-light d-flex justify-content-between">
+          <button class="btn btn-outline-danger rounded-pill px-4"
+                  @onclick="() => MarkOutcome(InterviewOutcome.Failed)">
+            Reject Candidate
+          </button>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-success rounded-pill px-4"
+                    @onclick="SaveInterview">
+              Save Interview
+            </button>
+            <button class="btn btn-primary rounded-pill px-4"
+                    @onclick="() => MarkOutcome(InterviewOutcome.Passed)">
+              Mark as Passed
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+}
+
+@code {
+  private List<JobApplication>? interviews;
+  private JobApplication? selectedApp;
+
+  private DateTime interviewDate = DateTime.Today.AddDays(1);
+  private string? interviewTime;
+  private string? interviewNotes;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await LoadData();
+    CheckForAppFromQuery();
+  }
+
+  private async Task LoadData()
+  {
+    interviews = await JobAppService.GetApplicationsByStatusAsync(ApplicationStatus.Shortlisted);
+  }
+
+  private void OpenInterviewModal(JobApplication app)
+  {
+    selectedApp = app;
+    interviewDate = DateTime.Today.AddDays(1);
+    interviewTime = null;
+    interviewNotes = null;
+  }
+
+  private void CloseInterviewModal()
+  {
+    selectedApp = null;
+  }
+
+  private async Task SaveInterview()
+  {
+    if (selectedApp == null) return;
+
+    await InterviewService.CreateOrUpdateAsync(
+        selectedApp.Id,
+        interviewDate,
+        interviewTime,
+        interviewNotes
+    );
+
+    // TODO: call email service here if you wire one in
+    // await EmailService.SendInterviewInviteAsync(...);
+
+    CloseInterviewModal();
+  }
+
+  private async Task MarkOutcome(InterviewOutcome outcome)
+  {
+    if (selectedApp == null) return;
+
+    await InterviewService.SetOutcomeAsync(selectedApp.Id, outcome);
+
+    if (outcome == InterviewOutcome.Passed)
+    {
+      Nav.NavigateTo($"/recruitment/onboarding?appId={selectedApp.Id}");
+    }
+
+    selectedApp = null;
+    await LoadData();
+  }
+
+  private void CheckForAppFromQuery()
+  {
+    var uri = Nav.ToAbsoluteUri(Nav.Uri);
+    var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+    if (query.TryGetValue("appId", out var appIdStr))
+    {
+      if (Guid.TryParse(appIdStr, out var id))
+      {
+        selectedApp = interviews?.FirstOrDefault(x => x.Id == id);
+        if (selectedApp != null)
+        {
+          interviewDate = DateTime.Today.AddDays(1);
+        }
+      }
+    }
+  }
+
+  private double CalculateTotalExperience(JobApplication app)
+  {
+    if (app.Experience == null || !app.Experience.Any())
+      return 0;
+
+    double total = 0;
+
+    foreach (var exp in app.Experience)
+    {
+      var end = exp.EndDate ?? DateTime.UtcNow;
+      var years = (end - exp.StartDate).TotalDays / 365.0;
+      total += years;
+    }
+
+    return Math.Round(total, 1);
+  }
+
+}

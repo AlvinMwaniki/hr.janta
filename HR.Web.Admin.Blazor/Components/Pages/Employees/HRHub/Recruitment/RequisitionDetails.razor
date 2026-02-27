@@ -1,0 +1,383 @@
+﻿@page "/recruitment/details/{Id:guid}"
+@using HR.Services.DTO.Recruitment
+@using HR.Core.Enums
+@using HR.Services.Interfaces
+@inject IRequisitionService RequisitionService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<h3 class="mb-4">Requisition Details</h3>
+
+@if (IsLoading)
+{
+  <div class="text-center p-5">
+    <div class="spinner-border text-primary"></div>
+  </div>
+}
+else if (requisition == null)
+{
+  <div class="alert alert-danger">
+    Requisition not found.
+  </div>
+}
+else
+{
+  <div class="card shadow-sm p-4">
+
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">@requisition.JobTitle</h5>
+
+      <span class="badge @GetStatusBadge(requisition.Status)">
+        @requisition.Status
+      </span>
+    </div>
+
+    <hr />
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <p><strong>Requisition #:</strong> @requisition.RequisitionNumber</p>
+        <p><strong>Department:</strong> @requisition.DepartmentName</p>
+        <p><strong>Contract Type:</strong> @requisition.ContractType</p>
+      </div>
+
+      <div class="col-md-6">
+        <p>
+          <strong>Salary Range:</strong>
+          @requisition.SalaryMin.ToString("N0")
+          -
+          @requisition.SalaryMax.ToString("N0")
+        </p>
+        <p><strong>Created:</strong> @requisition.CreatedAt.ToString("d")</p>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <p><strong>Requisition #:</strong> @requisition.RequisitionNumber</p>
+          <p><strong>Department:</strong> @requisition.DepartmentName</p>
+          <p><strong>Contract Type:</strong> @requisition.ContractType</p>
+        </div>
+
+        <div class="col-md-6">
+          <p>
+            <strong>Salary Range:</strong>
+            @requisition.SalaryMin.ToString("N0")
+            -
+            @requisition.SalaryMax.ToString("N0")
+          </p>
+          <p><strong>Created:</strong> @requisition.CreatedAt.ToString("d")</p>
+        </div>
+      </div>
+
+      <hr />
+
+      <h6>ATS Criteria</h6>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <p>
+            <strong>Required Experience:</strong>
+            @(requisition.RequiredExperienceYears.HasValue
+                      ? $"{requisition.RequiredExperienceYears}+ years"
+                      : "Not specified")
+                                      </p>
+                                      <p>
+                                        <strong>Required Education:</strong>
+            @(string.IsNullOrWhiteSpace(requisition.RequiredEducationLevel)
+                      ? "Not specified"
+                      : requisition.RequiredEducationLevel)
+                                                         </p>
+                                                       </div>
+                                                       <div class="col-md-6">
+                                                         <p>
+                                                           <strong>Required Skills:</strong><br />
+            @(string.IsNullOrWhiteSpace(requisition.RequiredSkills)
+                      ? "Not specified"
+                      : requisition.RequiredSkills)
+        </p>
+      </div>
+    </div>
+
+      <hr />
+    </div>
+
+    <hr />
+
+    <h6>Description</h6>
+    <div class="description-container border rounded p-3 bg-light">
+      @if (!string.IsNullOrEmpty(requisition.Description))
+      {
+        @((MarkupString)requisition.Description)
+      }
+      else
+      {
+        <span class="text-muted italic">No description provided.</span>
+      }
+    </div>
+
+    <hr />
+
+    <h6>Approval Timeline</h6>
+    @if (requisition.Approvals != null && requisition.Approvals.Any())
+    {
+        @foreach (var approval in requisition.Approvals.OrderBy(a => a.ApprovalLevel))
+        {
+          <div class="border rounded p-3 mb-3
+                @(approval.Status == "Approved" ? "border-success" :
+                          approval.Status == "Rejected" ? "border-danger" :
+                          "border-warning")">
+
+            <div class="d-flex justify-content-between">
+              <strong>Level @approval.ApprovalLevel</strong>
+
+              <span class="badge
+                        @(approval.Status == "Approved" ? "bg-success" :
+                                      approval.Status == "Rejected" ? "bg-danger" :
+                                      "bg-warning text-dark")">
+                @approval.Status
+              </span>
+            </div>
+
+            @if (!string.IsNullOrEmpty(approval.ActionByName))
+            {
+              <div class="mt-2">
+                Approved by: <strong>@approval.ActionByName</strong>
+              </div>
+            }
+
+            <div class="small text-muted">
+              @(approval.ActionDate?.ToString("g") ?? "Awaiting action")
+            </div>
+
+            @if (!string.IsNullOrEmpty(approval.Comments))
+            {
+              <div class="mt-2 text-danger">
+                Reason: @approval.Comments
+              </div>
+            }
+          </div>
+        }
+    }
+    else
+    {
+      <div class="text-muted">No approval records found.</div>
+    }
+
+    <hr />
+
+    @* FIX: Use HasUserActed to hide buttons after one click *@
+    @if (requisition.Status == RequisitionStatus.PendingApproval && !HasUserActed)
+    {
+      <div class="mt-3">
+        <button class="btn btn-success me-2" @onclick="Approve">
+          Approve
+        </button>
+
+        <button class="btn btn-danger" @onclick="OpenRejectModal">
+          Reject
+        </button>
+      </div>
+    }
+    else if (HasUserActed && requisition.Status == RequisitionStatus.PendingApproval)
+    {
+      <div class="alert alert-info mt-3">
+        You have already acted on this requisition.
+      </div>
+    }
+
+    <hr />
+
+    <div class="d-flex justify-content-between align-items-center mt-2">
+      <button class="btn btn-outline-secondary" @onclick="GoBack">
+        <i class="bi bi-arrow-left"></i> Back to List
+      </button>
+
+      @if (requisition != null && requisition.Status == RequisitionStatus.Approved)
+      {
+        <button class="btn btn-success shadow-sm" @onclick="OpenPublishModal">
+          <i class="bi bi-megaphone-fill me-1"></i> Post to Career Site
+        </button>
+      }
+    </div>
+
+  </div>
+}
+
+@if (ShowRejectModal)
+{
+  <div class="modal fade show d-block" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">Reject Requisition</h5>
+          <button class="btn-close" @onclick="CloseRejectModal"></button>
+        </div>
+        <div class="modal-body">
+          <textarea class="form-control"
+                    placeholder="Enter rejection reason..."
+                    @bind="RejectComment"
+                    rows="4"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @onclick="CloseRejectModal">Cancel</button>
+          <button class="btn btn-danger" @onclick="ConfirmReject">Confirm Reject</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}
+@if (ShowPublishModal)
+{
+  <div class="modal fade show d-block" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content shadow-lg">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">Publish Job Listing</h5>
+          <button class="btn-close btn-close-white" @onclick="ClosePublishModal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Public Job Title</label>
+            <input type="text" class="form-control" @bind="PublicTitle" placeholder="e.g. Senior Full Stack Developer" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Location</label>
+            <select class="form-select" @bind="PublicLocation">
+              <option value="Remote">Remote</option>
+              <option value="Nairobi, Kenya">Nairobi, Kenya</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
+          </div>
+          <p class="text-muted small">Note: The description from the requisition will be used as the public description.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @onclick="ClosePublishModal">Cancel</button>
+          <button class="btn btn-primary" @onclick="HandlePublish">Confirm & Post</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}
+<style>
+  /* This ensures the HTML from the editor actually looks like a job description */
+  .description-container, .job-body {
+    line-height: 1.6;
+    color: #333;}
+    /* Force bullets to show up */
+    .description-container ul, .job-body ul {
+      list-style-type: disc !important;
+      margin-left: 1.5rem !important;
+      display: block !important;
+    }
+
+    .description-container ol, .job-body ol {
+      list-style-type: decimal !important;
+      margin-left: 1.5rem !important;
+      display: block !important;
+    }
+
+    .description-container li, .job-body li {
+      display: list-item !important;
+      margin-bottom: 0.5rem;
+    }
+
+  /* Fix for Dark Mode: ensure text is visible if background is dark */
+  [data-bs-theme='dark'] .description-container {
+    color: #f8f9fa !important;
+  }
+</style>
+
+@code {
+  [Parameter] public Guid Id { get; set; }
+
+  private RequisitionViewDto? requisition;
+  private bool IsLoading = true;
+  private bool HasUserActed = false; // Prevents double action
+  private bool ShowPublishModal = false;
+  private bool IsProcessing = false;
+  private string PublicTitle = "";
+  private string PublicLocation = "Nairobi, Kenya";
+
+  private void OpenPublishModal()
+  {
+    PublicTitle = requisition?.JobTitle ?? ""; // Default to internal title
+    ShowPublishModal = true;
+  }
+
+  protected override async Task OnInitializedAsync()
+  {
+    await LoadData();
+  }
+
+  private async Task LoadData()
+  {
+    IsLoading = true;
+    requisition = await RequisitionService.GetByIdAsync(Id);
+    
+    // Check if current user (AdminUser) already approved/rejected
+    if (requisition != null)
+    {
+        HasUserActed = requisition.Approvals.Any(a => 
+            a.ActionByName == "AdminUser" && (a.Status == "Approved" || a.Status == "Rejected"));
+    }
+    
+    IsLoading = false;
+  }
+
+  private async Task Approve()
+  {
+    await RequisitionService.ApproveAsync(Id);
+    await LoadData(); // This refreshes the local state so the badge and timeline update
+  }
+
+  private void GoBack()
+  {
+    Nav.NavigateTo("/recruitment/requisitions");
+  }
+
+  private string GetStatusBadge(RequisitionStatus status) => status switch
+  {
+    RequisitionStatus.Draft => "bg-secondary",
+    RequisitionStatus.PendingApproval => "bg-warning text-dark",
+    RequisitionStatus.Approved => "bg-success",
+    RequisitionStatus.Rejected => "bg-danger",
+    _ => "bg-secondary"
+  };
+
+  private bool ShowRejectModal = false;
+  private string RejectComment = string.Empty;
+
+  private void OpenRejectModal() => ShowRejectModal = true;
+  private void CloseRejectModal() { ShowRejectModal = false; RejectComment = string.Empty; }
+
+  private async Task ConfirmReject()
+  {
+    if (string.IsNullOrWhiteSpace(RejectComment)) return;
+    await RequisitionService.RejectAsync(Id, RejectComment);
+    CloseRejectModal();
+    await LoadData(); // This refreshes the local state
+  }
+
+  private void ClosePublishModal() => ShowPublishModal = false;
+
+  private async Task HandlePublish()
+  {
+    if (IsProcessing) return;
+    IsProcessing = true;
+
+    try
+    {
+      var success = await RequisitionService.PublishJobAsync(Id, PublicTitle, PublicLocation);
+
+      if (success)
+      {
+        ShowPublishModal = false;
+        Nav.NavigateTo("/recruitment/listings");
+      }
+    }
+    finally
+    {
+      IsProcessing = false;
+    }
+  }
+}

@@ -15,7 +15,7 @@ namespace HR.Data
 
 			// MySQL connection string
 			optionsBuilder.UseMySql(
-				"Server=localhost;Port=3306;Database=hrdb;User Id=root;Password=Mwenda2sana.;",
+				"Server=localhost;Port=3306;Database=hrdb;User Id=root;Password=mwenda2sana;",
 				new MySqlServerVersion(new Version(8, 0, 43))// MySQL version
 			);
 

@@ -1,0 +1,53 @@
+﻿
+@using HR.Data.Models.Employees
+@using HR.Core.Enums
+
+<div class="p-3 bg-white shadow-sm rounded">
+  <div class="row">
+    @* Profile Header *@
+    <div class="col-md-3 text-center border-end">
+      <img src="@Employee.PhotoBase64" class="img-thumbnail rounded mb-3" style="width: 150px; height: 150px; object-fit: cover;" />
+      <h4 class="fw-bold">@Employee.FirstName @Employee.LastName</h4>
+      <span class="badge bg-primary mb-2">@Employee.EmployeeCode</span>
+      <div class="text-muted small">@Employee.JobTitle</div>
+      <div class="mt-2">
+        <span class="badge @(Employee.Status == EmployeeStatus.Active ? "bg-success" : "bg-danger")">@Employee.Status</span>
+      </div>
+    </div>
+
+    @* Details Sections *@
+    <div class="col-md-9">
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <h6 class="text-primary border-bottom pb-1">Basic Information</h6>
+          <p><strong>Email:</strong> @Employee.Email</p>
+          <p><strong>Phone:</strong> @Employee.Phone</p>
+          <p><strong>Hire Date:</strong> @Employee.HireDate.ToLongDateString()</p>
+          <p><strong>Contract:</strong> @Employee.ContractType</p>
+        </div>
+        <div class="col-md-6">
+          <h6 class="text-primary border-bottom pb-1">Identification</h6>
+          <p><strong>ID Number:</strong> @Employee.NationalID</p>
+          <p><strong>Gender:</strong> @Employee.Gender</p>
+          <p><strong>DOB:</strong> @Employee.DOB.ToShortDateString()</p>
+        </div>
+      </div>
+
+      @* Secondary Data *@
+      <div class="row">
+        <div class="col-md-12">
+          <h6 class="text-primary border-bottom pb-1">Bank & Payment</h6>
+          <div class="d-flex gap-4">
+            <span><strong>Bank:</strong> @(Employee.BankDetail?.BankName ?? "N/A")</span>
+            <span><strong>Account:</strong> @(Employee.BankDetail?.AccountNumber ?? "N/A")</span>
+            <span><strong>KRA PIN:</strong> @(Employee.PaymentData?.KRA_PIN ?? "N/A")</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@code {
+  [Parameter] public Employee Employee { get; set; } = default!;
+}

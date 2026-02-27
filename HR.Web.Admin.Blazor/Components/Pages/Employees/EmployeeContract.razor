@@ -1,0 +1,169 @@
+﻿@page "/employees/EmployeeContract"
+@using HR.Services.DTO
+@using HR.Services.Services
+@using HR.Data.Models.Employees
+@using HR.Services
+@using HR.Data
+@inject EmployeeTempService TempService
+@inject ContractPdfService PdfService
+@inject HRDbContext Db
+
+@rendermode InteractiveServer
+
+<h3 class="mb-4">Employment Contract</h3>
+
+@if (showPreview)
+{
+  <div class="modal-backdrop fade show"></div>
+
+  <div class="modal fade show d-block" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content shadow-lg">
+
+        <div class="modal-header" style="background:#222240; color:white;">
+          <h5 class="modal-title">Contract Preview</h5>
+          <button type="button" class="btn-close btn-close-white" @onclick="ClosePreview"></button>
+        </div>
+
+        <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+          @((MarkupString)previewHtml)
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-success" @onclick="GeneratePdf">
+            Download PDF
+          </button>
+
+          <button class="btn btn-secondary" @onclick="SendToEmployee">
+            Send to Employee
+          </button>
+
+          <button class="btn btn-outline-dark" @onclick="ClosePreview">
+            Close
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+}
+
+@if (!string.IsNullOrEmpty(downloadUrl))
+{
+  <div class="alert alert-success mt-3">
+    Contract generated. <a href="@downloadUrl" target="_blank">Download here</a>.
+  </div>
+}
+
+@code {
+  private bool showPreview = false;
+  private string previewHtml = "";
+  private string? downloadUrl;
+
+  // ⭐ Automatically open modal when page loads
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender)
+    {
+      await GenerateAndPreview();
+      StateHasChanged();
+    }
+  }
+
+  private async Task GenerateAndPreview()
+  {
+    var emp = TempService.TempEmployee;
+
+    var countyName = await GetCountyName(emp.CountyId);
+    var subCountyName = await GetSubCountyName(emp.SubCountyId);
+    var departmentName = await GetDepartmentName(emp.DepartmentId);
+
+    var model = new EmploymentContractModel
+    {
+      EmployeeName = $"{emp.FirstName} {emp.LastName}",
+      JobTitle = emp.JobTitle ?? "",
+      DepartmentName = departmentName,
+      StartDate = DateTime.Today,
+      Email = emp.Email ?? "",
+      Phone = emp.Phone ?? "",
+      Estate = emp.Estate ?? "",
+      SubCounty = subCountyName,
+      County = countyName
+    };
+
+    previewHtml = PdfService.GenerateHtml(model);
+    showPreview = true;
+  }
+
+  private void ClosePreview()
+  {
+    showPreview = false;
+  }
+
+  private async Task GeneratePdf()
+  {
+    var emp = TempService.TempEmployee;
+
+    var countyName = await GetCountyName(emp.CountyId);
+    var subCountyName = await GetSubCountyName(emp.SubCountyId);
+    var departmentName = await GetDepartmentName(emp.DepartmentId);
+
+    var model = new EmploymentContractModel
+    {
+      EmployeeName = $"{emp.FirstName} {emp.LastName}",
+      JobTitle = emp.JobTitle ?? "",
+      DepartmentName = departmentName,
+      StartDate = DateTime.Today,
+      Email = emp.Email ?? "",
+      Phone = emp.Phone ?? "",
+      Estate = emp.Estate ?? "",
+      SubCounty = subCountyName,
+      County = countyName
+    };
+
+    var pdfBytes = PdfService.Generate(model);
+
+    var fileName = $"{model.EmployeeName}_Contract.pdf";
+    var folder = Path.Combine("wwwroot", "uploads", "contracts");
+    Directory.CreateDirectory(folder);
+
+    var path = Path.Combine(folder, fileName);
+    await File.WriteAllBytesAsync(path, pdfBytes);
+
+    downloadUrl = $"/uploads/contracts/{fileName}";
+
+    // ⭐ Close the modal
+    showPreview = false;
+
+    // ⭐ Trigger UI refresh
+    StateHasChanged();
+
+
+  }
+
+  private Task SendToEmployee()
+  {
+    // TODO: Email logic
+    return Task.CompletedTask;
+  }
+
+  private async Task<string> GetDepartmentName(Guid departmentId)
+  {
+    var dept = await Db.Departments.FindAsync(departmentId);
+    return dept?.Name ?? "Unknown Department";
+  }
+
+  private async Task<string> GetCountyName(Guid? id)
+  {
+    if (id == null) return "";
+    var county = await Db.Counties.FindAsync(id);
+    return county?.Name ?? "";
+  }
+
+  private async Task<string> GetSubCountyName(Guid? id)
+  {
+    if (id == null) return "";
+    var sub = await Db.SubCounties.FindAsync(id);
+    return sub?.Name ?? "";
+  }
+}

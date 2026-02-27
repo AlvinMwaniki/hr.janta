@@ -1,0 +1,155 @@
+﻿/* ===============================
+   PROX DASHBOARD TYPOGRAPHY
+================================ */
+.prox-dashboard {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.prox-kpi-value, .prox-metric-value {
+  font-size: 2.0rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #0EA5E9 !important; /* UPGRADED: Deep Dashboard Blue */
+}
+
+.prox-kpi-label, .prox-metric-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+/* Maintain dark mode labels */
+body.dark .prox-kpi-label, body.dark .prox-metric-title {
+  color: #94a3b8;
+}
+
+/* =========================================
+   PROX METRIC CARD - THE PRISTINE UPGRADE
+============================================ */
+.prox-metric-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px !important;
+  border: none;
+  min-height: 130px;
+  background: #ffffff !important; /* UPGRADED: Pure White Skin */
+  /* THE SIGNATURE: Thick Gradient Bottom Shadow/Border */
+  border-bottom: 5px solid #222240;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  transition: transform .3s ease, box-shadow .3s ease;
+  color: #222240 !important; /* Text to Deep Blue */
+}
+ 
+  .prox-metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(14, 165, 233, 0.15), inset 0 -8px 0 0 #0284c7 !important;
+  }
+
+  .prox-metric-card .card-body {
+    position: relative;
+    z-index: 2;
+  }
+
+/* Decorative Icons - Now #222240 */
+.prox-metric-decor {
+  position: absolute;
+  bottom: -5px;
+  right: -8px;
+  opacity: .12 !important; /* Subtle watermark */
+  font-size: 4rem;
+  color: #222240 !important;
+}
+
+/* Fix SVG Waves for White background */
+.prox-metric-card svg path {
+  stroke: #222240 !important;
+  opacity: 0.15;
+}
+
+/* ===============================
+   VARIANTS & EMPLOYEE STATES
+================================ */
+/* Keep background white, but change the bottom accent color */
+.prox-employee-card {
+  background: #ffffff !important; /* UPGRADED: Pure White Skin */
+  box-shadow: 0 10px 30px rgba(34, 34, 64, 0.05), inset 0 -2px 0 0 #0EA5E9 !important;
+  transition: transform .3s ease, box-shadow .3s ease;
+  color: #222240 !important; /* Text to Deep Blue */
+}
+  .prox-employee-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 6px; /* SLIMMER & CLEANER */
+    background: linear-gradient(135deg, #0EA5E9 0%, #0284c7 100%);
+    border-radius: 0 0 20px 20px; /* MATCHES CARD CURVE PERFECTLY */
+  }
+
+.prox-bg-soft, .prox-bg-glass, .prox-employee-card {
+  background: #ffffff !important;
+}
+.prox-leave-ok {
+  box-shadow: 0 10px 30px rgba(34, 34, 64, 0.05), inset 0 -2px 0 0 #34d399 !important;
+}
+.prox-leave-ok:hover {
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.15), inset 0 -8px 0 0 #10b981 !important;
+  }
+
+  .prox-leave-ok::after {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+  }
+
+.prox-leave-low {
+  box-shadow: 0 10px 30px rgba(34, 34, 64, 0.05), inset 0 -2px 0 0 #fb923c !important;
+}
+
+  .prox-leave-low::after {
+    background: linear-gradient(135deg, #fb923c 0%, #f97316 100%) !important;
+  }
+
+.prox-leave-critical {
+  box-shadow: 0 10px 30px rgba(34, 34, 64, 0.05), inset 0 -2px 0 0 #f87171 !important;
+}
+
+  .prox-leave-critical::after {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%) !important;
+  }
+/* ===============================
+   PROGRESS BAR (EMPLOYEE VIEW)         
+================================ */
+.prox-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: #f1f5f9 !important; /* Track visible on white */
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.prox-progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0EA5E9, #0284c7) !important;
+  transition: width .4s ease;
+}
+
+/* ===============================
+   DARK MODE REFINEMENT
+================================ */
+body.dark .prox-metric-card {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  box-shadow: 0 20px 45px rgba(0,0,0,.8) !important;
+}
+
+body.dark .prox-metric-value {
+  color: #ffffff !important;
+}
+
+body.dark .prox-metric-decor {
+  color: #ffffff !important;
+}

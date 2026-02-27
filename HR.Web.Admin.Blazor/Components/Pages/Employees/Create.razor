@@ -15,8 +15,12 @@
 @inject IJSRuntime JS
 
 
-
+ <div class="d-flex justify-content-between align-items-center">
 <h3>Create Employee</h3>
+  <button type="button" class="btn btn-sm btn-outline-danger" @onclick="ExitForm">
+    <i class="fas fa-times me-1"></i> Exit
+  </button>
+</div>
 
 <EditForm Model="@TempService.TempEmployee" OnValidSubmit="Save" OnInvalidSubmit="OnInvalidSubmit" FormName="Step1">
   <DataAnnotationsValidator />
@@ -74,7 +78,7 @@
     <!-- Row 1: Employee Code -->
     <div class="row form-row mb-2">
       <div class="col-md-4">
-        <label class="form-label">Employee Code</label>
+        <label class="prox-header-text form-label">Employee Code</label>
         <InputText @bind-Value="TempService.TempEmployee.EmployeeCode" class="form-control" />
       </div>
     </div>
@@ -82,16 +86,16 @@
     <!-- Row 2: First, Middle, Last Name -->
     <div class="row form-row mb-2">
       <div class="col-md-4">
-        <label class="form-label">First Name</label>
+        <label class="prox-header-text form-label">First Name</label>
         <InputText @bind-Value="TempService.TempEmployee.FirstName" class="form-control" />
         <ValidationMessage For="@(() => TempService.TempEmployee.FirstName)" />
       </div>
       <div class="col-md-4">
-        <label class="form-label">Middle Name</label>
+        <label class="prox-header-text form-label">Middle Name</label>
         <InputText @bind-Value="TempService.TempEmployee.MiddleName" class="form-control" />
       </div>
       <div class="col-md-4">
-        <label class="form-label">Last Name</label>
+        <label class="prox-header-text form-label">Last Name</label>
         <InputText @bind-Value="TempService.TempEmployee.LastName" class="form-control" />
         <ValidationMessage For="@(() => TempService.TempEmployee.LastName)" />
 
@@ -101,7 +105,7 @@
     <!-- Row 3: Email, Phone, Address -->
     <div class="row form-row mb-2">
       <div class="col-md-4">
-        <label class="form-label">
+        <label class="prox-header-text form-label">
           Email
           @if (isCheckingEmail)
           {
@@ -124,7 +128,7 @@
       </div>
 
       <div class="col-md-4">
-        <label class="form-label fw-bold">Phone Number</label>
+        <label class="prox-header-text fw-bold">Phone Number</label>
         <div class="input-group mb-3">
           <button class="btn btn-light border-secondary-subtle dropdown-toggle d-flex align-items-center"
           type="button" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 90px;">
@@ -156,9 +160,9 @@
       </div>
 
       <div class="col-md-4">
-        <label class="form-label fw-bold">County of Residence</label>
+        <label class="prox-header-text form-label fw-bold">County of Residence</label>
         <select class="form-select"
-                style="color: @(TempService.TempEmployee.CountyId == null ? "#989A9C" : "black");"
+                style="color: @(TempService.TempEmployee.CountyId == null ? "#989A9C" : "var(--text-main, inherit)");"
                 value="@TempService.TempEmployee.CountyId"
                 @onchange="HandleCountyChange" >
           <option value="" disabled selected hidden>-- Select County --</option>         
@@ -176,9 +180,9 @@
     <!-- Row 3.5: Subcounty, Estate, pobox -->
     <div class="row mb-3">
       <div class="col-md-4">
-        <label class="form-label fw-bold">Sub-County / Area</label>
+        <label class="prox-header-text form-label fw-bold">Sub-County / Area</label>
         <select @bind="TempService.TempEmployee.SubCountyId" class="form-select"
-                style="color: @(TempService.TempEmployee.SubCountyId == null ? "#989A9C" : "black");">
+                style="color: @(TempService.TempEmployee.SubCountyId == null ? "#989A9C" : "var(--text-main, inherit)");">
           
           <option value="" disabled selected hidden>-- Select Sub-County --</option>
           @if (filteredSubCounties != null)
@@ -193,19 +197,19 @@
       </div>
 
       <div class="col-md-4">
-        <label class="form-label fw-bold">Estate / Street</label>
+        <label class="prox-header-text form-label fw-bold">Estate / Street</label>
         <InputText @bind-Value="TempService.TempEmployee.Estate" class="form-control" />
       </div>
 
       <div class="col-md-4">
-        <label class="form-label fw-bold">P.O. Box</label>
+        <label class="prox-header-text form-label fw-bold">P.O. Box</label>
         <InputText @bind-Value="TempService.TempEmployee.POBox" class="form-control" />
       </div>
     </div>
     <!-- Row 4: DOB, National ID, Gender -->
     <div class="row form-row mb-2">
       <div class="col-md-4">
-        <label class="form-label">Date of Birth</label>
+        <label class="prox-header-text form-label">Date of Birth</label>
        <InputDate @bind-Value="TempService.TempEmployee.DOB" 
            class="form-control"
            
@@ -214,20 +218,20 @@
 
       </div>
       <div class="col-md-4">
-        <label class="form-label">National ID</label>
+        <label class="prox-header-text form-label">National ID</label>
         <InputText @bind-Value="TempService.TempEmployee.NationalID" class="form-control"
-                   style="@(string.IsNullOrEmpty(TempService.TempEmployee.NationalID) ? "color: #989A9C;" : "color: #212529;")" maxlength="10"
-                   placeholder="Enter 10 digits" />
+                   style="@(string.IsNullOrEmpty(TempService.TempEmployee.NationalID))" maxlength="9"
+                   placeholder="Enter 9 digits" />
         <ValidationMessage For="@(() => TempService.TempEmployee.NationalID)" />
 
       </div>
       <div class="col-md-4">
-        <label class="form-label">Gender</label>
+        <label class="prox-header-text form-label">Gender</label>
         <InputSelect @bind-Value="TempService.TempEmployee.Gender"
                      class="form-control"
-                     style="@(string.IsNullOrEmpty(TempService.TempEmployee.Gender) ? "color: #989A9C;" : "color: #212529;")">
+                     style="@(string.IsNullOrEmpty(TempService.TempEmployee.Gender))">
 
-          <option value="" selected hidden>Select Gender</option>
+          <option  value="" selected hidden>Select Gender</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
         </InputSelect>
@@ -239,15 +243,15 @@
     <!-- Row 5: Job Title, Disability, Ethnicity -->
     <div class="row form-row mb-2">
       <div class="col-md-4">
-        <label class="form-label">Job Title</label>
+        <label class="prox-header-text form-label">Job Title</label>
         <InputText @bind-Value="TempService.TempEmployee.JobTitle" class="form-control" />
         <ValidationMessage For="@(() => TempService.TempEmployee.JobTitle)" />
 
       </div>
       <div class="col-md-4">
-        <label class="form-label font-weight-bold">Are you a Person with Disability?</label>
+        <label class="prox-header-text form-label font-weight-bold">Are you a Person with Disability?</label>
         <InputSelect @bind-Value="TempService.TempEmployee.Disability" class="form-control"
-                     style="@(string.IsNullOrEmpty(TempService.TempEmployee.Disability) ? "color: #989A9C;" : "color: #212529;")">
+                     style="@(string.IsNullOrEmpty(TempService.TempEmployee.Disability) )">
 
         >
           <option value="" selected hidden>Select Disability</option>
@@ -258,35 +262,35 @@
 
       @if (TempService.TempEmployee.Disability == "Yes")
       {
-        <div class="row mt-3 border p-3 rounded bg-light">
+        <div class="row mt-3 border p-3 rounded">
           <div class="col-md-12 mb-3">
-            <label class="form-label">Nature of Disability (Describe your condition)</label>
+            <label class="prox-header-text form-label">Nature of Disability (Describe your condition)</label>
             <InputText @bind-Value="TempService.TempEmployee.DisabilityDetail!.DisabilityNature"
                        class="form-control" placeholder="e.g. Physical - Mobility Impairment" />
           </div>
 
           <div class="col-md-6">
-            <label class="form-label">NCPWD Number</label>
+            <label class="prox-header-text form-label">NCPWD Number</label>
             <InputText @bind-Value="TempService.TempEmployee.DisabilityDetail.NCPWD_Number"
                        class="form-control" />
           </div>
 
           <div class="col-md-6">
-            <label class="form-label">KRA Exemption Number</label>
+            <label class="prox-header-text form-label">KRA Exemption Number</label>
             <InputText @bind-Value="TempService.TempEmployee.DisabilityDetail.KRA_ExemptionNumber"
                        class="form-control" />
           </div>
 
           <div class="col-md-12 mt-3">
-            <label class="form-label">Upload Exemption Certificate (PDF/Image)</label>
+            <label class="prox-header-text form-label">Upload Exemption Certificate (PDF/Image)</label>
             <InputFile OnChange="HandleFileSelected" class="form-control" />
           </div>
         </div>
       }
       <div class="col-md-4">
-        <label class="form-label">Ethnicity</label>
+        <label class="prox-header-text form-label">Ethnicity</label>
         <InputSelect @bind-Value="TempService.TempEmployee.EthnicityId" class="form-control"
-                     style="@(TempService.TempEmployee.EthnicityId == null || TempService.TempEmployee.EthnicityId == Guid.Empty ? "color: #989A9C;" : "color: #212529;")">
+                     style="@(TempService.TempEmployee.EthnicityId == null || TempService.TempEmployee.EthnicityId == Guid.Empty)">
           <option value=""selected hidden>Select Ethnicity</option>
           @if (ethnicities != null)
           {
@@ -304,24 +308,66 @@
     <!-- Row 6: Hire Date, Status, Department -->
     <div class="row form-row mb-2">
       <div class="col-md-4">
-        <label class="form-label">Hire Date</label>
+        <label class="prox-header-text form-label">Hire Date</label>
         <InputDate @bind-Value="TempService.TempEmployee.HireDate" class="form-control" />
         <ValidationMessage For="@(() => TempService.TempEmployee.HireDate)" />
 
       </div>
-      <div class="col-md-4">
-        <label class="form-label">Status</label>
-        <InputSelect @bind-Value="TempService.TempEmployee.Status" class="form-control">
-          <option value="Active">Active </option>
-          <option value="Inactive">Inactive</option>
-        </InputSelect>
-        <ValidationMessage For="@(() => TempService.TempEmployee.Status)" />
 
-      </div>
+        <div class="col-md-4">
+          <label class="prox-header-text form-label fw-bold">Contract Type</label>
+          <InputSelect TValue="HR.Core.Enums.ContractType"
+                       @bind-Value="TempService.TempEmployee.ContractType"
+                       @bind-Value:after="OnTypeChanged"
+                       class="form-control">
+            @foreach (var type in Enum.GetValues(typeof(HR.Core.Enums.ContractType)))
+            {
+              <option value="@type">@type.ToString()</option>
+            }
+          </InputSelect>
+          <ValidationMessage For="@(() => TempService.TempEmployee.ContractType)" />
+        </div>
+
+        @if (TempService.TempEmployee.ContractType != HR.Core.Enums.ContractType.Permanent)
+        {
+          <div class="col-md-8 animate__animated animate__fadeInRight">
+            <div class="card shadow-sm border-primary" style="background-color: #f0f7ff; border-left: 5px solid #007bff !important;">
+              <div class="card-body py-2">
+                <div class="row align-items-center">
+                  <div class="col-md-5">
+                    <label class="form-label mb-1 small fw-bold">Set Duration</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control"
+                             @bind="durationValue"
+                             @bind:event="oninput"
+                             @bind:after="Calculate" />
+
+                      <select class="form-select w-auto"
+                              @bind="durationUnit"
+                              @bind:after="Calculate">
+                        <option value="Months">Months</option>
+                        <option value="Years">Years</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-7">
+                    <label class="form-label mb-1 small fw-bold text-primary">Calculated End Date</label>
+                    <div class="d-flex align-items-center">
+                      <InputDate @bind-Value="TempService.TempEmployee.ContractEndDate"
+                                 class="form-control form-control-sm fw-bold border-primary text-primary" />
+                      <span class="ms-2 badge bg-primary text-white">Smart Mode</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
       <div class="col-md-4">
-        <label class="form-label">Department</label>
+        <label class="prox-header-text form-label">Department</label>
         <InputSelect @bind-Value="TempService.TempEmployee.DepartmentId" class="form-control"
-                     style="@(TempService.TempEmployee.DepartmentId == Guid.Empty ? "color: #989A9C;" : "color: #212529;")">
+                     style="@(TempService.TempEmployee.DepartmentId == Guid.Empty)">
           <option value="" selected hidden>Select Department</option>
           @foreach (var d in departments)
           {
@@ -344,6 +390,55 @@
   List<County> countiesList = new();
   private List<SubCounty> filteredSubCounties = new();
   private Country? selectedCountry;
+  private int durationValue;
+  private string durationUnit = "Months";
+
+  private void OnTypeChanged()
+  {
+    if (TempService.TempEmployee.ContractType == HR.Core.Enums.ContractType.Permanent)
+    {
+      TempService.TempEmployee.ContractEndDate = null;
+      durationValue = 0;
+    }
+    else
+    {
+      // Default to 6 months if they switch to Contract/Internship for the first time
+      if (durationValue == 0) durationValue = 6;
+      Calculate();
+    }
+  }
+
+  private void HandleDurationInput(ChangeEventArgs e)
+  {
+    if (int.TryParse(e.Value?.ToString(), out int val))
+    {
+      durationValue = val;
+      Calculate();
+    }
+  }
+
+  private void Calculate()
+  {
+    // Use the HireDate from the employee model, or today as fallback
+    var baseDate = TempService.TempEmployee.HireDate == default
+                   ? DateTime.Today
+                   : TempService.TempEmployee.HireDate;
+
+    if (durationValue > 0)
+    {
+      if (durationUnit == "Months")
+      {
+        TempService.TempEmployee.ContractEndDate = baseDate.AddMonths(durationValue);
+      }
+      else if (durationUnit == "Years")
+      {
+        TempService.TempEmployee.ContractEndDate = baseDate.AddYears(durationValue);
+      }
+    }
+
+    // Forces the UI to refresh the calculated date field
+    StateHasChanged();
+  }
   private void SelectCountry(Country country)
   {
     selectedCountry = country;
@@ -402,7 +497,11 @@
     TempService.TempEmployee.SubCountyId = null;
   }
 
-
+  // Exit the form and discard changes=========================
+  private void ExitForm()
+  {
+    Navigation.NavigateTo("/employees/list");
+  }
   //private Employee employee = new Employee();
   // private EditContext? editContext;
   List<Department> departments = new();
@@ -425,6 +524,16 @@
     // Load countries for phone codes
     countries = await Db.Countries.OrderBy(c => c.Name).ToListAsync();
     // Load the 47 counties
+    // If CountyId already exists (coming from Job Application), load matching SubCounties
+    if (TempService.TempEmployee.CountyId != null)
+    {
+      filteredSubCounties = await Db.SubCounties
+          .Where(s => s.CountyId == TempService.TempEmployee.CountyId)
+          .OrderBy(s => s.Name)
+          .ToListAsync();
+    }
+
+
     countiesList = await Db.Counties.OrderBy(c => c.Name).ToListAsync();
     // SET DEFAULT TO KENYA if it's a new employee
     var kenya = countries.FirstOrDefault(c => c.IsoCode == "KE");

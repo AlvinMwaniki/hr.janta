@@ -21,18 +21,20 @@
     <PackageReference Include="Blazorise" Version="1.8.7" />
     <PackageReference Include="Blazorise.Bootstrap5" Version="1.8.7" />
     <PackageReference Include="Blazorise.Icons.FontAwesome" Version="1.8.7" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.0" />
+    <PackageReference Include="MudBlazor" Version="8.15.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Hubs\" />
     <Folder Include="LoginHandler\" />
     <Folder Include="wwwroot\uploads\disability_certs\" />
+    <Folder Include="wwwroot\uploads\cvs\" />
   </ItemGroup>
 
 </Project>

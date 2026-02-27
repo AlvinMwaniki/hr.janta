@@ -7,6 +7,7 @@
 		Suspended = 3,
 		Terminated = 4,
 		Resigned = 5,
-		ContractEnded = 6
+		ContractEnded = 6,
+		Retired = 7
 	}
 }

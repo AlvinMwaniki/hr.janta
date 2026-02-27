@@ -1,0 +1,221 @@
+﻿@page "/recruitment/create"
+@using HR.Services.DTO.Recruitment
+@using HR.Core.Enums
+@using HR.Services.Interfaces
+@using HR.Services.DTO
+@inject IJSRuntime JSRuntime
+@inject IRequisitionService RequisitionService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<div class="mb-4">
+    <h3 class="fw-bold">Create Job Requisition</h3>
+    <small class="text-muted">Fill in the details below</small>
+</div>
+
+<div class="card shadow-sm border-0 p-4">
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success">@successMessage</div>
+    }
+
+    <EditForm Model="model" OnValidSubmit="HandleSave">
+        <DataAnnotationsValidator />
+        <Microsoft.AspNetCore.Components.Forms.ValidationSummary />
+
+        <div class="row">
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Job Title</label>
+                <InputText class="form-control"
+                           @bind-Value="model.JobTitle" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Department</label>
+                <InputSelect class="form-select"
+                             @bind-Value="model.DepartmentId">
+          <option value="@Guid.Empty">-- Select Department --</option>                    
+          @foreach (var dept in Departments)
+                    {
+                        <option value="@dept.Id">@dept.Name</option>
+                    }
+                </InputSelect>
+        <ValidationMessage For="@(() => model.DepartmentId)" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Contract Type</label>
+                <InputSelect class="form-select"
+                             @bind-Value="model.ContractType">
+                    @foreach (var type in Enum.GetValues<ContractType>())
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Salary Min</label>
+                <InputNumber class="form-control"
+                             @bind-Value="model.SalaryMin" />
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Salary Max</label>
+                <InputNumber class="form-control"
+                             @bind-Value="model.SalaryMax" />
+            </div>
+      <div class="col-12 mb-3">
+        <label class="form-label fw-bold">Required Skills (comma-separated)</label>
+        <InputText class="form-control"
+                   @bind-Value="model.RequiredSkills"
+                   placeholder="e.g. C#, .NET, SQL, Azure" />
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">Required Experience (years)</label>
+        <InputNumber class="form-control"
+                     @bind-Value="model.RequiredExperienceYears" />
+      </div>
+
+      <div class="col-md-8 mb-3">
+        <label class="form-label fw-bold">Required Education Level</label>
+        <InputText class="form-control"
+                   @bind-Value="model.RequiredEducationLevel"
+                   placeholder="e.g. Degree in Computer Science" />
+      </div>
+
+      <div class="col-12 mb-3">
+        <label class="form-label fw-bold">Description</label>
+        <MudPaper Outlined="true" >
+          <div @ref="quillElement" style="height: 300px;">
+          </div>
+        </MudPaper>
+        @if (hasAttemptedSubmit && (string.IsNullOrWhiteSpace(model.Description) || model.Description == "<p><br></p>"))
+        {
+          <small class="text-danger">The job description cannot be empty.</small>
+        }
+      </div>
+
+        </div>
+
+        <div class="mt-3">
+
+            <button type="submit"
+                    class="btn btn-primary px-4"
+                    disabled="@isLoading">
+                @(isLoading ? "Saving..." : "Save as Draft")
+            </button>
+
+            <button type="button"
+                    class="btn btn-success ms-2"
+                    @onclick="HandleSaveAndSubmit"
+                    disabled="@isLoading">
+                Submit for Approval
+            </button>
+
+            <button type="button"
+                    class="btn btn-outline-secondary ms-2"
+                    @onclick="GoToRequisitions">
+                Cancel
+            </button>
+
+        </div>
+    </EditForm>
+</div>
+
+@code {
+
+    private RequisitionCreateDto model = new();
+    private List<DepartmentDto> Departments = new();
+    private ElementReference quillElement;
+
+  private bool hasAttemptedSubmit = false;
+    private bool isLoading = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Departments = await RequisitionService.GetDepartmentsAsync();
+    }
+  
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender)
+    {
+      // This calls the function you put in App.razor
+      await JSRuntime.InvokeVoidAsync("quillFunctions.createQuill", quillElement);
+    }
+  }
+  private async Task<bool> SyncAndValidate()
+  {
+    // Grab the HTML from JS and put it in the model
+    model.Description = await JSRuntime.InvokeAsync<string>("quillFunctions.getHtml", quillElement);
+
+    hasAttemptedSubmit = true;
+
+    // Check if it's actually empty
+    if (string.IsNullOrWhiteSpace(model.Description) || model.Description == "<p><br></p>")
+    {
+      errorMessage = "Description is required.";
+      return false;
+    }
+    return true;
+  }
+    private async Task HandleSave()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+      if (!await SyncAndValidate()) return;
+
+      await RequisitionService.CreateAsync(model);
+      successMessage = "Requisition saved as Draft.";
+    }
+    catch (Exception ex) { errorMessage = ex.Message; }
+    finally { isLoading = false; }
+    }
+
+    private async Task HandleSaveAndSubmit()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            if (!await SyncAndValidate()) return;
+            await RequisitionService.CreateAsync(model);
+
+            // After creating → get latest requisition (better: return ID from service)
+            var myRequisitions = await RequisitionService.GetMyRequisitionsAsync();
+            var latest = myRequisitions
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefault();
+
+            if (latest != null)
+                await RequisitionService.SubmitAsync(latest.Id);
+
+            Nav.NavigateTo("/recruitment/requisitions");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoToRequisitions()
+        => Nav.NavigateTo("/recruitment/requisitions");
+}

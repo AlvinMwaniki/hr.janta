@@ -6,6 +6,7 @@
 @inject DashboardService DashboardService
 @inject HR.Services.Services.ImpersonationService Impersonation
 @inject HR.Services.Services.ThemeService Theme
+@inject RefreshBroker RefreshBroker
 @attribute [Authorize]
 @implements IDisposable
 
@@ -26,7 +27,7 @@
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+<div class="nav-scrollable" onclick="closeSidebarOnMobile()">
   <nav class="nav flex-column">
 
     <!-- Home & Weather -->    <!-- Dashboard -->
@@ -151,9 +152,7 @@
           @* Only users who manage leave/attendance should see these *@
 
           @* Only users who manage leave/attendance should see these *@
-          <AuthorizeView Policy="@AppPermissions.ApproveRejectLeave">
-            <NavLink class="nav-link" href="/leaverequests" Match="NavLinkMatch.Prefix">Leave Requests</NavLink>
-          </AuthorizeView>
+
           <AuthorizeView Policy="@AppPermissions.ViewAllLeaveRequests">
             <NavLink class="nav-link" href="/attendance" Match="NavLinkMatch.Prefix">Attendance Records</NavLink>
           </AuthorizeView>
@@ -192,10 +191,11 @@
       </a>
       <div class="submenu ms-3 @(isRecruitmentMenuExpanded ? "expanded" : "")" id="recruitmentMenu">
         <nav class="nav flex-column ms-3">
-          <NavLink class="nav-link" href="/joblistings" Match="NavLinkMatch.Prefix">Job Listings</NavLink>
-          <NavLink class="nav-link" href="/ats" Match="NavLinkMatch.Prefix">ATS</NavLink>
-          <NavLink class="nav-link" href="/interviews" Match="NavLinkMatch.Prefix" >Interviews</NavLink>
-          <NavLink class="nav-link" href="/onboarding" Match="NavLinkMatch.Prefix">Onboarding</NavLink>
+            <NavLink class="nav-link" href="/recruitment/requisitions" Match="NavLinkMatch.Prefix">Job Requisitions</NavLink>
+            <NavLink class="nav-link" href="/recruitment/listings" Match="NavLinkMatch.Prefix">Job Listings</NavLink>
+            <NavLink class="nav-link" href="/admin/recruitment/applications" Match="NavLinkMatch.Prefix">Job Applications</NavLink>
+            <NavLink class="nav-link" href="/recruitment/interviews" Match="NavLinkMatch.Prefix">Interviews</NavLink>
+            <NavLink class="nav-link" href="/recruitment/onboarding" Match="NavLinkMatch.Prefix">Onboarding</NavLink>
         </nav>
       </div>
     </div>
@@ -249,12 +249,22 @@
   protected override async Task OnInitializedAsync(){
     // Subscribe to navigation events to re-check the URL on every navigation
     Navigation.LocationChanged += HandleLocationChanged;
+    //  na Subscribe to the broker event
+    RefreshBroker.OnRequestChanged += RefreshCounts;
+
     CheckForInitialExpansion();
+    await RefreshCounts(); // Initial load
+  }
+  // refresh logic
+  private async Task RefreshCounts()
+  {
     var counts = await DashboardService.GetPendingCountsAsync();
     if (counts != null)
     {
       LeavePendingCount = counts.Leaves;
       AdvancePendingCount = counts.Advances;
+      // 4. Force the UI to re-render the badges
+      await InvokeAsync(StateHasChanged);
     }
   }
   private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -307,6 +317,7 @@
   public void Dispose()
   {
     Navigation.LocationChanged -= HandleLocationChanged;
+    RefreshBroker.OnRequestChanged -= RefreshCounts;
   }
 
 

@@ -30,25 +30,19 @@ else
   // 2. Use the chart's specific lifecycle hook for rendering the JS chart
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
-    // We only render on the first pass when the component loads
-    if (firstRender)
+    try
     {
-      try
-      {
-        // This call only passes the two required data points
-        await Task.Delay(50);
-        await JS.InvokeVoidAsync(
-            "renderAdvanceChart",
-                        AdvanceData.Approved,
-                        AdvanceData.PendingOrRejected
-            
-        );
-      }
-      catch (Exception ex)
-      {
-        // Log the error locally to this component
-        Console.WriteLine($"Advance Chart JS Error: {ex.Message}");
-      }
+      await Task.Delay(50); // Give the DOM a millisecond to catch up
+      await JS.InvokeVoidAsync(
+          "renderAdvanceChart",
+          AdvanceData.Approved,
+          AdvanceData.PendingOrRejected
+      );
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Advance Chart JS Error: {ex.Message}");
     }
   }
+  
 }

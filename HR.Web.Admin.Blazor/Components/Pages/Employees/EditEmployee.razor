@@ -1,0 +1,565 @@
+﻿@page "/employees/edit/{Id:guid}"
+@using HR.Data
+@using HR.Data.Models.Employees
+@using HR.Data.Models.BANKING
+@using HR.Core.Enums
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Forms
+@inject HRDbContext Db
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="container-fluid container-md py-3 py-md-4">
+    <div class="card form-card border-0 animate-fade-in shadow-lg">
+      @* --- HEADER --- *@
+    <div class="card-header py-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4 class="fw-bold mb-0 prox-header-text">
+          <i class="fas fa-user-edit me-2"></i>Edit Profile: @(Employee?.FirstName ?? "Loading...")
+        </h4>
+        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="ExitForm">
+          <i class="fas fa-times me-1"></i> Exit
+        </button>
+      </div>
+    </div>
+    
+    <div class="card-body p-4">
+        @* --- SUCCESS TOAST --- *@
+        @if (showToast)
+        {
+          <div class="position-fixed top-0 end-0 p-3" style="z-index: 1060;">
+            <div class="alert alert-success shadow-lg border-0 d-flex align-items-center"
+                 style="min-width: 300px; border-left: 5px solid #198754 !important;">
+              <i class="fas fa-check-circle fa-2x me-3 text-success"></i>
+              <div>
+                <strong class="d-block">Success!</strong>
+                <span class="small">Employee record updated successfully.</span>
+              </div>
+            </div>
+          </div>
+        }
+
+        @* --- ERROR TOAST --- *@
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+          <div class="position-fixed top-0 end-0 p-3" style="z-index: 1060;">
+            <div class="alert alert-danger shadow-lg border-0 d-flex align-items-center"
+                 style="min-width: 300px; border-left: 5px solid #dc3545 !important;">
+              <i class="fas fa-exclamation-triangle fa-2x me-3 text-danger"></i>
+              <div>
+                <strong class="d-block">Update Failed</strong>
+                <span class="small">@errorMessage</span>
+              </div>
+              <button type="button" class="btn-close ms-auto" @onclick="() => errorMessage = null"></button>
+            </div>
+          </div>
+        }
+
+      @if (Employee == null)
+      {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary"></div>
+          <p class="mt-2">Fetching Employee Record...</p>
+        </div>
+      }
+      else
+      {
+        <EditForm Model="Employee" OnSubmit="HandleSubmit">
+          <DataAnnotationsValidator />
+          <Microsoft.AspNetCore.Components.Forms.ValidationSummary />
+
+          @* --- STEP 1: PERSONAL & LOCATION --- *@
+          @if (currentStep == 1)
+          {
+            <h5 class="fw-bold mb-4 border-bottom pb-2 text-primary">Step 1: Professional & Location</h5>
+            <div class="row g-3">
+              <div class="col-md-4"><label class="form-label small fw-bold">First Name</label><InputText class="form-control" @bind-Value="Employee.FirstName" /></div>
+              <div class="col-md-4"><label class="form-label small fw-bold">Middle Name</label><InputText class="form-control" @bind-Value="Employee.MiddleName" /></div>
+              <div class="col-md-4"><label class="form-label small fw-bold">Last Name</label><InputText class="form-control" @bind-Value="Employee.LastName" /></div>
+              @* NEW: Email and Phone *@
+              <div class="col-md-6"><label class="form-label small fw-bold">Email Address</label><InputText class="form-control" @bind-Value="Employee.Email" /></div>
+              <div class="col-md-6"><label class="form-label small fw-bold">Phone Number</label><InputText class="form-control" @bind-Value="Employee.Phone" /></div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Department</label>
+                <InputSelect class="form-select" @bind-Value="Employee.DepartmentId">
+                  <option value="@Guid.Empty">-- Select Department --</option>
+                  @foreach (var d in departments)
+                  {
+                    <option value="@d.Id">@d.Name</option>
+                  }
+                </InputSelect>
+              </div>
+              <div class="col-md-4"><label class="form-label small fw-bold">Job Title</label><InputText class="form-control" @bind-Value="Employee.JobTitle" /></div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Contract Type</label>
+                <InputSelect @bind-Value="Employee.ContractType" class="form-select">
+                  @foreach (var type in Enum.GetValues<ContractType>())
+                  {
+                    <option value="@type">@type.ToString()</option>
+                  }
+                </InputSelect>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-success">County</label>
+                <select class="form-select border-success" @onchange="OnCountyChanged">
+                  <option value="@Guid.Empty">-- Select County --</option>
+                  @foreach (var c in counties)
+                  {
+                    <option value="@c.Id" selected="@(c.Id == Employee.CountyId)">@c.Name</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-success">Sub-County</label>
+                <InputSelect class="form-select border-success" @bind-Value="Employee.SubCountyId">
+                  <option value="@Guid.Empty">-- Select Sub-County --</option>
+                  @foreach (var sc in filteredSubCounties)
+                  {
+                    <option value="@sc.Id">@sc.Name</option>
+                  }
+                </InputSelect>
+              </div>
+              <div class="col-md-4"><label class="form-label small fw-bold text-success">Estate / Area</label><InputText class="form-control border-success" @bind-Value="Employee.Estate" /></div>
+            </div>
+          }
+
+          @* --- STEP 2: EDUCATION (LIST & ICON ACTIONS) --- *@
+          @if (currentStep == 2)
+          {
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0 text-primary">Step 2: Education History</h5>
+              <button type="button" class="btn btn-primary btn-sm" @onclick="() => OpenEduModal(new EducationHistory())"><i class="fas fa-plus"></i> Add New</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover border align-middle">
+                <thead class="bg-light"><tr><th>Institution</th><th>Course</th><th class="text-end">Actions</th></tr></thead>
+                <tbody>
+                  @foreach (var edu in Employee.Education!)
+                  {
+                    <tr>
+                      <td>@edu.SchoolName</td>
+                      <td>@edu.Field</td>
+                      <td class="text-end">
+                        <button type="button" class="btn btn-link text-primary p-1" @onclick="() => OpenEduModal(edu)"><i class="fas fa-edit"></i></button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @* --- STEP 3: WORK HISTORY --- *@
+          @if (currentStep == 3)
+          {
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0 text-primary">Step 3: Work Experience</h5>
+              <button type="button" class="btn btn-primary btn-sm" @onclick="() => OpenWorkModal(new WorkHistory())"><i class="fas fa-plus"></i> Add New</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover border align-middle">
+                <thead class="bg-light"><tr><th>Company</th><th>Position</th><th class="text-end">Actions</th></tr></thead>
+                <tbody>
+                  @foreach (var work in Employee.WorkHistory!)
+                  {
+                    <tr>
+                      <td>@work.CompanyName</td>
+                      <td>@work.JobTitle</td>
+                      <td class="text-end">
+                        <button type="button" class="btn btn-link text-primary p-1" @onclick="() => OpenWorkModal(work)"><i class="fas fa-edit"></i></button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @* --- STEP 4: NEXT OF KIN --- *@
+          @if (currentStep == 4)
+          {
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0 text-primary">Step 4: Next of Kin</h5>
+              <button type="button" class="btn btn-PR btn-sm" @onclick="() => OpenKinModal(new NextOfKin())"><i class="fas fa-plus"></i> Add New</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover border align-middle">
+                <thead class="bg-light"><tr><th>Full Name</th><th>Phone</th><th class="text-end">Actions</th></tr></thead>
+                <tbody>
+                  @foreach (var kin in Employee.NextOfKin!)
+                  {
+                    <tr>
+                      <td>@kin.FullName</td>
+                      <td>@kin.Phone</td>
+                      <td class="text-end">
+                        <button type="button" class="btn btn-link text-primary p-1" @onclick="() => OpenKinModal(kin)"><i class="fas fa-edit"></i></button>
+                        <button type="button" class="btn btn-link text-danger p-1" @onclick="() => RemoveNextOfKin(kin)"><i class="fas fa-trash"></i></button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @* --- STEP 5: BANKING --- *@
+          @if (currentStep == 5 && Employee != null)
+          {
+            // Ensure objects exist right before the inputs try to use them
+            Employee.BankDetail ??= new BankDetail { EmployeeId = Employee.Id };
+            Employee.PaymentData ??= new PaymentData { EmployeeId = Employee.Id };
+
+            <h5 class="fw-bold mb-4 text-primary border-bottom pb-2">Step 5: Banking & Compliance</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="small fw-bold">Bank Name</label>
+                <InputText class="form-control" @bind-Value="Employee.BankDetail.BankName" />
+              </div>
+              <div class="col-md-6">
+                <label class="small fw-bold">Account Number</label>
+                <InputText class="form-control" @bind-Value="Employee.BankDetail.AccountNumber" />
+              </div>
+              <div class="col-md-4">
+                <label class="small fw-bold text-danger">KRA PIN</label>
+                <InputText class="form-control border-danger" @bind-Value="Employee.PaymentData.KRA_PIN" />
+              </div>
+              <div class="col-md-4">
+                <label class="small fw-bold">NSSF Number</label>
+                <InputText class="form-control" @bind-Value="Employee.PaymentData.NSSF_Number" />
+              </div>
+              <div class="col-md-4">
+                <label class="small fw-bold">NHIF Number</label>
+                <InputText class="form-control" @bind-Value="Employee.PaymentData.NHIF_Number" />
+              </div>
+            </div>
+            @* ... save button ... *@
+          
+            <div class="text-center mt-5">
+              <button type="submit" class="btn btn-success btn-lg px-5 shadow">
+                <i class="fas fa-save me-2"></i> Update Employee Record
+              </button>
+            </div>
+          }
+
+          @* --- NAVIGATION --- *@
+          <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+            <button type="button" class="btn btn-outline-secondary px-4" @onclick="PrevStep" disabled="@(currentStep == 1)">Previous</button>
+            @if (currentStep < 5)
+            {
+              <button type="button" class="btn btn-brand-navy px-4" @onclick="NextStep">Next Step</button>
+            }
+          </div>
+        </EditForm>
+      }
+    </div>
+  </div>
+</div>
+
+@* --- MODAL FOR LIST EDITING --- *@
+@* --- UPDATED MODAL OVERLAY --- *@
+@if (isModalOpen)
+{
+  <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5); z-index: 1050;">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-primary text-white"><h5 class="modal-title">Edit Details</h5></div>
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+
+          @if (activeEdu != null)
+          {
+            <div class="row g-3">
+              <div class="col-md-6"><label class="small fw-bold">Institution</label><input @bind="activeEdu.SchoolName" class="form-control" /></div>
+              <div class="col-md-6"><label class="small fw-bold">Field of Study</label><input @bind="activeEdu.Field" class="form-control" /></div>
+              <div class="col-md-4"><label class="small fw-bold">Level (e.g. Degree)</label><input @bind="activeEdu.Level" class="form-control" /></div>
+              <div class="col-md-4"><label class="small fw-bold">Country</label><input @bind="activeEdu.Country" class="form-control" /></div>
+              <div class="col-md-6"><label class="small fw-bold">Start Date</label><input type="date" @bind="activeEdu.FromDate" class="form-control" /></div>
+              <div class="col-md-6"><label class="small fw-bold">End Date</label><input type="date" @bind="activeEdu.ToDate" class="form-control" /></div>
+            </div>
+          }
+
+          @if (activeWork != null)
+          {
+            <div class="row g-3">
+              <div class="col-md-6"><label class="small fw-bold">Company</label><input @bind="activeWork.CompanyName" class="form-control" /></div>
+              <div class="col-md-6"><label class="small fw-bold">Job Title</label><input @bind="activeWork.JobTitle" class="form-control" /></div>
+              <div class="col-md-4"><label class="small fw-bold">City</label><input @bind="activeWork.CompanyCity" class="form-control" /></div>
+              <div class="col-md-4"><label class="small fw-bold">Country</label><input @bind="activeWork.CompanyCountry" class="form-control" /></div>
+              <div class="col-md-12"><label class="small fw-bold">Duties</label><textarea @bind="activeWork.JobDuties" class="form-control"></textarea></div>
+              <div class="col-md-6"><label class="small fw-bold">From</label><input type="date" @bind="activeWork.JobFromDate" class="form-control" /></div>
+              <div class="col-md-6"><label class="small fw-bold">To</label><input type="date" @bind="activeWork.JobToDate" class="form-control" /></div>
+            </div>
+          }
+
+          @if (activeKin != null)
+          {
+            <div class="row g-3">
+              <div class="col-md-6"><label class="small fw-bold">Full Name</label><input @bind="activeKin.FullName" class="form-control" /></div>
+              <div class="col-md-6"><label class="small fw-bold">Phone</label><input @bind="activeKin.Phone" class="form-control" /></div>
+              <div class="col-md-6"><label class="small fw-bold">Relationship</label><input @bind="activeKin.Relationship" class="form-control" /></div>
+              <div class="col-md-6"><label class="small fw-bold">Address</label><input @bind="activeKin.Address" class="form-control" /></div>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary w-100" @onclick="CloseModal">Confirm & Update List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@code {
+  [Parameter] public Guid Id { get; set; }
+  private Employee? Employee;
+  private List<HR.Data.Models.Departments.Department> departments = new();
+  private List<HR.Data.Models.County.County> counties = new();
+  private List<HR.Data.Models.County.SubCounty> allSubCounties = new();
+  private List<HR.Data.Models.County.SubCounty> filteredSubCounties = new();
+
+  private int currentStep = 1;
+  private bool showToast = false, isModalOpen = false;
+
+  private EducationHistory? activeEdu;
+  private WorkHistory? activeWork;
+  private NextOfKin? activeKin;
+  private string? errorMessage; 
+  private List<NextOfKin> kinDeletes = new();
+
+  protected override async Task OnInitializedAsync()
+  {
+    departments = await Db.Departments.OrderBy(d => d.Name).ToListAsync();
+    counties = await Db.Counties.OrderBy(c => c.Name).ToListAsync();
+    allSubCounties = await Db.SubCounties.OrderBy(s => s.Name).ToListAsync();
+
+    Employee = await Db.Employees
+                .Include(e => e.Education)
+                .Include(e => e.WorkHistory)
+                .Include(e => e.NextOfKin)
+                .Include(e => e.BankDetail)
+                .Include(e => e.PaymentData)
+                .FirstOrDefaultAsync(e => e.Id == Id);
+
+    if (Employee != null)
+    {
+      if (!string.IsNullOrEmpty(Employee.Phone) && Employee.Phone.StartsWith("254"))
+      {
+        Employee.Phone = "0" + Employee.Phone.Substring(3);
+      }
+      Employee.Education ??= new();
+      Employee.WorkHistory ??= new();
+      Employee.NextOfKin ??= new();
+      Employee.BankDetail ??= new BankDetail { EmployeeId = Employee.Id, AccountName = $"{Employee.FirstName} {Employee.LastName}" };
+      Employee.PaymentData ??= new PaymentData { EmployeeId = Employee.Id };
+
+      if (Employee.CountyId != Guid.Empty && Employee.CountyId != null)
+        filteredSubCounties = allSubCounties.Where(s => s.CountyId == Employee.CountyId).ToList();
+    }
+  }
+
+  private void OpenEduModal(EducationHistory edu)
+  {
+    activeEdu = edu;
+
+    // Check: Is this a NEW record (Id is empty) AND is it NOT already in the list?
+if (Employee?.Education != null && edu.Id == Guid.Empty && !Employee.Education.Contains(edu))    
+{
+      edu.EmployeeId = Employee.Id;
+      Employee.Education.Add(edu);
+    }
+    isModalOpen = true;
+  }
+  private void OpenWorkModal(WorkHistory work)
+  {
+    activeWork = work;
+    if (Employee?.WorkHistory != null && work.Id == Guid.Empty && !Employee.WorkHistory.Contains(work))
+    {
+      work.EmployeeId = Employee.Id;
+      work.CompanyCity ??= "Nairobi";
+      work.CompanyCountry ??= "Kenya";
+      Employee.WorkHistory.Add(work);
+    }
+    isModalOpen = true;
+  }
+
+  private void OpenKinModal(NextOfKin kin)
+  {
+    activeKin = kin;
+    if (Employee?.NextOfKin != null && kin.Id == Guid.Empty && !Employee.NextOfKin!.Contains(kin))
+    {
+      kin.EmployeeId = Employee.Id;
+      kin.Address ??= "N/A";
+      Employee.NextOfKin.Add(kin);
+    }
+    isModalOpen = true;
+  }
+
+  private void CloseModal() { isModalOpen = false; activeEdu = null; activeWork = null; activeKin = null; }
+
+  private void OnCountyChanged(ChangeEventArgs e)
+  {
+    if (Employee == null) return;
+    if (Guid.TryParse(e.Value?.ToString(), out var sid))
+    {
+      Employee.CountyId = sid;
+      filteredSubCounties = allSubCounties.Where(s => s.CountyId == sid).ToList();
+      Employee.SubCountyId = Guid.Empty;
+    }
+  }
+  private void RemoveNextOfKin(NextOfKin kin)
+  {
+    if (Employee?.NextOfKin != null)
+    {
+      // 1. Remove from UI list so it disappears for the user
+      Employee.NextOfKin.Remove(kin);
+
+      // 2. If it's a real record, put it on "Death Row"
+      if (kin.Id != Guid.Empty)
+      {
+        kinDeletes.Add(kin);
+      }
+    }
+  }
+  private async Task HandleSubmit(EditContext editContext)
+  {
+    // We manually trigger validation but tuna decide if we proceed
+    var isValid = editContext.Validate();
+
+    if (!isValid)
+    {
+      // Log the errors to the console so we can see what was blocking me
+      Console.WriteLine("Form has validation errors, but proceeding with Surgical Save...");
+      foreach (var message in editContext.GetValidationMessages())
+      {
+        Console.WriteLine($"- Validation Error: {message}");
+      }
+    }
+
+    // Call  existing HandleSave logic regardless of UI validation
+    await HandleSave();
+  }
+  private async Task HandleSave()
+  {
+    if (Employee == null) return;
+    errorMessage = null;
+
+    try
+    {
+      // 1. Phone Formatting
+      if (!string.IsNullOrEmpty(Employee.Phone) && Employee.Phone.StartsWith("0"))
+      {
+        Employee.Phone = "254" + Employee.Phone.Substring(1);
+      }
+
+      // 2. THE FIX: Clear the tracker first
+      // This prevents the "identity conflict" when you try to Add records
+      // that the Employee object thinks it already owns.
+      Db.ChangeTracker.Clear();
+      Db.Entry(Employee!).State = EntityState.Unchanged;
+      // 3. SURGICAL EMPLOYEE UPDATE
+      // Attach the employee and only mark the fields on your form as Modified.
+      var entry = Db.Entry(Employee);
+      entry.State = EntityState.Unchanged; // Start with no changes tracked
+
+
+
+      entry.Property(x => x.FirstName).IsModified = true;
+      entry.Property(x => x.MiddleName).IsModified = true;
+      entry.Property(x => x.LastName).IsModified = true;
+      entry.Property(x => x.Email).IsModified = true;
+      entry.Property(x => x.Phone).IsModified = true;
+      entry.Property(x => x.DepartmentId).IsModified = true;
+      entry.Property(x => x.JobTitle).IsModified = true;
+      entry.Property(x => x.ContractType).IsModified = true;
+      entry.Property(x => x.CountyId).IsModified = true;
+      entry.Property(x => x.SubCountyId).IsModified = true;
+      entry.Property(x => x.Estate).IsModified = true;
+
+      // 4. REFRESH COLLECTIONS (Education, Work, Kin)
+
+      // Tell the database to drop the rows in your death row list
+      foreach (var k in kinDeletes.ToArray())
+      {
+        Db.NextOfKins.Remove(k);      }
+
+      // Education History
+      foreach (var edu in Employee.Education.ToList())
+      {
+        edu.Employee = null!; 
+                              // IF ID is empty, user clicked "Add New". IF ID exists, user just viewed or edited it.
+        Db.Entry(edu).State = (edu.Id == Guid.Empty) ? EntityState.Added : EntityState.Modified;
+      }
+
+      // Work History
+     
+      foreach (var work in Employee.WorkHistory.ToList())
+      {
+        work.Employee = null!;
+        Db.Entry(work).State = (work.Id == Guid.Empty) ? EntityState.Added : EntityState.Modified;
+        
+      }
+
+      // Next of Kin
+      foreach (var kin in Employee.NextOfKin.ToList())
+      {
+        kin.Employee = null!; // Avoid circular tracking
+
+        if (kin.Id == Guid.Empty)
+        {
+          Db.Entry(kin).State = EntityState.Added;
+        }
+        else
+        {
+          // Only mark as modified if it's NOT in the delete list
+          if (!kinDeletes.Any(x => x.Id == kin.Id))
+          {
+            Db.Entry(kin).State = EntityState.Modified;
+          }
+        }
+      }
+
+      /// 4. Step 5: Banking & Payment
+      if (Employee.BankDetail != null)
+      {
+        Employee.BankDetail.Employee = null!;
+        Db.Entry(Employee.BankDetail).State = (Employee.BankDetail.Id == Guid.Empty) ? EntityState.Added : EntityState.Modified;
+      }
+      if (Employee.PaymentData != null)
+      {
+        Employee.PaymentData.Employee = null!;
+        var pEntry = Db.Entry(Employee.PaymentData);
+        pEntry.State = (Employee.PaymentData.Id == Guid.Empty) ? EntityState.Added : EntityState.Modified;
+
+        pEntry.Property(x => x.KRA_PIN).IsModified = true;
+        pEntry.Property(x => x.NSSF_Number).IsModified = true;
+        pEntry.Property(x => x.NHIF_Number).IsModified = true;
+      }
+      // 6. EXECUTE ALL AT ONCE
+      await Db.SaveChangesAsync();
+      kinDeletes.Clear(); // Clear the list after successful save
+      showToast = true;
+      StateHasChanged();
+      await Task.Delay(1500);
+      Navigation.NavigateTo("/employees/list");
+    }
+    catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+    {
+      Console.WriteLine($"DATABASE ERROR: {dbEx.InnerException?.Message ?? dbEx.Message}");
+      errorMessage = "Database Error: " + (dbEx.InnerException?.Message ?? dbEx.Message);
+      StateHasChanged();
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"FATAL ERROR: {ex.Message}");
+      errorMessage = "An unexpected error occurred: " + ex.Message;
+      StateHasChanged();
+
+    }
+  }
+
+
+
+  private void NextStep() => currentStep++;
+  private void PrevStep() => currentStep--;
+  private void ExitForm() => Navigation.NavigateTo("/employees/list");
+}

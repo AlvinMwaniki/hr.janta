@@ -1,0 +1,25 @@
+﻿@if (ShowSidebar)
+{
+  <div class="sidebar @(IsOpen ? "open" : "")">
+    <NavMenu />
+  </div>
+}
+else
+{
+  <button type="button"
+          class="navbar-toggler d-lg-none me-3"
+          @onclick="ToggleSidebar">
+    <i class="fas fa-bars fa-lg"></i>
+  </button>
+}
+
+@code {
+  [Parameter] public bool ShowSidebar { get; set; }
+
+  private static bool IsOpen = false;
+
+  private void ToggleSidebar()
+  {
+    IsOpen = !IsOpen;
+  }
+}

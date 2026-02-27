@@ -1,52 +1,290 @@
 ﻿@page "/employees/list"
-
 @using HR.Data
 @using HR.Data.Models.Employees
+@using HR.Core.Enums
 @using Microsoft.EntityFrameworkCore
-
 @inject HRDbContext Db
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@rendermode InteractiveServer
 
-<h3>Employees</h3>
 
-<table class="table align-middle">
-  <thead>
-    <tr>
-      <th>Photo</th>
-      <th>Name</th>
-      <th>Department</th>
-      <th>Job Title</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    @foreach (var emp in employees)
-    {
-      <tr>
-        <td>
-          <img src="@emp.PhotoBase64"
-               class="rounded-circle border"
-               style="width: 45px; height: 45px; object-fit: cover;" />
-        </td>
-        <td>@($"{emp.FirstName} {emp.LastName}")</td>
-        <td>@emp.Department?.Name</td>
-        <td>@emp.JobTitle</td>
-        <td>
-          <span class="badge @(emp.Status == "Active" ? "bg-success" : "bg-secondary")">
-            @emp.Status
-          </span>
-        </td>
-      </tr>
-    }
-  </tbody>
-</table>
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #222240;"><i class="fas fa-users-cog me-2"></i>Staff Management</h2>
+    <button class="btn btn-brand-navy shadow-sm rounded-pill px-4" @onclick='() => Navigation.NavigateTo("/employees/create")'>
+      <i class="fas fa-user-plus me-2"></i>Register New Employee
+    </button>
+  </div>
+
+  @* --- FILTERS SECTION --- *@
+  <div class="card form-card mb-4 border-0">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label small fw-bold">Department</label>
+        <select class="form-select" @onchange="FilterByDept">
+          <option value="">All Departments</option>
+          @foreach (var dept in departments)
+          {
+            <option value="@dept.Id">@dept.Name</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-bold">Contract Type</label>
+        <select class="form-select" @onchange="FilterByContract">
+          <option value="">All Contracts</option>
+          @foreach (var type in Enum.GetValues<ContractType>())
+          {
+            <option value="@type">@type</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-bold">Status</label>
+        <select class="form-select" @onchange="FilterByStatus">
+          <option value="">All Statuses</option>
+          @foreach (var stat in Enum.GetValues<EmployeeStatus>())
+          {
+            <option value="@stat">@stat</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-3 d-flex align-items-end">
+        <button class="btn btn-outline-secondary w-100 py-2" @onclick="LoadEmployees">
+          <i class="fas fa-sync me-2"></i> Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+  @* --- TABLE --- *@
+  <div class="card form-card border-0 overflow-hidden p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 custom-staff-table">
+      <thead class="table-primary text-white">
+        <tr>
+          <th class="ps-4">Employee Details</th>
+          <th>Department</th>
+          <th>Contract</th>
+          <th>Status</th>
+          <th class="text-end pe-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var emp in filteredEmployees)
+        {
+          <tr>
+            <td class="ps-4">
+              <div class="d-flex align-items-center">
+                <img src="@emp.PhotoBase64" class="rounded-circle border border-2 me-3" style="width: 50px; height: 50px; object-fit: cover;" />
+                <div>
+                    <div class="fw-bold prox-header-text">@emp.FirstName @emp.LastName</div>
+                  <small class="text-muted">ID: @emp.EmployeeCode</small>
+                </div>
+              </div>
+            </td>
+            <td style="width: 150px;">
+                <span class="badge border border-primary text-primary prox-badge-outline fw-normal" style="width: 100px; display: inline-block;">
+                @emp.Department?.Name
+              </span>
+            </td>
+            <td>@emp.ContractType</td>
+            <td style="width: 120px;">
+              <span class="badge @(emp.Status == EmployeeStatus.Active ? "bg-success" : "bg-warning text-dark") d-inline-block text-center" style="min-width: 90px;">
+                @emp.Status
+              </span>
+            </td>
+            <td class="text-end pe-4">
+              <div class="btn-group shadow-sm">
+                <button class="btn btn-white btn-sm border" @onclick="() => ShowDetails(emp.Id)" title="View Profile">
+                  <i class="fas fa-eye text-primary"></i>
+                </button>
+                <button class="btn btn-white btn-sm border" @onclick="() => GoToEdit(emp.Id)" title="Edit Employee">
+                  <i class="fas fa-edit text-success"></i>
+                </button>
+                <button class="btn btn-white btn-sm border" @onclick="() => OpenStatusModal(emp)" title="Change Status">
+                  <i class="fas fa-user-shield text-danger"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+@* --- MODAL: EMPLOYEE QUICK VIEW --- *@
+@if (selectedEmployee != null)
+{
+  <div class="modal fade show d-block" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-2xl">
+        <div class="modal-header bg-primary text-white py-3">
+          <h5 class="modal-title fw-bold"><i class="fas fa-id-card me-2"></i> Employee Master File</h5>
+          <button type="button" class="btn-close btn-close-white" @onclick="CloseDetails"></button>
+        </div>
+        <div class="modal-body p-0" id="printArea">
+          <EmployeeSummaryView Employee="selectedEmployee" />
+        </div>
+        <div class="modal-footer bg-light justify-content-between">
+          <div>
+            <button class="btn btn-dark px-4" @onclick="PrintProfile">
+              <i class="fas fa-print me-2"></i> Print to PDF
+            </button>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" @onclick="CloseDetails">Close</button>
+            <button class="btn btn-success px-4" @onclick="() => GoToEdit(selectedEmployee.Id)">
+              <i class="fas fa-edit me-2"></i> Edit Record
+            </button>
+            <button class="btn btn-danger px-4" @onclick="() => OpenStatusModal(selectedEmployee)">
+              <i class="fas fa-user-shield me-2"></i> Change Status
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@* --- MODAL: STATUS CHANGE --- *@
+@if (statusEmployee != null)
+{
+  <div class="modal fade show d-block" style="background: rgba(0,0,0,0.8);" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">Status: @statusEmployee.FirstName @statusEmployee.LastName</h5>
+          <button type="button" class="btn-close btn-close-white" @onclick="CloseStatusModal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="fw-bold">New Status</label>
+            <select class="form-select" @bind="pendingStatus">
+              @foreach (var s in Enum.GetValues<EmployeeStatus>())
+              {
+                <option value="@s">@s</option>
+              }
+            </select>
+          </div>
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="small fw-bold">Notice Given</label>
+              <input type="date" class="form-control" @bind="noticeDate" />
+            </div>
+            <div class="col-6">
+              <label class="small fw-bold">Last Working Day</label>
+              <input type="date" class="form-control" @bind="lastWorkDate" />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="fw-bold">Reason (Justification)</label>
+            <textarea class="form-control" @bind="statusReason" placeholder="Reason for this change..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @onclick="CloseStatusModal">Cancel</button>
+          <button class="btn btn-danger" @onclick="ProcessStatusChange">Save Change</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 
 @code {
-  List<Employee> employees = new();
+  List<Employee> allEmployees = new();
+  List<Employee> filteredEmployees = new();
+  List<HR.Data.Models.Departments.Department> departments = new();
+
+  // --- UI State (Cleaned up duplicates) ---
+  Employee? selectedEmployee;
+  Employee? statusEmployee;
+  EmployeeStatus pendingStatus;
+  string statusReason = "";
+  DateTime noticeDate = DateTime.Now;
+  DateTime lastWorkDate = DateTime.Now;
 
   protected override async Task OnInitializedAsync()
   {
-    employees = await Db.Employees
+    departments = await Db.Departments.ToListAsync();
+    await LoadEmployees();
+  }
+
+  private async Task LoadEmployees()
+  {
+    allEmployees = await Db.Employees
         .Include(e => e.Department)
+        .Include(e => e.Education)
+        .Include(e => e.WorkHistory)
+        .Include(e => e.NextOfKin)
+        .Include(e => e.BankDetail)
+        .Include(e => e.PaymentData)
+        .Include(e => e.DisabilityDetail)
         .ToListAsync();
+    filteredEmployees = allEmployees;
+  }
+
+  private void ShowDetails(Guid id)
+  {
+    selectedEmployee = allEmployees.FirstOrDefault(e => e.Id == id);
+    StateHasChanged();
+  }
+
+  private void CloseDetails() => selectedEmployee = null;
+
+  private void GoToEdit(Guid id) => Navigation.NavigateTo($"/employees/edit/{id}");
+
+  private void OpenStatusModal(Employee emp)
+  {
+    statusEmployee = emp;
+    pendingStatus = emp.Status;
+    statusReason = "";
+    StateHasChanged();
+  }
+
+  private void CloseStatusModal() => statusEmployee = null;
+
+  private async Task ProcessStatusChange()
+  {
+    if (statusEmployee == null) return;
+
+    var emp = await Db.Employees.FindAsync(statusEmployee.Id);
+    if (emp != null) emp.Status = pendingStatus;
+
+    var log = new HR.Data.Models.EmployestatusLog.EmployeeStatusLog
+    {
+      EmployeeId = statusEmployee.Id,
+      NewStatus = pendingStatus,
+      Reason = statusReason,
+      NoticeDate = noticeDate,
+      LastWorkDate = lastWorkDate,
+      EffectiveDate = DateTime.Now,
+      AuthorizedBy = "HR Admin"
+    };
+    Db.EmployeeStatusLogs.Add(log);
+
+    await Db.SaveChangesAsync();
+    CloseStatusModal();
+    await LoadEmployees();
+  }
+
+  private async Task PrintProfile() => await JS.InvokeVoidAsync("window.print");
+
+  private void FilterByDept(ChangeEventArgs e)
+  {
+    var val = e.Value?.ToString();
+    filteredEmployees = string.IsNullOrEmpty(val) ? allEmployees : allEmployees.Where(x => x.DepartmentId == Guid.Parse(val)).ToList();
+  }
+  private void FilterByContract(ChangeEventArgs e)
+  {
+    var val = e.Value?.ToString();
+    filteredEmployees = string.IsNullOrEmpty(val) ? allEmployees : allEmployees.Where(x => x.ContractType.ToString() == val).ToList();
+  }
+  private void FilterByStatus(ChangeEventArgs e)
+  {
+    var val = e.Value?.ToString();
+    filteredEmployees = string.IsNullOrEmpty(val) ? allEmployees : allEmployees.Where(x => x.Status.ToString() == val).ToList();
   }
 }

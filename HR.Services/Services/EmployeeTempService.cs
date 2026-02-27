@@ -1,7 +1,11 @@
 ﻿// HR.Web.Admin.Services/EmployeeTempService.cs
+using HR.Core.Enums;
 using HR.Data.Models.BANKING;
-using HR.Data.Models.Employees;
 using HR.Data.Models.County;
+using HR.Data.Models.Employees;
+using HR.Data.Models.Recruitment;
+using Microsoft.AspNetCore.Builder;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +44,8 @@ namespace HR.Services.Services
 				NationalID = string.Empty,
 				Gender = string.Empty,
 				JobTitle = string.Empty,
-				Status = "Active",
+				Status = EmployeeStatus.Active,
+				ContractType = ContractType.Permanent,
 				Disability = string.Empty,
 
 				// Dates - keep nullable if model is nullable; otherwise default to Today or MinValue
@@ -171,6 +176,65 @@ namespace HR.Services.Services
 			payment.BankDetailId = TempEmployee.BankDetail?.Id ?? Guid.Empty; // Use Guid.Empty if BankDetail hasn't been set yet
 			payment.EmployeeId = TempEmployee.Id;
 			TempEmployee.PaymentData = payment;
+		}
+
+		// Inside HR.Services.Services.EmployeeTempService
+		public void InitializeFromApplication(JobApplication app)
+		{
+			Reset(); // Always start fresh
+
+			// 1. Map Basic Info (Smart Name Split)
+			var names = app.FullName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+			TempEmployee.FirstName = names.Length > 0 ? names[0] : "";
+
+			if (names.Length == 2)
+			{
+				TempEmployee.LastName = names[1];
+			}
+			else if (names.Length >= 3)
+			{
+				TempEmployee.MiddleName = names[1];
+				TempEmployee.LastName = string.Join(" ", names.Skip(2));
+			}
+
+			TempEmployee.Email = app.Email;
+			TempEmployee.Phone = app.PhoneNumber;
+			TempEmployee.JobTitle = app.JobListing?.JobRequisition?.JobTitle ?? app.JobListing?.ExternalTitle;
+			TempEmployee.DepartmentId = app.JobListing?.JobRequisition?.DepartmentId ?? Guid.Empty;
+			// 2. NEW: Map Location & Address (Directly from Application)
+			TempEmployee.CountryId = app.CountryId;
+			TempEmployee.CountyId = app.CountyId;
+			TempEmployee.SubCountyId = app.SubCountyId;
+			TempEmployee.Estate = app.Estate;
+			TempEmployee.POBox = app.POBox;
+
+			// 2. Map Education (Linking to your existing EducationHistory model)
+			TempEmployee.Education = app.Education.Select(e => new EducationHistory
+			{
+				Id = Guid.NewGuid(),
+				EmployeeId = TempEmployee.Id,
+				SchoolName = e.Institution,
+				Field = e.Field,
+				Level = e.Level,
+				Country = e.Country ?? "N/A",
+				FromDate = e.StartDate,
+				ToDate = e.EndDate ?? DateTime.Today
+			}).ToList();
+
+			// 3. Map Work History (Linking to your existing WorkHistory model)
+			TempEmployee.WorkHistory = app.Experience.Select(w => new WorkHistory
+			{
+				Id = Guid.NewGuid(),
+				EmployeeId = TempEmployee.Id,
+				CompanyName = w.Company,
+				JobTitle = w.JobTitle,
+				JobDuties = w.Responsibilities,
+				JobFromDate = w.StartDate,
+				JobToDate = w.EndDate ?? DateTime.Today,
+				IsCurrentJob = w.EndDate == null,
+				CompanyCity = w.City ?? "N/A",
+				CompanyCountry = w.Country ?? "N/A"
+			}).ToList();
 		}
 	}
 }

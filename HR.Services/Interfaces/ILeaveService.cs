@@ -12,4 +12,5 @@ public interface ILeaveService
 	Task<bool> ReviewLeaveRequestAsync(Guid leaveId, LeaveStatus newStatus, string? comment = null);
 	Task<bool> CancelLeaveRequestAsync(Guid leaveId);
 	Task<List<LeaveRequestViewDto>> GetMyLeaveRequestsAsync();
+	Task<List<LeaveRequestViewDto>> GetAllRequestsAsync();
 }

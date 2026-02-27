@@ -1,0 +1,63 @@
+﻿@using HR.Services.DTO
+@inject NavigationManager Nav
+
+<div class="card shadow-sm border-0">
+  <div class="card-header py-3 bg-dark">
+    <h5 class="mb-0 text-white small text-uppercase fw-bold">
+      <i class="fas fa-user-plus me-2 text-info"></i> Incoming Talent Pipeline
+    </h5>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="bg-light text-secondary small text-uppercase">
+        <tr>
+          <th class="ps-3">Applicant Name</th>
+          <th>Job Title & Match</th>
+          <th class="text-center">Applied Date</th>
+          <th class="text-end pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (Applications == null || !Applications.Any())
+        {
+          <tr>
+            <td colspan="4" class="text-center py-4 text-muted small">No new applications at the moment.</td>
+          </tr>
+        }
+        else
+        {
+          @foreach (var app in Applications)
+          {
+            <tr>
+              <td class="ps-3">
+                <div class="fw-bold">@app.Description</div>
+                <span class="badge rounded-pill bg-info-subtle text-info border border-info-subtle x-small">
+                  <i class="fas fa-file-alt me-1"></i> CV RECEIVED
+                </span>
+              </td>
+              <td>
+                <div class="small fw-semibold">@app.Detail</div>
+              </td>
+              <td class="text-center small text-muted">@app.Date.ToShortDateString()</td>
+              <td class="text-end pe-3">
+                <button class="btn btn-sm btn-dark rounded-pill px-3 fw-bold"
+                        @onclick='() => Nav.NavigateTo($"/admin/recruitment/applications?reviewId={app.Id}")'>
+                  REVIEW <i class="fas fa-external-link-alt ms-1 small"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@code {
+  [Parameter] public List<UnifiedRequestDto> Applications { get; set; } = new();
+  [Parameter] public EventCallback<UnifiedRequestDto> OnAction { get; set; }
+  private async Task NotifyParent(UnifiedRequestDto app)
+  {
+    await OnAction.InvokeAsync(app);
+  }
+}

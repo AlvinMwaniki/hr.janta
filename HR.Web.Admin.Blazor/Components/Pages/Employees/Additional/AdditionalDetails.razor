@@ -146,9 +146,30 @@
     editContext = new EditContext(educationModel);
 
     // Add placeholders for required strings
-   
-    educationModel.FromDate = DateTime.Today;
-    educationModel.ToDate = DateTime.Today;
+    // If TempService already has education from the application, load it
+    if (TempService.TempEmployee.Education.Any())
+    {
+      var first = TempService.TempEmployee.Education.First();
+
+      educationModel = new EducationHistory
+      {
+        FromDate = DateTime.Today,
+        ToDate = DateTime.Today
+      };
+
+      editingEducationIndex = -1;
+
+
+      editContext = new EditContext(educationModel);
+    }
+    else
+    {
+      // Default values for new entry
+      educationModel.FromDate = DateTime.Today;
+      educationModel.ToDate = DateTime.Today;
+    }
+
+
   }
 
   // Changed method signature to accept EditContext parameter

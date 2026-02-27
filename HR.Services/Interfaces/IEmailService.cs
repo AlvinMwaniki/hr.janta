@@ -10,4 +10,6 @@ public interface IEmailService
 {
 	Task SendEmailAsync(string toEmail, string subject, string body);
 	Task SendSetupPasswordEmailAsync(string recipientEmail, string recipientName, string setupLink);
+	Task SendInterviewInviteAsync(string toEmail, string candidateName, string jobTitle, DateTime date, string? time);
+
 }

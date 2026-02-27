@@ -1,0 +1,419 @@
+﻿@page "/job/apply/{JobId:guid}"
+@using HR.Data.Models.Recruitment
+@using HR.Data
+@using HR.Data.Models.Country
+@using HR.Data.Models.County
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@using HR.Services.Interfaces
+@inject IDbContextFactory<HRDbContext> DbFactory
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject IJobApplicationService JobAppService
+@inject ICvParsingService CvParsingService
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+<div id="job-details" class="container mt-3 mb-3">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-lg border-0 mt-4" style="border-radius: 15px;">
+        <div class="card-header text-white p-4" style="border-radius: 15px 15px 0 0; background-color: #222240;">
+          <h3 class="mb-0">Application Form</h3>
+          <p class="mb-0 opacity-75">Upload your CV first — the form will auto-populate with extracted data.</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+
+          <div class="mb-5">
+            <label class="form-label fw-bold mb-3">Upload CV (PDF Only)</label>
+            <div class="upload-area @(isSubmitting ? "uploading" : "") p-4 text-center border-dashed rounded-3">
+              <InputFile OnChange="HandleFileSelected" class="form-control form-control-lg" accept=".pdf" />
+              <div class="mt-2"><small class="text-muted">Max size 5MB. AI will auto-fill the form below.</small></div>
+            </div>
+          </div>
+
+          <EditForm Model="appModel" OnSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="form-card mb-4">
+              <h5 class="section-title mb-4"><i class="bi bi-person-badge me-2"></i>Personal Information</h5>
+              <div class="row g-4">
+                <div class="col-md-12">
+                  <label class="form-label">Full Name</label>
+                  <InputText @bind-Value="appModel.FullName" class="form-control custom-input" placeholder="John Doe" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email Address</label>
+                  <InputText @bind-Value="appModel.Email" class="form-control custom-input" placeholder="john@example.com" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Phone Number</label>
+                  <div class="input-group">
+                    <button class="btn btn-input-group dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                      @if (selectedCountry != null)
+                      {
+                        <img src="@selectedCountry.FlagUrl" style="width: 20px;" class="me-1" />
+                        <span>@selectedCountry.IsoCode</span>
+                      }
+                    </button>
+                    <ul class="dropdown-menu shadow">
+                      @foreach (var c in countries)
+                      {
+                        <li>
+                          <button type="button" class="dropdown-item" @onclick="() => SelectCountry(c)">
+                            <img src="@c.FlagUrl" width="20" class="me-2" /> @c.Name (@c.DialCode)
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                    <InputText @bind-Value="appModel.PhoneNumber" class="form-control custom-input" placeholder="712345678" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-4 mt-1">
+                <div class="col-md-6">
+                  <label class="form-label">County of Residence</label>
+                  <select class="form-select custom-input" @onchange="HandleCountyChange">
+                    <option value="">-- Select County --</option>
+                    @foreach (var c in countiesList)
+                    {
+                      <option value="@c.Id">@c.Name</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Sub-County</label>
+                  <InputSelect @bind-Value="appModel.SubCountyId" class="form-select custom-input">
+                    <option value="">-- Select Sub-County --</option>
+                    @foreach (var sub in filteredSubCounties)
+                    {
+                      <option value="@sub.Id">@sub.Name</option>
+                    }
+                  </InputSelect>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label">Estate / Street</label>
+                  <InputText @bind-Value="appModel.Estate" class="form-control custom-input" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">P.O. Box</label>
+                  <InputText @bind-Value="appModel.POBox" class="form-control custom-input" />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-card mb-4">
+              <h5 class="section-title mb-4"><i class="bi bi-lightbulb me-2"></i>Skills & Profile</h5>
+              <div class="mb-4">
+                <label class="form-label">LinkedIn Profile (Optional)</label>
+                <InputText @bind-Value="appModel.LinkedInProfile" class="form-control custom-input" placeholder="https://linkedin.com/in/username" />
+              </div>
+              <div class="mb-4">
+                <label class="form-label">Technical Skills (comma-separated)</label>
+                <InputText @bind-Value="appModel.SkillsFound" class="form-control custom-input" placeholder="e.g. C#, .NET, SQL" />
+              </div>
+              <div>
+                <label class="form-label">Cover Letter</label>
+                <InputTextArea @bind-Value="appModel.CoverLetter" class="form-control custom-input" rows="4" placeholder="Brief summary of your application..." />
+              </div>
+            </div>
+
+            <div class="form-card mb-4 p-4">
+              @if (appModel.Education.Any())
+              {
+                <h5 class="mb-3 text-primary border-bottom pb-1">Education History</h5>
+
+                @foreach (var edu in appModel.Education)
+                {
+                  <div class="row g-2 mb-2">
+                    <div class="col-md-3">
+                      <InputText @bind-Value="edu.Institution" class="form-control custom-input" placeholder="Institution" />
+                    </div>
+                    <div class="col-md-3">
+                      <InputText @bind-Value="edu.Field" class="form-control custom-input" placeholder="Field of Study" />
+                    </div>
+                    <div class="col-md-2">
+                      <InputText @bind-Value="edu.Level" class="form-control custom-input" placeholder="Level" />
+                    </div>
+                    <div class="col-md-2">
+                      <InputDate @bind-Value="edu.StartDate" class="form-control custom-input" />
+                    </div>
+                    <div class="col-md-2">
+                      <InputDate @bind-Value="edu.EndDate" class="form-control custom-input" />
+                    </div>
+                  </div>
+                }
+
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" @onclick="AddEducation">
+                  + Add Education
+                </button>
+              }
+              else
+              {
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" @onclick="AddEducation">
+                  + Add Education
+                </button>
+              }
+            </div>
+
+            <div class="form-card mb-4 p-4">
+              @if (appModel.Experience.Any())
+              {
+                <h5 class="mb-3 text-primary border-bottom pb-1">Experience History</h5>
+
+                @foreach (var exp in appModel.Experience)
+                {
+                  <div class="experience-entry mb-4 p-3 border rounded shadow-sm">
+                    <div class="row g-2 mb-2">
+                      <div class="col-md-6">
+                        <label class="small text-muted">Company</label>
+                        <InputText @bind-Value="exp.Company" class="form-control custom-input" placeholder="Company Name" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="small text-muted">Job Title</label>
+                        <InputText @bind-Value="exp.JobTitle" class="form-control custom-input" placeholder="Job Title" />
+                      </div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                      <div class="col-md-12">
+                        <label class="small text-muted">Responsibilities</label>
+                        <InputTextArea @bind-Value="exp.Responsibilities" class="form-control custom-input" placeholder="Describe your role..." rows="2" />
+                      </div>
+                    </div>
+
+                    <div class="row g-2">
+                      <div class="col-md-6">
+                        <label class="small text-muted">Start Date</label>
+                        <InputDate @bind-Value="exp.StartDate" class="form-control custom-input" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="small text-muted">End Date</label>
+                        <InputDate @bind-Value="exp.EndDate" class="form-control custom-input" />
+                      </div>
+                    </div>
+                  </div>
+                }
+
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" @onclick="AddExperience">
+                  + Add Experience
+                </button>
+              }
+              else
+              {
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" @onclick="AddExperience">
+                  + Add Experience
+                </button>
+              }
+            </div>
+
+            <div class="d-grid mt-5">
+              <button type="submit" class="btn btn-submit btn-lg py-3" disabled="@isSubmitting">
+                @(isSubmitting ? "Finalizing..." : "Submit Application")
+              </button>
+            </div>
+          </EditForm>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .upload-area {
+    border: 2px dashed #dee2e6;
+    padding: 20px;
+    border-radius: 10px;
+    transition: all 0.3s;
+  }
+
+    .upload-area.uploading {
+      border-color: #0d6efd;
+      background-color: #f8f9fa;
+    }
+    /* Section Titles */
+.section-title {
+    color: var(--primary-accent, #0d6efd);
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-left: 4px solid #0d6efd;
+    padding-left: 15px;
+}
+
+/* Custom Inputs to blend with Dark Mode classes you provided */
+.custom-input {
+    background: var(--input-bg, #ffffff) !important;
+    border: 1px solid var(--border, #ddd) !important;
+    color: var(--text-main) !important;
+    padding: 12px 15px;
+    border-radius: 10px;
+}
+
+/* Dynamic Rows for Education/Experience */
+.dynamic-row {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--border) !important;
+}
+
+/* Fix Date Picker width */
+.date-picker {
+    font-size: 0.8rem;
+    padding: 5px;
+}
+
+/* Buttons */
+.btn-add {
+    background: #0d6efd;
+    color: white;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+}
+</style>
+
+@code {
+  [Parameter] public Guid JobId { get; set; }
+  private JobApplication appModel = new();
+  private bool isSubmitting = false;
+  private IBrowserFile? selectedFile;
+  private List<Country> countries = new();
+  private List<County> countiesList = new();
+  private List<SubCounty> filteredSubCounties = new();
+  private Country? selectedCountry;
+  private bool _scrollDone = false;
+
+
+  protected override async Task OnInitializedAsync()
+  {
+    using var db = await DbFactory.CreateDbContextAsync();
+    countries = await db.Countries.OrderBy(c => c.Name).ToListAsync();
+    countiesList = await db.Counties.OrderBy(c => c.Name).ToListAsync();
+
+    var kenya = countries.FirstOrDefault(c => c.IsoCode == "KE");
+    if (kenya != null) SelectCountry(kenya);
+
+
+  }
+
+  private async Task HandleCountyChange(ChangeEventArgs e)
+  {
+    if (Guid.TryParse(e.Value?.ToString(), out Guid countyId))
+    {
+      appModel.CountyId = countyId;
+      using var db = await DbFactory.CreateDbContextAsync();
+      filteredSubCounties = await db.SubCounties
+          .Where(s => s.CountyId == countyId)
+          .OrderBy(s => s.Name)
+          .ToListAsync();
+    }
+    else
+    {
+      appModel.CountyId = null;
+      filteredSubCounties.Clear();
+    }
+    appModel.SubCountyId = null;
+  }
+
+  private void SelectCountry(Country country)
+  {
+    selectedCountry = country;
+    appModel.CountryId = country.Id;
+  }
+
+  private void HandleFileSelected(InputFileChangeEventArgs e)
+  {
+    selectedFile = e.File;
+  }
+
+
+
+
+  private async Task HandleSubmit()
+  {
+    if (selectedFile == null)
+    {
+      await JS.InvokeVoidAsync("alert", "Please upload a CV.");
+      return;
+    }
+
+    isSubmitting = true;
+    appModel.JobListingId = JobId;
+
+    try
+    {
+      var success = await JobAppService.SubmitApplicationAsync(appModel, selectedFile);
+
+      if (success)
+      {
+        Nav.NavigateTo($"/apply-success/{Uri.EscapeDataString(appModel.FullName ?? "Candidate")}");
+      }
+      else
+      {
+        await JS.InvokeVoidAsync("alert", "Submission failed. Please check the logs.");
+      }
+    }
+    catch (Exception ex)
+    {
+      appModel.CVPath = null!;
+      await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+    }
+    finally
+    {
+      isSubmitting = false;
+    }
+  }
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (!_scrollDone)
+    {
+      _scrollDone = true;
+
+      // Delay ensures Blazor fully hydrates the form
+      await Task.Delay(150);
+
+      await JS.InvokeVoidAsync("scrollToAnchor", "job-details");
+    }
+  }
+
+
+  private void AddEducation()
+  {
+    appModel.Education.Add(new ApplicantEducation
+    {
+      Id = Guid.NewGuid(),
+      Institution = "",
+      Field = "",
+      Level = "",
+      StartDate = DateTime.Today,
+      EndDate = null
+    });
+  }
+
+  private void AddExperience()
+  {
+    appModel.Experience.Add(new ApplicantExperience
+    {
+      Id = Guid.NewGuid(),
+      Company = "",
+      JobTitle = "",
+      Responsibilities = "",
+      StartDate = DateTime.Today,
+      EndDate = null
+    });
+  }
+}

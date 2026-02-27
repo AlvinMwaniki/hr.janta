@@ -151,8 +151,28 @@
   protected override void OnInitialized()
   {
     editContext = new EditContext(workModel)!;
-    workModel.JobFromDate = DateTime.Today;
-    workModel.JobToDate = DateTime.Today;
+
+    if (TempService.TempEmployee.WorkHistory.Any())
+    {
+      var first = TempService.TempEmployee.WorkHistory.First();
+
+      workModel = new DataModels.WorkHistory
+      {
+        JobFromDate = DateTime.Today,
+        JobToDate = DateTime.Today
+      };
+
+
+      editingWorkIndex = -1;
+      editContext = new EditContext(workModel);
+    }
+    else
+    {
+      workModel.JobFromDate = DateTime.Today;
+      workModel.JobToDate = DateTime.Today;
+    }
+
+
   }
 
   private async Task AddOrUpdateWork(EditContext context)

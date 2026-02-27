@@ -1,23 +1,28 @@
 ﻿using HR.Core;
 using HR.Core.Enums;
 using HR.Data;
+using HR.Data.Models.Recruitment;
 using HR.Services.DTO;
 using HR.Services.Interfaces; 
 using HR.Services.Services;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace HR.Services
 {
 	public class DashboardService
 	{
-		private readonly HRDbContext _db;
+		private readonly IDbContextFactory<HRDbContext> _dbFactory; 
 		private readonly ICurrentUserService _currentUser;
-		public DashboardService(HRDbContext db, ICurrentUserService currentUser)
+		private readonly IMemoryCache _cache;
+
+		public DashboardService(IDbContextFactory<HRDbContext> dbFactory, ICurrentUserService currentUser, IMemoryCache cache)
 		{
-			_db = db;
+			_dbFactory = dbFactory; 
 			_currentUser = currentUser;
+			_cache = cache;
 		}
 
 		/*public DashboardService(HRDbContext db)
@@ -29,11 +34,14 @@ namespace HR.Services
 		{
 			try
 			{
-				return await _db.Employees.CountAsync();
+				using var db = await _dbFactory.CreateDbContextAsync();
+				return await db.Employees.CountAsync();
 			}
-			catch
+			catch (Exception ex)
 			{
-				return 0; // fallback
+				Console.WriteLine($"Critical Error in GetTotalEmployees: {ex.Message}");
+
+				return 0;
 			}
 		}
 
@@ -41,23 +49,27 @@ namespace HR.Services
 		{
 			try
 			{
-				return await _db.Departments.CountAsync();
+				using var db = await _dbFactory.CreateDbContextAsync();
+				return await db.Departments.CountAsync();
 			}
-			catch
+			catch (Exception ex)
 			{
-				return 0; // fallback
+				Console.WriteLine($"Critical Error in GetTotalDepartments: {ex.Message}");
+				return 0;
 			}
-		}
+			}
 
 		public async Task<int> GetTotalLeavesAsync()
 		{
 			try
 			{
-				return await _db.LeaveRequests.CountAsync();
+				using var db = await _dbFactory.CreateDbContextAsync();
+				return await db.LeaveRequests.CountAsync();
 			}
-			catch
+			catch (Exception ex)
 			{
-				return 0; // fallback
+				Console.WriteLine($"Critical Error in GetTotalLeaves: {ex.Message}");
+				return 0;
 			}
 		}
 
@@ -65,50 +77,44 @@ namespace HR.Services
 		{
 			try
 			{
-				return await _db.SalaryAdvances.CountAsync();
+				using var db = await _dbFactory.CreateDbContextAsync();
+				return await db.SalaryAdvances.CountAsync();
 			}
-			catch
+			catch (Exception ex)
 			{
-				return 0; // fallback
+				Console.WriteLine($"Critical Error in GetTotalAdvances: {ex.Message}");
+				return 0;
 			}
 		}
 
-		public async Task<(int working, int onLeave)> GetWorkingVsLeaveAsync(DateTime asOf)
-		{
-			var onLeave = await _db.LeaveRequests
-	.Where(l => l.FromDate.Date <= asOf.Date &&
-				l.ToDate.Date >= asOf.Date &&
-				l.Status == "Approved")
-	.Select(l => l.EmployeeId)
-	.Distinct()
-	.CountAsync();
+public async Task<(int working, int onLeave)> GetWorkingVsLeaveAsync(DateTime asOf)
+        {
+            using var db = await _dbFactory.CreateDbContextAsync();
+            var onLeave = await db.LeaveRequests
+                .Where(l => l.FromDate.Date <= asOf.Date && l.ToDate.Date >= asOf.Date && l.Status == "Approved")
+                .Select(l => l.EmployeeId).Distinct().CountAsync();
 
-
-
-			var totalEmployees = await _db.Employees.CountAsync();
-
-			return (totalEmployees - onLeave, onLeave);
-		}
+            var totalEmployees = await db.Employees.CountAsync();
+            return (totalEmployees - onLeave, onLeave);
+        }
 
 		public async Task<int> GetEmployeesOnLeaveAsync()
 		{
+			using var db = await _dbFactory.CreateDbContextAsync();
 			var today = DateTime.Today;
-
-			var onLeave = await _db.LeaveRequests
-				.Where(l => l.FromDate.Date <= today &&
-							l.ToDate.Date >= today &&
-							l.Status == "Approved")
-				.Select(l => l.EmployeeId)
-				.Distinct()
-				.CountAsync();
-
-			return onLeave;
+			return await db.LeaveRequests
+				.Where(l => l.FromDate.Date <= today && l.ToDate.Date >= today && l.Status == "Approved")
+				.Select(l => l.EmployeeId).Distinct().CountAsync();
 		}
 
 		public async Task<int> GetEmployeesNotOnLeaveAsync()
 		{
-			var totalEmployees = await _db.Employees.CountAsync();
-			var onLeave = await GetEmployeesOnLeaveAsync();
+			using var db = await _dbFactory.CreateDbContextAsync();
+			var totalEmployees = await db.Employees.CountAsync();
+			var today = DateTime.Today;
+			var onLeave = await db.LeaveRequests
+				.Where(l => l.FromDate.Date <= today && l.ToDate.Date >= today && l.Status == "Approved")
+				.Select(l => l.EmployeeId).Distinct().CountAsync();
 
 			return totalEmployees - onLeave;
 		}
@@ -133,44 +139,27 @@ namespace HR.Services
 
 		public async Task<int> GetMyLeavesTakenAsync()
 		{
-			// Get the ID of the current employee
 			var userId = await _currentUser.GetCurrentUserIdAsync();
 			if (userId == Guid.Empty) return 0;
 
-			var employeeId = await _db.Employees
-				.Where(e => e.UserId == userId)
-				.Select(e => e.Id)
-				.FirstOrDefaultAsync();
-
+			using var db = await _dbFactory.CreateDbContextAsync();
+			var employeeId = await db.Employees.Where(e => e.UserId == userId).Select(e => e.Id).FirstOrDefaultAsync();
 			if (employeeId == Guid.Empty) return 0;
 
 			var startOfYear = new DateTime(DateTime.Today.Year, 1, 1);
 			var endOfYear = new DateTime(DateTime.Today.Year, 12, 31);
 
-			var approvedRequests = await _db.LeaveRequests
-					.Where(l => l.EmployeeId == employeeId &&
-								l.Status == "Approved" &&
-								// l.LeaveType == HR.Core.Enums.LeaveType.Annual.ToString() && 
-								l.FromDate >= startOfYear &&
-								l.ToDate <= endOfYear)
-					//  Pull the list into memory before calculating the sum!
+			var approvedRequests = await db.LeaveRequests
+					.Where(l => l.EmployeeId == employeeId && l.Status == "Approved" && l.FromDate >= startOfYear && l.ToDate <= endOfYear)
 					.ToListAsync();
 
-			// Use the Enumerable.Sum extension method, which is the C# in-memory version.
-			var totalDaysTaken = approvedRequests.Sum(l =>
-				(int)Math.Ceiling((l.ToDate - l.FromDate).TotalDays) + 1
-			);
-			return totalDaysTaken;
+			return approvedRequests.Sum(l => (int)Math.Ceiling((l.ToDate - l.FromDate).TotalDays) + 1);
 		}
 
 		public async Task<int> GetMyLeaveBalanceAsync()
 		{
 			var takenDays = await GetMyLeavesTakenAsync();
-
-			const int annualLimit = HRConstants.AnnualLeaveDaysLimit;
-
-			// Logic: Balance = Max Annual Days - Days Taken
-			return Math.Max(0, annualLimit - takenDays); // Math.Max to prevent negative balance
+			return Math.Max(0, HRConstants.AnnualLeaveDaysLimit - takenDays);
 		}
 
 		public async Task<string?> GetMyJobTitleAsync()
@@ -193,24 +182,14 @@ namespace HR.Services
 
 		public async Task<int> GetMyPendingTasksAsync()
 		{
-			// ⭐ STEP 1: Get the reliable User ID ⭐
 			var userId = await _currentUser.GetCurrentUserIdAsync();
 			if (userId == Guid.Empty) return 0;
 
-			// ⭐ STEP 2: Find the Employee ID by querying the database ⭐
-			var employeeId = await _db.Employees
-				.Where(e => e.UserId == userId)
-				.Select(e => e.Id)
-				.FirstOrDefaultAsync();
-
+			using var db = await _dbFactory.CreateDbContextAsync();
+			var employeeId = await db.Employees.Where(e => e.UserId == userId).Select(e => e.Id).FirstOrDefaultAsync();
 			if (employeeId == Guid.Empty) return 0;
 
-			// Assuming pending tasks are things like leave requests awaiting approval
-			var pendingCount = await _db.LeaveRequests
-				.CountAsync(l => l.EmployeeId == employeeId &&
-								 l.Status == "Pending"); // <-- Uses the found Employee ID
-
-			return pendingCount;
+			return await db.LeaveRequests.CountAsync(l => l.EmployeeId == employeeId && l.Status == "Pending");
 		}
 		/*public async Task<DateTime?> GetMyLastPayslipDateAsync()
 		{
@@ -229,21 +208,14 @@ namespace HR.Services
 		//===============CHARTS ADVANCE==================
 		public async Task<AdvanceChartDataDto> GetAdvanceStatusChartDataAsync()
 		{
-			// For simplicity, we query ALL advances in the database for the Admin view.
-			var requests = await _db.SalaryAdvances
-				.AsNoTracking()
-				.Where(a => a.RequestDate.Year == DateTime.Today.Year) // Filter by current year
-				.ToListAsync();
+			using var db = await _dbFactory.CreateDbContextAsync();
+			var requests = await db.SalaryAdvances.AsNoTracking()
+				.Where(a => a.RequestDate.Year == DateTime.Today.Year).ToListAsync();
 
-			var approved = requests.Count(a => a.Status == "Approved");
-			// Combine all non-approved statuses into one category
-			var pendingOrRejected = requests.Count(a => a.Status != "Approved");
-
-			//  Return a tuple directly 
 			return new AdvanceChartDataDto
 			{
-				Approved = approved,
-				PendingOrRejected = pendingOrRejected
+				Approved = requests.Count(a => a.Status == "Approved"),
+				PendingOrRejected = requests.Count(a => a.Status != "Approved")
 			};
 		}
 
@@ -252,14 +224,10 @@ namespace HR.Services
 		// ⭐ NEW: CHART METHOD FOR LEAVE STATUS ⭐
 		public async Task<LeaveChartDataDto> GetLeaveStatusChartDataAsync()
 		{
+			using var db = await _dbFactory.CreateDbContextAsync();
 			var year = DateTime.Today.Year;
-
-			// Use a single query to get all counts at once for performance
-			var stats = await _db.LeaveRequests
-				.Where(l => l.FromDate.Year == year)
-				.GroupBy(l => l.Status)
-				.Select(g => new { Status = g.Key, Count = g.Count() })
-				.ToListAsync();
+			var stats = await db.LeaveRequests.Where(l => l.FromDate.Year == year)
+				.GroupBy(l => l.Status).Select(g => new { Status = g.Key, Count = g.Count() }).ToListAsync();
 
 			return new LeaveChartDataDto
 			{
@@ -274,61 +242,43 @@ namespace HR.Services
 			var userId = await _currentUser.GetCurrentUserIdAsync();
 			if (userId == Guid.Empty) return new List<UnifiedRequestDto>();
 
-			// 1. Get Employee ID (Reusable logic from your other methods)
-			var employeeId = await _db.Employees
-				.Where(e => e.UserId == userId)
-				.Select(e => e.Id)
-				.FirstOrDefaultAsync();
-
+			using var db = await _dbFactory.CreateDbContextAsync();
+			var employeeId = await db.Employees.Where(e => e.UserId == userId).Select(e => e.Id).FirstOrDefaultAsync();
 			if (employeeId == Guid.Empty) return new List<UnifiedRequestDto>();
 
-			// 2. Fetch Leaves
-			var leaves = await _db.LeaveRequests
-				.Where(l => l.EmployeeId == employeeId)
-				.OrderByDescending(l => l.CreatedAt)
-				.Take(count)
+			var leaves = await db.LeaveRequests.Where(l => l.EmployeeId == employeeId)
+				.OrderByDescending(l => l.CreatedAt).Take(count)
 				.Select(l => new UnifiedRequestDto
 				{
 					Id = l.Id,
 					RequestType = "Leave",
-					Description = l.LeaveType, // e.g., "Annual"
+					Description = l.LeaveType,
 					Detail = "Time Off Request",
 					Date = l.CreatedAt,
 					Status = Enum.Parse<LeaveStatus>(l.Status)
 				}).ToListAsync();
 
-			// 3. Fetch Salary Advances
-			var advances = await _db.SalaryAdvances
-				.Where(a => a.EmployeeId == employeeId)
-				.OrderByDescending(a => a.RequestDate)
-				.Take(count)
+			var advances = await db.SalaryAdvances.Where(a => a.EmployeeId == employeeId)
+				.OrderByDescending(a => a.RequestDate).Take(count)
 				.Select(a => new UnifiedRequestDto
 				{
 					Id = a.Id,
 					RequestType = "Advance",
 					Description = "Salary Advance",
-					Detail = a.Amount.ToString("C"), // Formats as Currency
+					Detail = a.Amount.ToString("C"),
 					Date = a.RequestDate,
 					Status = Enum.Parse<LeaveStatus>(a.Status)
 				}).ToListAsync();
 
-			// 4. Merge, Sort, and Return
-			return leaves.Concat(advances)
-				.OrderByDescending(x => x.Date)
-				.Take(count)
-				.ToList();
+			return leaves.Concat(advances).OrderByDescending(x => x.Date).Take(count).ToList();
 		}
 
 		//PENDING STAFF APPROVALS
 		public async Task<List<UnifiedRequestDto>> GetAllPendingApplicationsAsync()
 		{
-			// 1. Fetch all Pending Leaves (Raw Data)
-			var rawLeaves = await _db.LeaveRequests
-				.Include(l => l.Employee)
-				.Where(l => l.Status == "Pending")
-				.OrderByDescending(l => l.CreatedAt)
-				.Select(l => new
-				{
+			using var db = await _dbFactory.CreateDbContextAsync();
+			var rawLeaves = await db.LeaveRequests.Include(l => l.Employee).Where(l => l.Status == "Pending")
+				.OrderByDescending(l => l.CreatedAt).Select(l => new {
 					l.Id,
 					l.Employee.FirstName,
 					l.Employee.LastName,
@@ -338,24 +288,18 @@ namespace HR.Services
 					l.CreatedAt
 				}).ToListAsync();
 
-			// Map Leaves to Unified DTO in memory
 			var leaves = rawLeaves.Select(l => new UnifiedRequestDto
 			{
 				Id = l.Id,
 				RequestType = "Leave",
 				Description = $"{l.FirstName} {l.LastName}",
-				// Math and String formatting happen here in C#, avoiding the error
 				Detail = $"{l.LeaveType} ({(int)(l.ToDate - l.FromDate).TotalDays + 1} Days)",
 				Date = l.CreatedAt == default ? DateTime.Now : l.CreatedAt,
 				Status = LeaveStatus.Pending
 			}).ToList();
 
-			// 2. Fetch all Pending Advances
-			var advances = await _db.SalaryAdvances
-				.Include(a => a.Employee)
-				.Where(a => a.Status == "Pending")
-				.OrderByDescending(a => a.RequestDate)
-				.Select(a => new UnifiedRequestDto
+			var advances = await db.SalaryAdvances.Include(a => a.Employee).Where(a => a.Status == "Pending")
+				.OrderByDescending(a => a.RequestDate).Select(a => new UnifiedRequestDto
 				{
 					Id = a.Id,
 					RequestType = "Advance",
@@ -365,27 +309,48 @@ namespace HR.Services
 					Status = LeaveStatus.Pending
 				}).ToListAsync();
 
-			// 3. Merge and Sort
-			return leaves.Concat(advances)
-				.OrderByDescending(x => x.Date)
-				.ToList();
+			return leaves.Concat(advances).OrderByDescending(x => x.Date).ToList();
+
 		}
 		public async Task<PendingCountDto> GetPendingCountsAsync()
 		{
-			var leaves = await _db.LeaveRequests.CountAsync(l => l.Status == "Pending");
-			var advances = await _db.SalaryAdvances.CountAsync(a => a.Status == "Pending");
-
-			return new PendingCountDto
+			if (!_cache.TryGetValue("PendingCounts", out PendingCountDto? counts))
 			{
-				Leaves = leaves,
-				Advances = advances
-			};
+				using var db = await _dbFactory.CreateDbContextAsync();
+				var leaves = await db.LeaveRequests.CountAsync(l => l.Status == "Pending");
+				var advances = await db.SalaryAdvances.CountAsync(a => a.Status == "Pending");
+
+				counts = new PendingCountDto { Leaves = leaves, Advances = advances };
+				_cache.Set("PendingCounts", counts, TimeSpan.FromMinutes(2));
+			}
+			return counts ?? new PendingCountDto();
 		}
+
 		public class PendingCountDto
 		{
 			public int Leaves { get; set; }
 			public int Advances { get; set; }
 		}
+
+		public async Task<List<UnifiedRequestDto>> GetJobApplicationsForWidgetAsync()
+		{
+			using var db = await _dbFactory.CreateDbContextAsync();
+
+			return await db.JobApplications
+				.Include(j => j.JobListing)
+				.Where(j => j.Status == ApplicationStatus.New)
+				.OrderByDescending(j => j.AppliedAt)
+				.Select(j => new UnifiedRequestDto
+				{
+					Id = j.Id,
+					RequestType = "JobApp",
+					Description = j.FullName,
+					Detail = $"Applied for: {j.JobListing!.ExternalTitle} (AI Match: {j.SuitabilityScore}%)",
+					Date = j.AppliedAt,
+					Status = LeaveStatus.Pending // Required for the Widget's Enum check
+				}).ToListAsync();
+		}
+
 	}
 
 }

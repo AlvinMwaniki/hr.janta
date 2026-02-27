@@ -1,29 +1,335 @@
 ﻿@page "/reports"
+@using MudBlazor
+@using HR.Core.DTOs.Reports
+@using HR.Core.Enums
+@using HR.Data.Reporting
+@using HR.Web.Admin.Blazor.Components.Pages.Reports
+@inject IReportRepository ReportRepo
+@inject NavigationManager Nav
+@* ADD THIS LINE BELOW TO FIX THE DIALOGSERVICE ERROR *@
+@inject IDialogService DialogService
+  
+@rendermode InteractiveServer
 
-<div class="coming-soon-wrapper">
-  <div class="coming-soon-card shadow-lg">
+<style>
+  .report-header-card {
+    background: #1e293b;
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
 
-    <i class="fas fa-chart-bar coming-soon-icon"></i>
+  .filter-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    border-left: 5px solid #1e293b;
+  }
 
-    <h1 class="mt-3">Coming Soon</h1>
+  .qta-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
+    padding: 1.2rem;
+    transition: 0.3s;
+    cursor: pointer;
+    height: 100%;
+  }
 
-    <p class="text-muted mt-2">
-      The <strong>Reports & Analytics</strong> module is currently under development.
-      Soon you’ll be able to view, analyze, and export HR reports
-      and gain actionable insights to make informed decisions.
-    </p>
+    .qta-card:hover {
+      box-shadow: 0 10px 20px rgba(30, 41, 59, 0.12);
+      border-color: #1e293b;
+      transform: translateY(-4px);
+    }
 
-    <div class="mt-4 d-flex justify-content-center gap-2">
-      <NavLink href="/dashboard" class="btn btn-primary px-4">
-        <i class="fas fa-home me-2"></i>
-        Dashboard
-      </NavLink>
+  .btn-prox {
+    background: #1e293b;
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+  }
 
-      <NavLink href="/employees" class="btn btn-outline-secondary px-4">
-        <i class="fas fa-users me-2"></i>
-        Employees
-      </NavLink>
+  .analytics-panel {
+    background: white;
+    border-radius: 15px;
+    border: 1px solid #e2e8f0;
+  }
+</style>
+
+<div class="container-fluid">
+  <div class="report-header-card d-flex justify-content-between align-items-center shadow">
+    <div>
+      <h2 class="fw-bold mb-1">REPORT LIBRARY</h2>
+      <p class="mb-0 opacity-75">Intelligence Hub</p>
     </div>
+    <div class="d-flex gap-3">
+      <MudButton Variant="MudBlazor.Variant.Filled"
+                 StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                 Color="MudBlazor.Color.Error"
+                 OnClick="HandleMasterExport">
+        Master Export
+      </MudButton>
+    </div>
+  </div>
 
+  <div class="filter-section mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small fw-bold text-muted">Report Subject</label>
+        <MudSelect T="string" @bind-Value="_selectedReportType" Label="Select Report" Variant="MudBlazor.Variant.Outlined" Margin="MudBlazor.Margin.Dense" Dense="true">
+          <MudSelectItem Value="@("LeavesApplied")">Leave Applied Report</MudSelectItem>
+          <MudSelectItem Value="@("LeavesNotApplied")">Leave Not Applied</MudSelectItem>
+          <MudSelectItem Value="@("AdvancesApplied")">Salary Advances</MudSelectItem>
+          <MudSelectItem Value="@("EmployeeList")">Full Employee List</MudSelectItem>
+          <MudSelectItem Value="@("ExitStaff")">Exit Staff List</MudSelectItem>
+          <MudSelectItem Value="@("ApprovedLeaves")">Approved Leaves</MudSelectItem>
+          <MudSelectItem Value="@("RejectedLeaves")">Rejected Leaves</MudSelectItem>
+        </MudSelect>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small fw-bold text-muted">Department</label>
+        <MudSelect T="DepartmentType?" @bind-Value="_selectedDept" Label="Department" Variant="MudBlazor.Variant.Outlined" Margin="MudBlazor.Margin.Dense" Dense="true">
+          <MudSelectItem T="DepartmentType?" Value="null">All Departments</MudSelectItem>
+          @foreach (DepartmentType item in Enum.GetValues(typeof(DepartmentType)))
+          {
+            <MudSelectItem T="DepartmentType?" Value="@item">@item.ToString()</MudSelectItem>
+          }
+        </MudSelect>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small fw-bold text-muted">Date From</label>
+        <MudDatePicker @bind-Date="_dateFrom" Variant="MudBlazor.Variant.Outlined" Margin="MudBlazor.Margin.Dense" />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small fw-bold text-muted">Date To</label>
+        <MudDatePicker @bind-Date="_dateTo" Variant="MudBlazor.Variant.Outlined" Margin="MudBlazor.Margin.Dense" />
+      </div>
+
+      <div class="col-md-3">
+        <button class="btn btn-prox w-100 py-2" @onclick="HandleGenerate">
+          <i class="fas fa-file-export me-2"></i> GENERATE REPORT
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5">
+    @foreach (var report in _reportCards)
+    {
+      <div class="col-md-3">
+        <div class="qta-card shadow-sm" @onclick="() => QuickPreview(report.InternalKey)">
+          <div class="d-flex align-items-center">
+            <div class="p-3 rounded-circle me-3"><i class="@report.Icon @report.ColorClass fa-lg"></i></div>
+            <div>
+              <div class="small text-muted">Ready-Made</div>
+              <div class="fw-bold">@report.Name</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  @* Charts Section - Kept as per your code *@
+  <div class="row mb-5">
+    <div class="col-md-8">
+      <div class="analytics-panel p-4 h-100 shadow-sm">
+        <div class="d-flex justify-content-between mb-4">
+          <h5 class="fw-bold prox-header-text"><i class="fas fa-chart-pie me-2 text-primary"></i>Workforce Diversity</h5>
+          <h5 class="fw-bold prox-header text-center mb-4">
+            <i class="fas fa-users me-2 text-primary"></i>Ethnicity Distribution
+          </h5>
+        </div>
+        <div class="row align-items-start">
+          <div class="col-md-6">
+            @if (_genderData.All(x => x == 0))
+            {
+              <MudProgressCircular Color="MudBlazor.Color.Default" Indeterminate="true" />
+            }
+            else
+            {
+
+              <MudChart ChartType="MudBlazor.ChartType.Donut" InputData="@_genderData" InputLabels="@_genderLabels" Width="250px" Height="250px" />
+            <div class="mt-8 d-flex justify-content-around align-items-center">
+                    <div class="text-center">
+                        <MudText Typo="MudBlazor.Typo.h4" Class="fw-bold" Style="color: #2196f3;">@_genderData[0]</MudText>
+                        <MudText Typo="MudBlazor.Typo.caption" Class="text-muted">MALE</MudText>
+                    </div>
+                    
+                    @* Vertical line to separate numbers *@
+                    <div style="width: 1px; height: 40px; background: #e0e0e0;"></div>
+
+                    <div class="text-center">
+                        <MudText Typo="MudBlazor.Typo.h4" Class="fw-bold" Style="color: #00c853;">@_genderData[1]</MudText>
+                        <MudText Typo="MudBlazor.Typo.caption" Class="text-muted">FEMALE</MudText>
+                    </div>
+                </div>
+                
+                @* OPTIONAL: Add a Total count at the very bottom for extra weight *@
+                <div class="mt-5 pt-3 border-top">
+                    <MudText Typo="MudBlazor.Typo.body2" Class="text-muted">
+                        Total Workforce: <b>@(_genderData.Sum()) Employees</b>
+                    </MudText>
+                </div>
+        }
+          </div>
+          <div class="col-md-6">
+                      @foreach (var eth in _ethnicityStats)
+            {
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><span>@eth.Name</span><span>@eth.Percentage%</span></div>
+                <MudProgressLinear Color="MudBlazor.Color.Primary" Value="@eth.Percentage" Vertical="false" Size="MudBlazor.Size.Small" />
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="analytics-panel p-4 h-100 shadow-sm text-center">
+        <h5 class="fw-bold text-dark mb-4"><i class="fas fa-chart-pie me-2 text-primary"></i> Age Demographics</h5>
+        @if (_ageData.All(x => x == 0))
+        {
+          <MudProgressCircular Color="MudBlazor.Color.Default" Indeterminate="true" />
+        }
+        else
+        {
+
+          <MudChart ChartType="MudBlazor.ChartType.Pie" InputData="@_ageData" InputLabels="@_ageLabels" Width="200px" Height="200px" />
+        }
+        <div class="mt-4 d-flex justify-content-around">
+          <div><MudText Typo="MudBlazor.Typo.h6">@_ageData[0]</MudText><MudText Typo="MudBlazor.Typo.caption">Gen Z</MudText></div>
+          <div><MudText Typo="MudBlazor.Typo.h6">@_ageData[1]</MudText><MudText Typo="MudBlazor.Typo.caption">Millennials</MudText></div>
+          <div><MudText Typo="MudBlazor.Typo.h6">@_ageData[2]</MudText><MudText Typo="MudBlazor.Typo.caption">Boomers</MudText></div>
+        </div>
+        @* Row 2: NEW Intelligence Insights to fill the vertical gap *@
+        <div class="mt-8 pt-5 border-top text-start">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <MudText Typo="MudBlazor.Typo.body2" Class="text-muted">Workforce Maturity</MudText>
+            <MudChip T="string" Color="MudBlazor.Color.Info" Size="MudBlazor.Size.Small" Variant="MudBlazor.Variant.Text">Stable</MudChip>
+          </div>
+
+          @* Visual bar for Boomers (Retirement Risk) *@
+          <div class="mb-4">
+            <div class="d-flex justify-content-between small mb-1">
+              <span class="text-muted">Retirement Eligibility (Boomers)</span>
+              <span class="fw-bold">@(Math.Round((_ageData[2] / _ageData.Sum()) * 100, 1))%</span>
+            </div>
+            <MudProgressLinear Color="MudBlazor.Color.Warning" Value="@((_ageData[2] / _ageData.Sum()) * 100)" Size="MudBlazor.Size.Small" />
+          </div>
+
+          <MudAlert Severity="MudBlazor.Severity.Normal" Variant="MudBlazor.Variant.Outlined" Dense="true" Class="mt-2" Icon="@Icons.Material.Filled.Info">
+            <small>Average age group is <b>Millennials</b>.</small>
+          </MudAlert>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
+@code {
+  private string _selectedReportType = "EmployeeList";
+  private DepartmentType? _selectedDept;
+  private DateTime? _dateFrom = DateTime.Now.AddMonths(-1);
+  private DateTime? _dateTo = DateTime.Now;
+
+  private double[] _genderData = { 0, 0 };
+  private string[] _genderLabels = { "Male", "Female" };
+  private double[] _ageData = { 0, 0, 0 };
+  private string[] _ageLabels = { "Gen Z", "Millennials", "Boomers" };
+  private List<EthnicityStat> _ethnicityStats = new();
+
+  private List<ReportCard> _reportCards = new() {
+        new("Bank Report", "BankReport", "fas fa-university", "text-primary"),
+        new("Diversity Equity", "EquityDiversity", "fas fa-users", "text-danger"),
+        new("Contract Expiry", "ContractExpiry", "fas fa-clock", "text-info"),
+        new("Staff Exit List", "ExitStaff", "fas fa-door-open", "text-dark")
+    };
+
+  protected override async Task OnInitializedAsync()
+  {
+    var stats = await ReportRepo.GetDashboardStatsAsync();
+    if (stats != null)
+    {
+      _genderData = new[] { stats.MaleCount, stats.FemaleCount };
+      _ageData = new[] { stats.GenZCount, stats.MillennialCount, stats.OlderCount };
+      _ethnicityStats = stats.Ethnicities;
+    }
+  }
+
+  // MERGED METHOD: Handles everything in one place
+  private async Task HandleGenerate()
+  {
+    var parameters = new MudBlazor.DialogParameters
+    {
+      ["ReportName"] = _selectedReportType,
+      ["ReportKey"] = _selectedReportType,
+      ["Dept"] = _selectedDept,
+      ["From"] = _dateFrom,
+      ["To"] = _dateTo
+    };
+
+    var options = new MudBlazor.DialogOptions
+    {
+      MaxWidth = MudBlazor.MaxWidth.Large,
+      FullWidth = true,
+      CloseButton = true,
+      BackdropClick = false
+    };
+
+    // If you get an error here, make sure 'ReportPreviewModal.razor' exists in your project!
+    await DialogService.ShowAsync<ReportViewer>("Report Preview", parameters, options);
+  }
+
+  private async Task QuickPreview(string key)
+  {
+    _selectedReportType = key;
+    await HandleGenerate();
+  }
+
+  public record ReportCard(string Name, string InternalKey, string Icon, string ColorClass); 
+  private async Task HandleMasterExport()
+  {
+    // 1. Get raw stats from Dapper
+    var stats = await ReportRepo.GetDashboardStatsAsync();
+
+    var allEmployees = await ReportRepo.GetBankStatutoryReportAsync("All");
+
+    // Calculate precise counts based on your data structure
+    int totalCount = allEmployees.Count();
+    // Assuming 'DepartmentName' presence indicates a contract for your logic
+    int contractCount = allEmployees.Count(x => !string.IsNullOrEmpty(x.DepartmentName));
+    int permanentCount = totalCount - contractCount;
+
+    // 3. Fetch Trend Data for Bar Charts (Dynamic Report logic)
+    var leaveData = await ReportRepo.GetDynamicReportAsync("LeavesApplied", "All", DateTime.Now.AddMonths(-1), DateTime.Now);
+    var advanceData = await ReportRepo.GetDynamicReportAsync("AdvancesApplied", "All", DateTime.Now.AddMonths(-1), DateTime.Now);
+
+    var parameters = new MudBlazor.DialogParameters
+    {
+      ["Stats"] = stats,
+      ["PermanentCount"] = stats.PermanentCount, // <--- IS THIS LINE HERE?
+      ["ContractCount"] = stats.ContractCount,
+      ["InternCount"] = stats.InternCount,
+      ["GenderData"] = new double[] { (double)stats.MaleCount, (double)stats.FemaleCount },
+      ["GenderLabels"] = new string[] { "Male", "Female" },
+      ["AgeData"] = new double[] { stats.GenZCount, stats.MillennialCount, stats.OlderCount },
+      ["AgeLabels"] = new string[] { "Gen Z", "Millennials", "Boomers" },
+
+      // Real Ethnicity Progress Bars (Map from Stats.Ethnicities)
+      ["EthnicityData"] = stats.Ethnicities.Select(x => x.Percentage).ToArray(),
+      ["EthnicityLabels"] = stats.Ethnicities.Select(x => x.Name).ToArray(),
+
+      // Map Trends to real Bar Chart Series
+
+    };
+
+    var options = new MudBlazor.DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true };
+    await DialogService.ShowAsync<MasterExportTemplate>("Executive Intelligence Export", parameters, options);
+  }
+}

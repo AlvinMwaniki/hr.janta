@@ -5,10 +5,15 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using HR.Services.Services
+@using HR.Services
 @using HR.Services.Constants
 @using Microsoft.AspNetCore.Components.Web
 @using HR.Web.Admin.Blazor.Components.Pages.Employees
 @using Microsoft.JSInterop
+@using HR.Services.Interfaces
+@using HR.Web.Admin.Blazor.Infrastructure
+@inject DashboardService DashboardService
+@inject IAppNotificationService NotificationService
 @inject NavigationManager Nav
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -16,28 +21,41 @@
 @inject AuthenticationStateProvider Auth
 @inject HR.Services.Services.ImpersonationService Impersonation
 @inject ThemeService Theme
+@inject HR.Services.Interfaces.ILeaveNotificationService NotificationService
+@inject RefreshBroker Broker
+
+@implements IDisposable
+
 
 <CascadingAuthenticationState>
 
   <div class="page">
 
-    <div class="sidebar">
+    <div class="sidebar @(sidebarOpen ? "open" : "")">
       <NavMenu />
     </div>
-
+    @if (sidebarOpen)
+    {
+      <div class="sidebar-backdrop" @onclick="ToggleSidebar"></div>
+    }
     <main>
 
       <header class="navbar navbar-expand-lg px-4 py-2 custom-header shadow-sm">
 
         <div class="d-flex align-items-center">
-          <input type="checkbox" title="Navigation menu" class="navbar-toggler me-3 d-lg-none" />
+          <button id="sidebarToggle"
+                  type="button"
+                  class="navbar-toggler d-lg-none me-3" @onclick="ToggleSidebar">
+            <i class="fas fa-bars fa-lg"></i>
+          </button>
+
 
           <h1 class="mb-0">
             <a class="navbar-brand-custom brand-large" href="/dashboard">
-              <i class="fas fa-cubes me-2"></i>
               <strong class="brand-color-text fw-bolder">HR Master ProX</strong>
             </a>
           </h1>
+
         </div>
 
         <div class="ms-auto d-flex align-items-center">
@@ -132,10 +150,12 @@
           <div class="notification-wrapper me-4">
             <button type="button" class="btn p-0 bg-transparent border-0 position-relative notification-btn">
               <i class="fas fa-bell fa-lg"></i>
-              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light">
-                3
-                <span class="visually-hidden">unread messages</span>
-              </span>
+              @if (totalPending > 0)
+              {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light pulse-animation">
+                  @totalPending
+                </span>
+              }
             </button>
           </div>
 
@@ -160,7 +180,28 @@
   <span class="dismiss">🗙</span>
 </div>
 
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+  <div id="liveToast" class="toast hide shadow-lg border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header bg-primary text-white">
+      <i class="fas fa-bell me-2"></i>
+      <strong class="me-auto">@ToastTitle</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body bg-white text-dark">@ToastMessage</div>
+  </div>
+</div>
+
 @code {
+  private int totalPending = 0;
+  private string ToastMessage = "";
+  private string ToastTitle = "Notification";
+  private bool sidebarOpen = false;
+
+  private void ToggleSidebar() => sidebarOpen = !sidebarOpen;
+
+
+
+
 
   protected class UserInfo
   {
@@ -192,20 +233,95 @@
 
 
   // ⭐ CRITICAL 2: Subscription Setup (OnInitialized) ⭐
-  protected override void OnInitialized()
-  {
+  protected override async Task OnInitializedAsync(){
     // Subscribe to the service event
-  
+    await LoadCounts();
     Theme.OnThemeChanged += RefreshUI;
+    // 3. Subscribe to Global Notifications (Leaves, Advances, etc.)
+    if (NotificationService is AppNotificationService infra)
+    {
+      infra.OnNotificationReceived += HandleNotification;
+    }
+
+    NotificationService.OnLeaveUpdated += HandleEmployeeNotification;
+    Broker.OnNewRequestReceived += HandleAdminNotification;
+    Broker.OnRequestChanged += async () => await LoadCounts();
+
   }
+  private void HandleEmployeeNotification(string userId, string message)
+  {
+    // This is for when an employee gets an approval/rejection toast
+    ToastTitle = "Leave Status Update";
+    ToastMessage = message;
+    TriggerUiUpdate();
+  }
+  private async Task HandleAdminNotification(string type, string name)
+  {
+    await LoadCounts(); // Update the sidebar badge
+    ToastTitle = $"New {type}";
+    ToastMessage = $"{name} has submitted a new {type.ToLower()}.";
+    TriggerUiUpdate();
+  }
+
+  private async Task HandleAdminNotification()
+  {
+    ToastTitle = "System Update";
+    ToastMessage = "A new request has been submitted or modified.";
+    TriggerUiUpdate();
+    await Task.CompletedTask;
+  }
+  private void TriggerUiUpdate()
+  {
+    InvokeAsync(async () =>
+    {
+      StateHasChanged();
+      try
+      {
+        await JSRuntime.InvokeVoidAsync("playNotificationSound");
+        await JSRuntime.InvokeVoidAsync("showBootstrapToast", "liveToast");
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine("UI Interaction Error: " + ex.Message);
+      }
+    });
+  }
+
+  private async Task LoadCounts()
+  {
+    try
+    {
+      var counts = await DashboardService.GetPendingCountsAsync();
+      totalPending = counts.Leaves + counts.Advances;
+      await InvokeAsync(StateHasChanged);
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Error loading counts: {ex.Message}");
+    }
+  }
+
+  private async void HandleNotification()
+  {
+    await LoadCounts();
+    ToastTitle = "System Notification";
+    ToastMessage = "A new request requires your attention.";
+    TriggerUiUpdate();
+  }
+
   private void RefreshUI() => InvokeAsync(StateHasChanged);
 
  
   // ⭐ CRITICAL 3: Subscription Cleanup (Dispose) ⭐
   public void Dispose()
   {
-  
     Theme.OnThemeChanged -= RefreshUI;
+    if (NotificationService is AppNotificationService infra)
+    {
+      infra.OnNotificationReceived -= HandleNotification;
+    }
+    NotificationService.OnLeaveUpdated -= HandleEmployeeNotification;
+    Broker.OnNewRequestReceived -= HandleAdminNotification;
   }
 
 

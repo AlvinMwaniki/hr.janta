@@ -1,8 +1,10 @@
-﻿using HR.Data.Models.Advances;
+﻿using HR.Core.Enums;
+using HR.Data.Models.Advances;
 using HR.Data.Models.BANKING;
-using HR.Data.Models.Departments;
-using HR.Data.Models.Leaves;
 using HR.Data.Models.County;
+using HR.Data.Models.Departments;
+using HR.Data.Models.EmployestatusLog;
+using HR.Data.Models.Leaves;
 
 using System;
 using System.Collections.Generic;
@@ -76,8 +78,8 @@ namespace HR.Data.Models.Employees
 		public DateTime DOB { get; set; }
 
 		[Required(ErrorMessage = "National ID is required")]
-		[StringLength(10, MinimumLength = 10, ErrorMessage = "National ID must be exactly 10 digits.")]
-		[RegularExpression(@"^\d{10}$", ErrorMessage = "National ID must contain only numbers.")]
+		[StringLength(9, MinimumLength = 9, ErrorMessage = "National ID must be exactly 9 digits.")]
+		[RegularExpression(@"^\d{9}$", ErrorMessage = "National ID must contain only numbers.")]
 		public string? NationalID { get; set; }
 
 		[Required(ErrorMessage = "Gender is required")]
@@ -101,8 +103,11 @@ namespace HR.Data.Models.Employees
 		[Required(ErrorMessage = "Hire Date is required")]
 		public DateTime HireDate { get; set; }
 
+		[Required(ErrorMessage = "Contract Type is required")]
+		public ContractType ContractType { get; set; } = ContractType.Permanent;
+		public DateTime? ContractEndDate { get; set; }
 		[Required(ErrorMessage = "Status is required")]
-		public string Status { get; set; } = "Active";
+		public EmployeeStatus Status { get; set; } = EmployeeStatus.Active;
 
 		[Required]
 		public Guid UserId { get; set; }
@@ -121,5 +126,7 @@ namespace HR.Data.Models.Employees
 		public List<SalaryAdvance> SalaryAdvances { get; set; } = new();
 		public BankDetail? BankDetail { get; set; }
 		public PaymentData? PaymentData { get; set; }
+		// Add this to your Navigation section in Employee.cs
+public virtual ICollection<EmployeeStatusLog> StatusLogs { get; set; } = new List<EmployeeStatusLog>();
 	}
 }

@@ -1,0 +1,43 @@
+﻿@page "/apply-success/{CandidateName}"
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<div class="container vh-100 d-flex align-items-center justify-content-center">
+  <div class="card border-0 shadow-lg p-5 text-center" style="max-width: 550px; border-radius: 24px; background: #ffffff;">
+    <div class="card-body">
+      <div class="mb-4">
+        <div class="success-checkmark">
+          <div class="check-icon">
+            <span class="icon-line line-tip"></span>
+            <span class="icon-line line-long"></span>
+            <div class="icon-circle"></div>
+            <div class="icon-fix"></div>
+          </div>
+        </div>
+        <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+      </div>
+
+      <h2 class="fw-bold text-dark mb-3">Application Received!</h2>
+
+      <p class="text-muted fs-5 mb-4">
+        Thank you, <span class="text-primary fw-bold">@CandidateName</span>. Your application has been successfully submitted and our recruitment team has been notified.
+      </p>
+
+      <div class="alert alert-light border-0 py-3 mb-4" style="background-color: #f8f9fa; border-radius: 12px;">
+        <p class="small text-secondary mb-0">
+          <i class="bi bi-info-circle me-2"></i>
+          You will receive an email update regarding your application status shortly.
+        </p>
+      </div>
+
+      <button class="btn btn-primary btn-lg w-100 rounded-pill py-3 shadow-sm fw-bold"
+              @onclick='() => Nav.NavigateTo("/")'>
+        <i class="bi bi-house-door-fill me-2"></i> Back to Job Listings
+      </button>
+    </div>
+  </div>
+</div>
+
+@code {
+  [Parameter] public string CandidateName { get; set; } = "";
+}

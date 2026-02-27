@@ -16,14 +16,13 @@
 @rendermode InteractiveServer
 
 
-<div class="row justify-content-center">
+<div class="row justify-content-center w-100 m-0">
   <div class="col-md-5">
     <div class="card shadow-lg mt-5">
-      <div class="card-header bg-primary text-white text-center">
-        <h4>Login</h4>
+      <div class="card-header text-white text-center py-3" style="background: linear-gradient(135deg, #1064ee 0%, #00d4ff 100%) !important;">
+        <h4 class="mb-0">Login</h4>
       </div>
-      <div class="card-body p-4">
-
+      <div class="card-body p-4 scrollable-form-container">
         <EditForm EditContext="editContext">
           @* RESTORED: Provides the EditContext! *@
           <DataAnnotationsValidator /> @* Now this works again *@
@@ -40,14 +39,14 @@
             }
 
             <div class="mb-3">
-              <label for="email" class="form-label">Email</label>
+              <label for="email" class="prox-header-text form-label">Email</label>
               @* Use InputText (must be inside EditForm/EditContext) and ADD the 'name' attribute for the server POST *@
               <InputText id="email" name="Email" @bind-Value="model!.Email" class="form-control" />
               <ValidationMessage For="@(() => model.Email)" />
             </div>
 
             <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
+              <label for="password" class="prox-header-text form-label">Password</label>
               @* Use InputText and ADD the 'name' attribute for the server POST *@
               <InputText id="password" name="Password" @bind-Value="model.Password" type="password" class="form-control" />
               <ValidationMessage For="@(() => model.Password)" />
@@ -55,7 +54,7 @@
 
             @* CAPTCHA Section (Simplified) *@
             <div class="mb-3">
-              <label for="captcha" class="form-label">Verification Code</label>
+              <label for="captcha" class="prox-header-text form-label">Verification Code</label>
               <div class="input-group">
                 @if (captchaImageSource != null)
                 {

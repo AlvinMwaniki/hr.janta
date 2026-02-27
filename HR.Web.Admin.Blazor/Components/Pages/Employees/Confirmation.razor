@@ -3,7 +3,9 @@
 @using HR.Data.Models.Employees
 @using HR.Data.Models.BANKING
 @using HR.Data.Models.Auth
+@using HR.Data.Models.EmployestatusLog
 @using HR.Services.Services
+@using HR.Core.Enums
 @using HR.Services
 @using Microsoft.EntityFrameworkCore
 @inject EmployeeTempService TempService
@@ -59,7 +61,11 @@
     </div>
     <p><strong>Ethnicity:</strong> @ethnicityName</p>
     <p><strong>Hire Date:</strong> @TempService.TempEmployee.HireDate.ToShortDateString()</p>
-    <p><strong>Status:</strong> @TempService.TempEmployee.Status</p>
+    <p><strong>Contract Type:</strong> @TempService.TempEmployee.ContractType.ToString()</p>
+    <p>
+      <strong>Status:</strong>
+      <span class="badge bg-success">@TempService.TempEmployee.Status</span>
+    </p>
     @* We cannot display the Department Name directly here as the Service doesn't load navigation properties from the DB *@
     <p><strong>Department:</strong> @departmentName</p>
   </div>
@@ -296,7 +302,17 @@
 
     // --- C. Save to Database ---
     Db.Employees.Add(TempService.TempEmployee);
-
+    var initialLog = new EmployeeStatusLog
+    {
+      Id = Guid.NewGuid(),
+      EmployeeId = employeeToSave.Id,
+      NewStatus = EmployeeStatus.Active, // They start as Active
+      EffectiveDate = DateTime.Now,
+      Reason = "Initial Registration",
+      AuthorizedBy = "System Administrator", // Or get the current logged-in user's name
+      Notes = "Employee record created via registration wizard."
+    };
+    Db.EmployeeStatusLogs.Add(initialLog);
     // This single call saves ALL tracked entities (Employee, related entities, AND User)
     await Db.SaveChangesAsync();
 

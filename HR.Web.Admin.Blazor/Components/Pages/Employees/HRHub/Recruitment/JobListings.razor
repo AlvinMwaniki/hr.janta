@@ -1,0 +1,111 @@
+﻿@inject IConfiguration Config
+@page "/recruitment/listings"
+@using HR.Data.Models.Recruitment
+@using HR.Services.Interfaces
+@inject IRequisitionService RequisitionService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #222240;">
+      <i class="bi bi-dot"></i>
+      Active Job Listings
+    </h2>
+    <span class="badge bg-info text-dark p-2">External Postings</span>
+  </div>
+
+  <div class="card shadow border-0">
+    <div class="card-body p-0">
+      <table class="table table-hover align-middle mb-0 custom-staff-table">
+        <thead class="table-primary text-white">
+          <tr>
+            <th>Job Title (External)</th>
+            <th>Internal Ref</th>
+            <th>Location</th>
+            <th>Date Published</th>
+            <th>Status</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (Listings == null)
+          {
+            <tr><td colspan="6" class="text-center p-5">Loading Listings...</td></tr>
+          }
+          else if (!Listings.Any())
+          {
+            <tr><td colspan="6" class="text-center p-5 text-muted">No jobs are currently published.</td></tr>
+          }
+          else
+          {
+            @foreach (var item in Listings)
+            {
+              <tr>
+                <td class="fw-bold">@item.ExternalTitle</td>
+                <td><small class="text-muted">#@item.JobRequisition?.RequisitionNumber</small></td>
+                <td><i class="bi bi-geo-alt me-1"></i>@item.Location</td>
+                <td>@item.PublishedAt.ToString("dd MMM yyyy")</td>
+                <td style="width: 180px;">
+                  @if (item.IsActive)
+                  {
+                    <span class="badge  rounded-pill bg-success d-inline-block text-center" style="min-width: 90px;" >Live</span>
+                  }
+                  else
+                  {
+                    <span class="badge rounded-pill bg-secondary d-inline-block text-center" style="min-width: 90px;">Archived</span>
+                  }
+                </td>
+                <td class="text-end pe-4">
+                  <div class="d-inline-flex gap-1">
+                  @* This creates the link: https://localhost:7039/job/GUID *@
+                  <a href="@($"{Config["PublicPortal:BaseUrl"]}/job/{item.Id}")"
+                     target="_blank"
+                       class="btn btn-sm btn-outline-primary me-2 d-inline-block text-center" style="min-width: 90px;">
+                    <i class="bi bi-eye me-1"></i> View Posting
+                  </a>
+
+                    <button class="btn btn-sm @(item.IsActive ? "btn-outline-danger" : "btn-outline-success") d-inline-block text-center" style="min-width: 90px;"
+                            @onclick="() => ToggleStatus(item.Id)">
+                    @(item.IsActive ? "Remove" : "Republish")
+                  </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+@code {
+  private List<JobListing> Listings = new();
+
+  protected override async Task OnInitializedAsync()
+  {
+    await LoadListings();
+  }
+
+  private async Task LoadListings()
+  {
+    var result = await RequisitionService.GetJobListingsAsync();
+    Listings = result ?? new List<JobListing>();
+    Listings = await RequisitionService.GetJobListingsAsync() ?? new();
+  }
+
+  private async Task DeactivateListing(Guid id)
+  {
+    await Task.CompletedTask;
+
+  }
+  private async Task ToggleStatus(Guid id)
+  {
+    var success = await RequisitionService.ToggleListingStatusAsync(id);
+    if (success)
+    {
+      await LoadListings(); // Refresh the table
+    }
+  }
+}

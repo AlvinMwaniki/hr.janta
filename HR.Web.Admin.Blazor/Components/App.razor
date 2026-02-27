@@ -1,13 +1,20 @@
-﻿<!DOCTYPE html>
+﻿
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="/prox-dashboard.css" />
+    <link rel="stylesheet" href="/reportspdf.css"/>
     <link rel="stylesheet" href="@Assets["HR.Web.Admin.Blazor.styles.css"]" />
+ 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
@@ -35,9 +42,28 @@
 </head>
 
 <body>
-    <Routes />
+  <MudThemeProvider @rendermode="InteractiveServer" />
+  <MudPopoverProvider @rendermode="InteractiveServer" />
+  <MudDialogProvider @rendermode="InteractiveServer" />
+  <MudSnackbarProvider @rendermode="InteractiveServer" />
+  <Routes @rendermode="InteractiveServer" />
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script>
+    // Simple, clean bridge for .NET 9
+    window.quillFunctions = {
+        createQuill: function (quillElement) {
+            var quill = new Quill(quillElement, {
+                modules: { toolbar: true },
+                theme: 'snow'
+            });
+        },
+        getHtml: function (quillElement) {
+            return quillElement.querySelector('.ql-editor').innerHTML;
+        }
+    };
+  </script>
   <script src="_framework/blazor.web.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="js/notifications.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
   <script src="/js/theme.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -45,12 +71,24 @@
   <script src="/js/charts.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script src="/Js/imageManager.js"></script>
+  <script src="js/reportFunctions.js"></script>
+  <script src="js/MasterexportHelper.js"></script>
+  <script src="Js/Sound.js"></script>
   <script>
     window.scrollToBottom = () => {
       const height = document.documentElement.scrollHeight || document.body.scrollHeight;
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     };
   </script>
+  <script>
+    function closeSidebarOnMobile() {
+      if (window.innerWidth <= 991) {
+        const toggle = document.getElementById('sidebarToggle');
+        if (toggle) toggle.click();
+      }
+    }
+  </script>
+  <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>
 
 </html>

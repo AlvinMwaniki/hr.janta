@@ -77,7 +77,71 @@ main {
         padding-right: 1.5rem !important;
     }
 }
+/* MOBILE + TABLET: hide sidebar, show only when hamburger is clicked */
+@media (max-width: 991.98px) {
 
+  /* Page becomes single column */
+  .page {
+    display: block !important;
+    flex-direction: column !important;
+  }
+
+  /* Sidebar becomes off-canvas drawer */
+  .sidebar {
+    position: fixed !important;
+    top: 0;
+    left: -250px !important; /* hidden by default */
+    width: 250px;
+    height: 100vh;
+    background: var(--prox-card-bg);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.25);
+    transition: left .3s ease;
+    z-index: 9999;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+    .sidebar *:first-child {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+    }
+
+    .sidebar .nav-header,
+    .sidebar .logo-container,
+    .sidebar .menu-section {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+    }
+
+
+
+
+  /* Backdrop overlay for mobile sidebar */
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+    z-index: 9998;
+  }
+
+    .sidebar-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sidebar.open {
+      left: 0 !important;
+    }
+
+  /* Main content full width */
+  main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;

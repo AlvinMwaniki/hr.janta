@@ -1,4 +1,5 @@
-﻿using HR.Data.Models;
+﻿using HR.Core.Enums;
+using HR.Data.Models;
 using HR.Data.Models.Advances;
 using HR.Data.Models.Auth;
 using HR.Data.Models.BANKING;
@@ -6,7 +7,9 @@ using HR.Data.Models.Country;
 using HR.Data.Models.County;
 using HR.Data.Models.Departments;
 using HR.Data.Models.Employees;
+using HR.Data.Models.EmployestatusLog;
 using HR.Data.Models.Leaves;
+using HR.Data.Models.Recruitment;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -40,7 +43,15 @@ namespace HR.Data
 		public DbSet<Role> Roles { get; set; }
 		public DbSet<UserPermission> UserPermissions { get; set; }
 		public DbSet<RolePermission> RolePermissions { get; set; } = default!;
-
+		public DbSet<EmployeeStatusLog> EmployeeStatusLogs { get; set; }
+		public DbSet<JobRequisition> JobRequisition { get; set; }
+		public DbSet<RequisitionApproval> RequisitionApprovals { get; set; }
+		public DbSet<JobListing> JobListings { get; set; }
+		public DbSet<JobApplication> JobApplications { get; set; }
+		public DbSet<ApplicantEducation> ApplicantEducations { get; set; }
+		public DbSet<ApplicantExperience> ApplicantExperiences { get; set; }
+		public DbSet<Interview> Interviews { get; set; } = default!;
+		public DbSet<Onboarding> Onboardings { get; set; }
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
@@ -49,6 +60,7 @@ namespace HR.Data
 			{
 				// This is the line that captures the unique constraint
 				entity.HasIndex(u => u.Email).IsUnique();
+				entity.Property(u => u.IsActive).HasDefaultValue(true);
 			});
 
 			// -----------------------------
@@ -116,6 +128,17 @@ namespace HR.Data
 				entity.ToTable("Employees");
 				entity.HasKey(e => e.Id);
 
+				entity.Property(e => e.Status)
+					  .IsRequired()
+					  .HasColumnType("int");
+
+				entity.Property(e => e.ContractType)
+					  .IsRequired()
+					  .HasColumnType("int")
+					  .HasDefaultValue(ContractType.Permanent);
+
+				entity.Property(e => e.ContractEndDate)
+	                  .IsRequired(false); // Nullable because Permanent staff don't have an end date
 				entity.Property(e => e.EmployeeCode).IsRequired().HasMaxLength(50);
 				entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
 				entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
@@ -141,6 +164,7 @@ namespace HR.Data
 				entity.Property(e => e.JobTitle).HasMaxLength(100);
 				entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
 				entity.Property(e => e.Disability).HasMaxLength(100);
+
 
 
 				// Department FK
@@ -204,7 +228,26 @@ namespace HR.Data
 					  .HasForeignKey(e => e.EmployeeId)
 					  .OnDelete(DeleteBehavior.Cascade);
 			});
+			// 3. EmployeeStatusLog Configuration (The Vital Table)
+			modelBuilder.Entity<EmployeeStatusLog>(entity =>
+			{
+				entity.ToTable("EmployeeStatusLogs");
+				entity.HasKey(e => e.Id);
 
+				// Explicitly match the ASCII setting found in your Employees table
+				entity.Property(e => e.Id)
+					  .HasColumnType("char(36)")
+					  .HasCharSet("ascii")
+					  .UseCollation("ascii_general_ci");
+
+				entity.Property(e => e.EmployeeId)
+					  .HasColumnType("char(36)")
+					  .HasCharSet("ascii")
+					  .UseCollation("ascii_general_ci");
+
+				entity.Property(e => e.NewStatus).IsRequired();
+				entity.Property(e => e.AuthorizedBy).IsRequired().HasMaxLength(150);
+			});
 			// -----------------------------
 			// WorkHistory
 			modelBuilder.Entity<WorkHistory>(entity =>
@@ -344,6 +387,69 @@ namespace HR.Data
 
 				// Ensure no duplicate permission codes for the same user
 				entity.HasIndex(up => new { up.UserId, up.PermissionCode }).IsUnique();
+			});
+
+			// -----------------------------
+			// JobApplications Location Mapping
+			modelBuilder.Entity<JobApplication>(entity =>
+			{
+				entity.ToTable("JobApplications");
+				entity.HasKey(a => a.Id);
+
+				// Link Application to Country
+				entity.HasOne(a => a.Country)
+					.WithMany()
+					.HasForeignKey(a => a.CountryId)
+					.OnDelete(DeleteBehavior.Restrict);
+
+				// Link Application to County
+				entity.HasOne(a => a.County)
+					.WithMany()
+					.HasForeignKey(a => a.CountyId)
+					.OnDelete(DeleteBehavior.Restrict);
+
+				// Link Application to SubCounty
+				entity.HasOne(a => a.SubCounty)
+					.WithMany()
+					.HasForeignKey(a => a.SubCountyId)
+					.OnDelete(DeleteBehavior.Restrict);
+
+				// Character limits for the new fields
+				entity.Property(a => a.Estate).HasMaxLength(250);
+				entity.Property(a => a.POBox).HasMaxLength(50);
+			});
+			// -----------------------------
+			// Applicant Education Mapping
+			modelBuilder.Entity<ApplicantEducation>(entity =>
+			{
+				entity.ToTable("ApplicantEducations");
+				entity.HasKey(e => e.Id);
+
+				entity.Property(e => e.Institution).IsRequired().HasMaxLength(200);
+				entity.Property(e => e.Field).HasMaxLength(150);
+
+				// If an application is deleted, remove its education records automatically
+				entity.HasOne(e => e.JobApplication)
+					.WithMany(a => a.Education)
+					.HasForeignKey(e => e.JobApplicationId)
+					.OnDelete(DeleteBehavior.Cascade);
+			});
+
+			// -----------------------------
+			// Applicant Experience Mapping
+			modelBuilder.Entity<ApplicantExperience>(entity =>
+			{
+				entity.ToTable("ApplicantExperiences");
+				entity.HasKey(e => e.Id);
+
+				entity.Property(e => e.Company).IsRequired().HasMaxLength(200);
+				entity.Property(e => e.JobTitle).HasMaxLength(150);
+
+				// If an application is deleted, remove its experience records automatically
+				entity.HasOne(e => e.JobApplication)
+					.WithMany(a => a.Experience)
+					.HasForeignKey(e => e.JobApplicationId)
+					.OnDelete(DeleteBehavior.Cascade);
 			});
 		}
 	}

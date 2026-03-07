@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using HR.Services.Services
 @using HR.Services
+@using HR.Services.DTO
 @using HR.Services.Constants
 @using Microsoft.AspNetCore.Components.Web
 @using HR.Web.Admin.Blazor.Components.Pages.Employees
@@ -147,17 +148,79 @@
             </NotAuthorized>
           </AuthorizeView>
 
-          <div class="notification-wrapper me-4">
-            <button type="button" class="btn p-0 bg-transparent border-0 position-relative notification-btn">
-              <i class="fas fa-bell fa-lg"></i>
-              @if (totalPending > 0)
-              {
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light pulse-animation">
-                  @totalPending
-                </span>
-              }
-            </button>
-          </div>
+@* ── Notification Bell ── *@
+    <div class="notification-wrapper me-4 position-relative">
+
+    <button type="button"
+            class="btn p-0 bg-transparent border-0 position-relative notification-btn"
+            @onclick="ToggleDropdown">
+        <i class="fas fa-bell fa-lg"></i>
+        @if (totalPending > 0)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light pulse-animation">
+                @totalPending
+            </span>
+        }
+    </button>
+
+    @* ── Dropdown Panel ── *@
+    @if (_showDropdown)
+    {
+        <div class="notif-dropdown shadow-lg">
+            <div class="notif-header d-flex justify-content-between align-items-center px-3 py-2">
+                <span class="fw-semibold">Notifications</span>
+                <button class="btn btn-sm btn-link text-muted p-0" @onclick="CloseDropdown">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="notif-body">
+                @if (!_notifications.Any())
+                {
+                    <div class="text-center text-muted py-4 small">
+                        <i class="fas fa-check-circle me-1"></i> All caught up!
+                    </div>
+                }
+                else
+                {
+                    @foreach (var item in _notifications)
+                    {
+                        <a class="notif-item d-flex align-items-start gap-2 px-3 py-2 text-decoration-none"
+                           href="@GetNotifLink(item.RequestType)"
+                           @onclick="CloseDropdown">
+
+                            <span class="notif-icon @GetIconClass(item.RequestType)">
+                                <i class="fas @GetIconName(item.RequestType)"></i>
+                            </span>
+
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="notif-title text-truncate fw-semibold small">
+                                    @item.Description
+                                </div>
+                                <div class="notif-detail text-muted small text-truncate">
+                                    @item.Detail
+                                </div>
+                                <div class="notif-time text-muted" style="font-size:0.7rem">
+                                    @GetRelativeTime(item.Date)
+                                </div>
+                            </div>
+
+                            @* Status dot *@
+                            <span class="notif-dot mt-1"></span>
+                        </a>
+                    }
+                }
+            </div>
+            <div class="notif-footer text-center py-2 border-top">
+                <a href="/admin/leaves" class="small text-muted me-3"
+                   @onclick="CloseDropdown">Leaves</a>
+                <a href="/admin/advances" class="small text-muted me-3"
+                   @onclick="CloseDropdown">Advances</a>
+                <a href="/admin/recruitment/applications" class="small text-muted"
+                   @onclick="CloseDropdown">Job Apps</a>
+            </div>
+        </div>
+    }
+</div>
 
           <div class="logout-container">
             <a href="/signout" class="btn btn8-outline-danger" title="Log Out">
@@ -190,155 +253,230 @@
     <div class="toast-body bg-white text-dark">@ToastMessage</div>
   </div>
 </div>
-
 @code {
-  private int totalPending = 0;
-  private string ToastMessage = "";
-  private string ToastTitle = "Notification";
-  private bool sidebarOpen = false;
+    private int totalPending = 0;
+    private int LeavePendingCount;
+    private int AdvancePendingCount;
+    private int JobAppPendingCount;        // ⭐ NEW
+    private bool _showDropdown = false;    // ⭐ NEW
+    private List<UnifiedRequestDto> _notifications = new(); // ⭐ NEW
 
-  private void ToggleSidebar() => sidebarOpen = !sidebarOpen;
+    private string ToastMessage = "";
+    private string ToastTitle = "Notification";
+    private bool sidebarOpen = false;
 
+    private void ToggleSidebar() => sidebarOpen = !sidebarOpen;
 
-
-
-
-  protected class UserInfo
-  {
-    public string UserName { get; set; } = "User";
-    public string Email { get; set; } = "Not Available";
-  }
-  //USER 
-  protected UserInfo GetUserInfo(ClaimsPrincipal user)
-  {
-    var email = user.FindFirst(ClaimTypes.Email)?.Value;
-
-    // 2. Get the Identity Name claim (which you set to the email)
-    var identityName = user.Identity?.Name;
-    var userNameClaim = user.FindFirst(ClaimTypes.Name)?.Value;
-    // 3. Get the GivenName claim (which we also set to the email)
-    var displayUserName = user.FindFirst(ClaimTypes.GivenName)?.Value;
-
-    // Prioritize the GivenName (if available), then the Identity Name, then a fallback
-    string finalDisplayName = displayUserName ?? identityName ?? "Admin";
-
-    return new UserInfo
+    protected class UserInfo
     {
-      // The professional display name will now be the Email until the User model is updated.
-      UserName = finalDisplayName,
-      Email = email ?? "admin@example.com"
+        public string UserName { get; set; } = "User";
+        public string Email { get; set; } = "Not Available";
+    }
+
+    protected UserInfo GetUserInfo(ClaimsPrincipal user)
+    {
+        var email = user.FindFirst(ClaimTypes.Email)?.Value;
+        var identityName = user.Identity?.Name;
+        var userNameClaim = user.FindFirst(ClaimTypes.Name)?.Value;
+        var displayUserName = user.FindFirst(ClaimTypes.GivenName)?.Value;
+        string finalDisplayName = displayUserName ?? identityName ?? "Admin";
+
+        return new UserInfo
+        {
+            UserName = finalDisplayName,
+            Email = email ?? "admin@example.com"
+        };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCounts();
+        Theme.OnThemeChanged += RefreshUI;
+
+        if (NotificationService is AppNotificationService infra)
+        {
+            infra.OnNotificationReceived += HandleNotification;
+        }
+
+        NotificationService.OnLeaveUpdated += HandleEmployeeNotification;
+        Broker.OnNewRequestReceived += HandleAdminNotification;
+        Broker.OnRequestChanged += async () => await LoadCounts();
+    }
+
+    // ── Bell Dropdown Logic ──────────────────────────────────────── ⭐ NEW
+
+    private async Task ToggleDropdown()
+    {
+        _showDropdown = !_showDropdown;
+        if (_showDropdown)
+            await LoadNotificationsAsync();
+    }
+
+    private void CloseDropdown() => _showDropdown = false;
+
+    private async Task LoadNotificationsAsync()
+    {
+        try
+        {
+            var pending  = await DashboardService.GetAllPendingApplicationsAsync();
+            var jobApps  = await DashboardService.GetJobApplicationsForWidgetAsync();
+
+            _notifications = pending
+                .Concat(jobApps)
+                .OrderByDescending(x => x.Date)
+                .Take(10)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading notifications: {ex.Message}");
+        }
+    }
+
+    // ── Navigation helpers for dropdown items ────────────────────── ⭐ NEW
+
+    private string GetNotifLink(string requestType) => requestType switch
+    {
+        "Leave"   => "/admin/leaves",
+        "Advance" => "/admin/advances",
+        "JobApp"  => "/admin/recruitment/applications",
+        _         => "/admin"
     };
+
+    private string GetIconClass(string requestType) => requestType switch
+    {
+        "Leave"   => "icon-leave",
+        "Advance" => "icon-advance",
+        "JobApp"  => "icon-job",
+        _         => "icon-default"
+    };
+
+    private string GetIconName(string requestType) => requestType switch
+    {
+        "Leave"   => "fa-calendar-alt",
+        "Advance" => "fa-money-bill-wave",
+        "JobApp"  => "fa-user-tie",
+        _         => "fa-bell"
+    };
+  private string GetRelativeTime(DateTime date)
+  {
+    var utcDate = date.Kind == DateTimeKind.Utc
+        ? date
+        : DateTime.SpecifyKind(date, DateTimeKind.Utc);
+
+    var diff = DateTime.UtcNow - utcDate;
+
+    if (diff.TotalSeconds < 60) return "Just now";
+    if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+    if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+    if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+
+    // Older than a week — show actual date in EAT (UTC+3)
+    var eat = TimeZoneInfo.FindSystemTimeZoneById("E. Africa Standard Time");
+    var localDate = TimeZoneInfo.ConvertTimeFromUtc(utcDate, eat);
+    return localDate.ToString("dd MMM, h:mm tt");
   }
 
+    // ── Existing notification handlers (unchanged) ───────────────────────
 
-
-  // ⭐ CRITICAL 2: Subscription Setup (OnInitialized) ⭐
-  protected override async Task OnInitializedAsync(){
-    // Subscribe to the service event
-    await LoadCounts();
-    Theme.OnThemeChanged += RefreshUI;
-    // 3. Subscribe to Global Notifications (Leaves, Advances, etc.)
-    if (NotificationService is AppNotificationService infra)
+    private void HandleEmployeeNotification(string userId, string message)
     {
-      infra.OnNotificationReceived += HandleNotification;
+        ToastTitle   = "Leave Status Update";
+        ToastMessage = message;
+        TriggerUiUpdate();
     }
 
-    NotificationService.OnLeaveUpdated += HandleEmployeeNotification;
-    Broker.OnNewRequestReceived += HandleAdminNotification;
-    Broker.OnRequestChanged += async () => await LoadCounts();
-
-  }
-  private void HandleEmployeeNotification(string userId, string message)
-  {
-    // This is for when an employee gets an approval/rejection toast
-    ToastTitle = "Leave Status Update";
-    ToastMessage = message;
-    TriggerUiUpdate();
-  }
-  private async Task HandleAdminNotification(string type, string name)
-  {
-    await LoadCounts(); // Update the sidebar badge
-    ToastTitle = $"New {type}";
-    ToastMessage = $"{name} has submitted a new {type.ToLower()}.";
-    TriggerUiUpdate();
-  }
-
-  private async Task HandleAdminNotification()
-  {
-    ToastTitle = "System Update";
-    ToastMessage = "A new request has been submitted or modified.";
-    TriggerUiUpdate();
-    await Task.CompletedTask;
-  }
-  private void TriggerUiUpdate()
-  {
-    InvokeAsync(async () =>
+    private async Task HandleAdminNotification(string type, string name)
     {
-      StateHasChanged();
-      try
-      {
-        await JSRuntime.InvokeVoidAsync("playNotificationSound");
-        await JSRuntime.InvokeVoidAsync("showBootstrapToast", "liveToast");
-      }
-      catch (Exception ex)
-      {
-        Console.WriteLine("UI Interaction Error: " + ex.Message);
-      }
-    });
-  }
-
-  private async Task LoadCounts()
-  {
-    try
-    {
-      var counts = await DashboardService.GetPendingCountsAsync();
-      totalPending = counts.Leaves + counts.Advances;
-      await InvokeAsync(StateHasChanged);
+        await LoadCounts();
+        ToastTitle   = $"New {type}";
+        ToastMessage = $"{name} has submitted a new {type.ToLower()}.";
+        TriggerUiUpdate();
     }
-    catch (Exception ex)
+
+    private async Task HandleAdminNotification()
     {
-      Console.WriteLine($"Error loading counts: {ex.Message}");
+        ToastTitle   = "System Update";
+        ToastMessage = "A new request has been submitted or modified.";
+        TriggerUiUpdate();
+        await Task.CompletedTask;
     }
-  }
 
-  private async void HandleNotification()
-  {
-    await LoadCounts();
-    ToastTitle = "System Notification";
-    ToastMessage = "A new request requires your attention.";
-    TriggerUiUpdate();
-  }
-
-  private void RefreshUI() => InvokeAsync(StateHasChanged);
-
- 
-  // ⭐ CRITICAL 3: Subscription Cleanup (Dispose) ⭐
-  public void Dispose()
-  {
-    Theme.OnThemeChanged -= RefreshUI;
-    if (NotificationService is AppNotificationService infra)
+    private void TriggerUiUpdate()
     {
-      infra.OnNotificationReceived -= HandleNotification;
+        InvokeAsync(async () =>
+        {
+            StateHasChanged();
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("playNotificationSound");
+                await JSRuntime.InvokeVoidAsync("showBootstrapToast", "liveToast");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("UI Interaction Error: " + ex.Message);
+            }
+        });
     }
-    NotificationService.OnLeaveUpdated -= HandleEmployeeNotification;
-    Broker.OnNewRequestReceived -= HandleAdminNotification;
-  }
 
+    // ── LoadCounts — now includes Job Apps ──────────────────────── ⭐ UPDATED
 
-
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    if (firstRender)
+    private async Task LoadCounts()
     {
-      await Theme.InitializeThemeAsync();
-    }
-    else
-    {
-      // This handles every subsequent render (navigation)
-      // ensuring the theme is always forced on
-      await JSRuntime.InvokeVoidAsync("applyTheme", Theme.CurrentMode);
-    }
-  }
+        try
+        {
+            var counts = await DashboardService.GetPendingCountsAsync();
 
+            LeavePendingCount   = counts.Leaves;
+            AdvancePendingCount = counts.Advances;
+            JobAppPendingCount  = counts.JobApplications; // ⭐ NEW
+
+            // Total now uses the computed property from PendingCountDto
+            totalPending = counts.Total;
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading counts: {ex.Message}");
+        }
+    }
+
+    private async void HandleNotification()
+    {
+        await LoadCounts();
+        ToastTitle   = "System Notification";
+        ToastMessage = "A new request requires your attention.";
+        TriggerUiUpdate();
+    }
+
+    private void RefreshUI() => InvokeAsync(StateHasChanged);
+
+    // ── Dispose (unchanged + Broker cleanup fix) ─────────────────────────
+
+    public void Dispose()
+    {
+        Theme.OnThemeChanged -= RefreshUI;
+
+        if (NotificationService is AppNotificationService infra)
+        {
+            infra.OnNotificationReceived -= HandleNotification;
+        }
+
+        NotificationService.OnLeaveUpdated    -= HandleEmployeeNotification;
+        Broker.OnNewRequestReceived           -= HandleAdminNotification;
+        Broker.OnRequestChanged               -= async () => await LoadCounts(); // cleanup
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Theme.InitializeThemeAsync();
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("applyTheme", Theme.CurrentMode);
+        }
+    }
 }
-

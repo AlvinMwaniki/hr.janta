@@ -1,29 +1,503 @@
 ﻿@page "/payrollprocessing"
+@rendermode InteractiveServer
 
-<div class="coming-soon-wrapper">
-  <div class="coming-soon-card shadow-lg">
+<PageTitle>Payroll Processing</PageTitle>
 
-    <i class="fas fa-file-invoice coming-soon-icon"></i>
+<style>
+  @@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
-    <h1 class="mt-3">Coming Soon</h1>
+  .pp-wrap {
+    font-family: 'Plus Jakarta Sans',sans-serif;
+    background: #f0f4ff;
+    min-height: 100vh;
+    padding: 2rem;
+  }
 
-    <p class="text-muted mt-2">
-      The <strong>Payroll Processing</strong> module is currently under development.
-      Soon you’ll be able to process payroll, generate payslips,
-      and manage employee compensation efficiently and securely.
-    </p>
+  .pp-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
 
-    <div class="mt-4 d-flex justify-content-center gap-2">
-      <NavLink href="/dashboard" class="btn btn-primary px-4">
-        <i class="fas fa-home me-2"></i>
-        Dashboard
-      </NavLink>
+  .pp-ttl {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f1c3f;
+    letter-spacing: -0.03em;
+  }
 
-      <NavLink href="/salarymanagement" class="btn btn-outline-secondary px-4">
-        <i class="fas fa-money-bill-wave me-2"></i>
-        Salary Management
-      </NavLink>
+  .pp-sub {
+    font-size: .8rem;
+    color: #64748b;
+    margin-top: 3px;
+  }
+
+  .pp-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+
+  .ch {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ct {
+    font-weight: 700;
+    font-size: .92rem;
+    color: #0f1c3f;
+  }
+
+  .cbody {
+    padding: 1.5rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: .65rem 1.1rem;
+    font-size: .66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #94a3b8;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  td {
+    padding: .82rem 1.1rem;
+    font-size: .875rem;
+    vertical-align: middle;
+  }
+
+  .av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: .71rem;
+    flex-shrink: 0;
+  }
+
+  .er {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+  }
+
+  .en {
+    font-weight: 600;
+    font-size: .85rem;
+    color: #1e293b;
+  }
+
+  .ec {
+    font-size: .7rem;
+    color: #94a3b8;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono',monospace;
+    font-size: .8rem;
+  }
+
+  .bdg {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: .68rem;
+    font-weight: 700;
+  }
+
+  .bg {
+    background: #e3faf3;
+    color: #0e9f6e;
+  }
+
+  .bb {
+    background: #e8effe;
+    color: #1a56db;
+  }
+
+  .br {
+    background: #fde8e8;
+    color: #e02424;
+  }
+
+  .ba {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  .btn {
+    padding: .45rem 1rem;
+    border-radius: 8px;
+    font-family: 'Plus Jakarta Sans',sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+  }
+
+  .btn-dk {
+    background: #0f1c3f;
+    color: white;
+  }
+
+    .btn-dk:hover {
+      background: #1a2d5a;
+    }
+
+  .btn-gn {
+    background: #0e9f6e;
+    color: white;
+  }
+
+    .btn-gn:hover {
+      filter: brightness(1.1);
+    }
+
+  .btn-gh {
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+
+    .btn-gh:hover {
+      border-color: #0f1c3f;
+      color: #0f1c3f;
+    }
+
+  .btn-sm {
+    padding: .28rem .7rem;
+    font-size: .73rem;
+  }
+
+  .step-list {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .7rem .9rem;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    font-size: .84rem;
+    transition: all .3s;
+  }
+
+    .step.done {
+      background: #e3faf3;
+      border-color: #0e9f6e;
+    }
+
+    .step.active {
+      background: #e8effe;
+      border-color: #1a56db;
+    }
+
+  .step-ic {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .step.done .step-ic {
+    background: #0e9f6e;
+    color: white;
+  }
+
+  .step.active .step-ic {
+    background: #1a56db;
+    color: white;
+  }
+
+  .step:not(.done):not(.active) .step-ic {
+    background: #e2e8f0;
+    color: #94a3b8;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .65rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: .84rem;
+  }
+
+    .stat-row:last-child {
+      border: none;
+    }
+
+  .kpi-mini {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: .75rem;
+    padding: 1.5rem;
+  }
+
+  .km {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: .9rem 1rem;
+    border: 1px solid #f1f5f9;
+  }
+
+  .kml {
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #94a3b8;
+  }
+
+  .kmv {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: .2rem 0 0;
+    font-family: 'JetBrains Mono',monospace;
+  }
+
+  .progress-bar-bg {
+    background: #f1f5f9;
+    border-radius: 99px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: .4rem;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg,#1a56db,#0e9f6e);
+    transition: width .5s ease;
+  }
+
+  @@keyframes spin {
+    to {
+      transform: rotate(360deg)
+    }
+  }
+
+  .spinner {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+  }
+</style>
+
+<div class="pp-wrap">
+  <div class="pp-hdr">
+    <div>
+      <div class="pp-ttl"><i class="fas fa-cogs me-2" style="color:#1a56db"></i>Payroll Processing</div>
+      <div class="pp-sub">@currentMonth · @emps.Count employees · Ready to process</div>
+    </div>
+    <div style="display:flex;gap:.6rem">
+      @if (!processed)
+      {
+        <button class="btn btn-gn" @onclick="RunPayroll" disabled="@running">
+          @if (running)
+          {
+            <span class="spinner me-1"><i class="fas fa-circle-notch"></i></span>
+            <span>Processing...</span>
+  }
+          else
+          {
+            <i class="fas fa-play"></i>
+            <span>Run Payroll</span>
+  }
+        </button>
+      }
+      else
+      {
+        <span class="bdg bg" style="padding:.45rem .9rem;font-size:.82rem"><i class="fas fa-check-circle me-1"></i> Payroll Processed</span>
+        <button class="btn btn-gh btn-sm" @onclick="Reset"><i class="fas fa-redo"></i> Reset</button>
+      }
+    </div>
+  </div>
+
+  <div class="pp-grid">
+    <!-- Left: Table -->
+    <div>
+      <div class="card">
+        <div class="ch">
+          <div class="ct"><i class="fas fa-list-check me-2" style="color:#1a56db"></i>Payroll Register — @currentMonth</div>
+          <div style="display:flex;gap:.4rem">
+            <button class="btn btn-gh btn-sm"><i class="fas fa-filter"></i></button>
+            <button class="btn btn-dk btn-sm"><i class="fas fa-download"></i> Export</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Employee</th><th>Gross</th><th>PAYE</th><th>NHIF</th><th>NSSF</th><th>Housing</th><th>Net Pay</th><th>Status</th></tr></thead>
+            <tbody>
+              @foreach (var e in emps)
+              {
+                var c = Pay(e.sal);
+                <tr>
+                  <td><div class="er"><div class="av" style="background:@e.bg;color:@e.col">@e.init</div><div><div class="en">@e.name</div><div class="ec">@e.title</div></div></div></td>
+                  <td class="mono" style="font-weight:600">@e.sal.ToString("N0")</td>
+                  <td class="mono" style="color:#e02424">@c.paye.ToString("N0")</td>
+                  <td class="mono" style="color:#e02424">@c.nhif.ToString("N0")</td>
+                  <td class="mono" style="color:#e02424">@c.nssf.ToString("N0")</td>
+                  <td class="mono" style="color:#e02424">@c.hous.ToString("N0")</td>
+                  <td class="mono" style="color:#0e9f6e;font-weight:700">@c.net.ToString("N0")</td>
+                  <td><span class="bdg @(processed ? "bg" : "ba")">@(processed ? "Paid" : "Pending")</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
+    <!-- Right: Steps + Summary -->
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      <!-- Processing Steps -->
+      <div class="card">
+        <div class="ch"><div class="ct"><i class="fas fa-tasks me-2" style="color:#1a56db"></i>Processing Steps</div></div>
+        <div class="cbody">
+          <div class="step-list">
+            @for (int i = 0; i < steps.Length; i++)
+            {
+              var cls = stepDone > i ? "done" : stepDone == i && running ? "active" : "";
+              <div class="step @cls">
+                <div class="step-ic">
+                  @if (stepDone > i)
+                  {
+                    <i class="fas fa-check" style="font-size:.6rem"></i>
+                  }
+                  else
+                  {
+
+                    <span>@(i + 1)</span>
+                  }
+                </div>
+                <span>@steps[i]</span>
+              </div>
+            }
+          </div>
+          @if (processed)
+          {
+            <div class="bdg bg" style="width:100%;justify-content:center;padding:.7rem;margin-top:1rem;font-size:.82rem;border-radius:8px">
+              <i class="fas fa-check-circle me-2"></i>Payroll completed successfully!
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="card">
+        <div class="ch"><div class="ct"><i class="fas fa-chart-pie me-2" style="color:#1a56db"></i>Payroll Summary</div></div>
+        <div class="kpi-mini">
+          <div class="km"><div class="kml">Gross Pay</div><div class="kmv" style="color:#1a56db">@((emps.Sum(e => e.sal) / 1000m).ToString("N0"))K</div></div>
+          <div class="km"><div class="kml">Net Pay</div><div class="kmv" style="color:#0e9f6e">@((emps.Sum(e => Pay(e.sal).net) / 1000m).ToString("N0"))K</div></div>
+          <div class="km"><div class="kml">PAYE</div><div class="kmv" style="color:#e02424">@((emps.Sum(e => Pay(e.sal).paye) / 1000m).ToString("N0"))K</div></div>
+          <div class="km"><div class="kml">NHIF+NSSF</div><div class="kmv" style="color:#e02424">@((emps.Sum(e => Pay(e.sal).nhif + Pay(e.sal).nssf) / 1000m).ToString("N0"))K</div></div>
+        </div>
+        <div class="stat-row"><span style="color:#64748b">Employees</span><span style="font-weight:700">@emps.Count</span></div>
+        <div class="stat-row"><span style="color:#64748b">Housing Levy</span><span class="mono" style="color:#e02424">@(emps.Sum(e => Pay(e.sal).hous).ToString("N0"))</span></div>
+        <div class="stat-row" style="background:#f0fdf4"><span style="font-weight:700;color:#0e9f6e">Total Net Payout</span><span class="mono" style="font-weight:700;color:#0e9f6e">@(emps.Sum(e => Pay(e.sal).net).ToString("N0"))</span></div>
+      </div>
+
+      <!-- Remittance -->
+      <div class="card">
+        <div class="ch"><div class="ct"><i class="fas fa-landmark me-2" style="color:#d97706"></i>Remittance Status</div></div>
+        <div class="stat-row"><span style="color:#64748b">KRA (PAYE)</span><span class="bdg br">Pending</span></div>
+        <div class="stat-row"><span style="color:#64748b">NHIF</span><span class="bdg bg"><i class="fas fa-check me-1"></i>Submitted</span></div>
+        <div class="stat-row"><span style="color:#64748b">NSSF</span><span class="bdg ba">Processing</span></div>
+        <div class="stat-row"><span style="color:#64748b">Housing Levy</span><span class="bdg ba">Processing</span></div>
+      </div>
+    </div>
   </div>
 </div>
+
+@code {
+  string currentMonth = DateTime.Now.ToString("MMMM yyyy");
+  bool running = false, processed = false;
+  int stepDone = 0;
+  string[] steps = { "Validate salary records", "Calculate deductions (PAYE, NHIF, NSSF, Housing)", "Generate payslips for all employees", "Send payslips via email", "Update payroll records & reports" };
+
+  record P(decimal paye, decimal nhif, decimal nssf, decimal hous, decimal net);
+  P Pay(decimal g)
+  {
+    var nssf = Math.Round(g * .06m, 2); var h = Math.Round(g * .015m, 2);
+    decimal nhif = g switch { <= 5999 => 150, <= 7999 => 300, <= 11999 => 400, <= 14999 => 500, <= 19999 => 600, <= 24999 => 750, <= 29999 => 850, <= 34999 => 900, <= 39999 => 950, <= 44999 => 1000, <= 49999 => 1100, <= 59999 => 1200, <= 69999 => 1300, <= 79999 => 1400, <= 89999 => 1500, <= 99999 => 1600, _ => 1700 };
+    var tax = g - nssf; decimal paye = tax switch { <= 24000 => tax * .10m, <= 32333 => 2400 + (tax - 24000) * .25m, <= 500000 => 4483.25m + (tax - 32333) * .30m, _ => 144433.25m + (tax - 500000) * .325m };
+    paye = Math.Max(0, Math.Round(paye - 2400, 2)); return new P(paye, nhif, nssf, h, g - paye - nhif - nssf - h);
+  }
+  string[] bgs = { "#dbeafe", "#dcfce7", "#fef3c7", "#fce7f3", "#ede9fe", "#ffedd5" };
+  string[] cols = { "#1d4ed8", "#15803d", "#b45309", "#be185d", "#7c3aed", "#c2410c" };
+  record E(string name, string title, decimal sal, string init, string bg, string col);
+  E Mk(string fn, string ln, string title, decimal sal)
+  {
+    var nm = $"{fn} {ln}"; var i = Math.Abs(nm.GetHashCode()) % 6;
+    return new E(nm, title, sal, $"{fn[0]}{ln[0]}".ToUpper(), bgs[i], cols[i]);
+  }
+  List<E> emps => new(){
+        Mk("Jackason","Munene","Kulima",65000),Mk("Jared","Okumu","HR Officer",72000),Mk("Alvin","Mwaniki","Sales Executive",68000),
+        Mk("Ann","Wangui","Operations Head",145000),Mk("Alvin","Kiarie","Full Stack Developer",110000),Mk("Martin","Kukushi","Fundi Mwitu",45000),
+        Mk("Mwende","Muthee","Software Developer",200000),Mk("Jame","Shikuku","Software Developer",95000),Mk("Kenneth","Oluthe","Sales Executive",78000),
+        Mk("Angela","Atieno","Supply Chain Officer",82000),Mk("John","Munene","Procurement Officer",88000),Mk("Jeff","Ntongai","HR Manager",92000),
+        Mk("Yobra","Mnoma","Supply Chain Officer",75000),Mk("Rogers","Kamori","IT Support",68000),Mk("Don","Muthee","Marketing Head",125000),
+        Mk("Rose","Gichuru","Full Stack Developer",110000),Mk("Richard","Magoma","ERT Officer",55000),Mk("Valentine","Wahito","Supply Chain Officer",80000),
+        Mk("Arsenal","Otieno","Operations Head",138000),Mk("Megan","Wanjiku","Customer Care",62000),Mk("Ince","Njenga","ERT Officer",55000),
+        Mk("Jackline","Obure","Operations Head",132000),Mk("Rose","Gichuru","Supply Chain",76000),Mk("Alvin","Mwaniki2","Full Stack Developer",115000),
+        Mk("Rose","Gichuru3","Supply Chain Officer",78000),
+    };
+
+  async Task RunPayroll()
+  {
+    running = true; stepDone = 0; StateHasChanged();
+    for (int i = 0; i < steps.Length; i++)
+    {
+      await Task.Delay(900); stepDone = i + 1; StateHasChanged();
+    }
+    running = false; processed = true; StateHasChanged();
+  }
+  void Reset() { processed = false; stepDone = 0; running = false; }
+}

@@ -1,29 +1,558 @@
 ﻿@page "/bonuses"
+@rendermode InteractiveServer
 
-<div class="coming-soon-wrapper">
-  <div class="coming-soon-card shadow-lg">
+<PageTitle>Bonuses & Deductions</PageTitle>
 
-    <i class="fas fa-gift coming-soon-icon"></i>
+<style>
+  @@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
-    <h1 class="mt-3">Coming Soon</h1>
+  .bd-wrap {
+    font-family: 'Plus Jakarta Sans',sans-serif;
+    background: #f0f4ff;
+    min-height: 100vh;
+    padding: 2rem;
+  }
 
-    <p class="text-muted mt-2">
-      The <strong>Bonuses & Deductions</strong> module is currently under development.
-      Soon you’ll be able to manage employee bonuses, deductions,
-      and other compensation adjustments efficiently.
-    </p>
+  .bd-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
 
-    <div class="mt-4 d-flex justify-content-center gap-2">
-      <NavLink href="/dashboard" class="btn btn-primary px-4">
-        <i class="fas fa-home me-2"></i>
-        Dashboard
-      </NavLink>
+  .bd-ttl {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f1c3f;
+    letter-spacing: -0.03em;
+  }
 
-      <NavLink href="/salarymanagement" class="btn btn-outline-secondary px-4">
-        <i class="fas fa-money-bill-wave me-2"></i>
-        Salary Management
-      </NavLink>
+  .bd-sub {
+    font-size: .8rem;
+    color: #64748b;
+    margin-top: 3px;
+  }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .kpi {
+    background: white;
+    border-radius: 14px;
+    padding: 1.2rem 1.4rem;
+    border: 1px solid #e2e8f0;
+    position: relative;
+    overflow: hidden;
+  }
+
+    .kpi::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      border-radius: 0 0 4px 4px;
+    }
+
+  .kb::after {
+    background: #1a56db;
+  }
+
+  .kg::after {
+    background: #0e9f6e;
+  }
+
+  .kr::after {
+    background: #e02424;
+  }
+
+  .ka::after {
+    background: #d97706;
+  }
+
+  .kl {
+    font-size: .66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #94a3b8;
+  }
+
+  .kv {
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: .25rem 0 .1rem;
+    line-height: 1;
+  }
+
+  .kb .kv {
+    color: #1a56db;
+  }
+
+  .kg .kv {
+    color: #0e9f6e;
+  }
+
+  .kr .kv {
+    color: #e02424;
+  }
+
+  .ka .kv {
+    color: #d97706;
+  }
+
+  .ks {
+    font-size: .72rem;
+    color: #94a3b8;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+
+  .ch {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ct {
+    font-weight: 700;
+    font-size: .92rem;
+    color: #0f1c3f;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: .65rem 1.1rem;
+    font-size: .66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #94a3b8;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+    tbody tr:hover {
+      background: #f8faff;
+    }
+
+  td {
+    padding: .78rem 1.1rem;
+    font-size: .875rem;
+  }
+
+  .av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: .71rem;
+    flex-shrink: 0;
+  }
+
+  .er {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+  }
+
+  .en {
+    font-weight: 600;
+    font-size: .85rem;
+    color: #1e293b;
+  }
+
+  .et {
+    font-size: .7rem;
+    color: #94a3b8;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono',monospace;
+    font-size: .8rem;
+  }
+
+  .bdg {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: .68rem;
+    font-weight: 700;
+  }
+
+  .bg {
+    background: #e3faf3;
+    color: #0e9f6e;
+  }
+
+  .bb {
+    background: #e8effe;
+    color: #1a56db;
+  }
+
+  .br {
+    background: #fde8e8;
+    color: #e02424;
+  }
+
+  .ba {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  .btn {
+    padding: .45rem 1rem;
+    border-radius: 8px;
+    font-family: 'Plus Jakarta Sans',sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+  }
+
+  .btn-dk {
+    background: #0f1c3f;
+    color: white;
+  }
+
+    .btn-dk:hover {
+      background: #1a2d5a;
+    }
+
+  .btn-gn {
+    background: #0e9f6e;
+    color: white;
+  }
+
+    .btn-gn:hover {
+      filter: brightness(1.1);
+    }
+
+  .btn-gh {
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+
+    .btn-gh:hover {
+      border-color: #0f1c3f;
+      color: #0f1c3f;
+    }
+
+  .btn-sm {
+    padding: .28rem .7rem;
+    font-size: .73rem;
+  }
+
+  .rem-card {
+    border-radius: 12px;
+    padding: 1.2rem;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  .rem-title {
+    font-weight: 700;
+    font-size: .88rem;
+  }
+
+  .rem-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: .82rem;
+    padding: .3rem 0;
+    border-bottom: 1px dashed #f1f5f9;
+  }
+
+    .rem-row:last-child {
+      border: none;
+    }
+
+  .tabs {
+    display: flex;
+    gap: .25rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 4px;
+    width: fit-content;
+    margin-bottom: 1.25rem;
+  }
+
+  .tab {
+    padding: .4rem 1rem;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    font-family: 'Plus Jakarta Sans',sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+    .tab.on {
+      background: #0f1c3f;
+      color: white;
+    }
+</style>
+
+<div class="bd-wrap">
+  <div class="bd-hdr">
+    <div>
+      <div class="bd-ttl"><i class="fas fa-sliders me-2" style="color:#1a56db"></i>Bonuses & Deductions</div>
+      <div class="bd-sub">@DateTime.Now.ToString("MMMM yyyy") · Manage employee bonuses and statutory deductions</div>
     </div>
-
+    <button class="btn btn-dk btn-sm"><i class="fas fa-plus"></i> Add Bonus</button>
   </div>
+
+  <div class="kpi-row">
+    <div class="kpi kb"><div class="kl">Total Bonuses</div><div class="kv">487K</div><div class="ks">KES this month</div></div>
+    <div class="kpi kr"><div class="kl">Total PAYE</div><div class="kv">312K</div><div class="ks">KES remitted</div></div>
+    <div class="kpi ka"><div class="kl">NHIF + NSSF</div><div class="kv">200K</div><div class="ks">KES statutory</div></div>
+    <div class="kpi kg"><div class="kl">Housing Levy</div><div class="kv">43K</div><div class="ks">KES collected</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab @(tab == "bonus" ? "on" : "")" @onclick='() => tab = "bonus"'>Bonuses</button>
+    <button class="tab @(tab == "stat" ? "on" : "")" @onclick='() => tab = "stat"'>Statutory Deductions</button>
+    <button class="tab @(tab == "custom" ? "on" : "")" @onclick='() => tab = "custom"'>Custom Deductions</button>
+    <button class="tab @(tab == "remit" ? "on" : "")" @onclick='() => tab = "remit"'>Remittance</button>
+  </div>
+
+  <!-- BONUSES TAB -->
+  @if (tab == "bonus")
+  {
+    <div class="card">
+      <div class="ch">
+        <div class="ct"><i class="fas fa-gift me-2" style="color:#0e9f6e"></i>Bonus Register — @DateTime.Now.ToString("MMMM yyyy")</div>
+        <button class="btn btn-gn btn-sm"><i class="fas fa-plus"></i> Add Bonus</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Employee</th><th>Bonus Type</th><th>Amount (KES)</th><th>Reason</th><th>Month</th><th>Status</th></tr></thead>
+          <tbody>
+            @foreach (var b in bonuses)
+            {
+              <tr>
+                <td><div class="er"><div class="av" style="background:@b.bg;color:@b.col">@b.init</div><div><div class="en">@b.name</div><div class="et">@b.title</div></div></div></td>
+                <td><span class="bdg @b.tbdg">@b.type</span></td>
+                <td class="mono" style="font-weight:700;color:#0e9f6e">@b.amount.ToString("N0")</td>
+                <td style="color:#64748b;font-size:.82rem">@b.reason</td>
+                <td style="color:#94a3b8;font-size:.8rem">@DateTime.Now.ToString("MMM yyyy")</td>
+                <td><span class="bdg bg"><i class="fas fa-check me-1"></i>Approved</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- STATUTORY TAB -->
+  @if (tab == "stat")
+  {
+    <div class="card">
+      <div class="ch"><div class="ct"><i class="fas fa-landmark me-2" style="color:#1a56db"></i>Statutory Deductions — @DateTime.Now.ToString("MMMM yyyy")</div></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Employee</th><th>Gross Salary</th><th>PAYE</th><th>NHIF</th><th>NSSF (6%)</th><th>Housing (1.5%)</th><th>Total Ded.</th></tr></thead>
+          <tbody>
+            @foreach (var e in statEmps)
+            {
+              var c = Pay(e.sal);
+              <tr>
+                <td><div class="er"><div class="av" style="background:@e.bg;color:@e.col">@e.init</div><div><div class="en">@e.name</div><div class="et">@e.dept</div></div></div></td>
+                <td class="mono">@e.sal.ToString("N0")</td>
+                <td class="mono" style="color:#e02424">@c.paye.ToString("N0")</td>
+                <td class="mono" style="color:#e02424">@c.nhif.ToString("N0")</td>
+                <td class="mono" style="color:#e02424">@c.nssf.ToString("N0")</td>
+                <td class="mono" style="color:#e02424">@c.hous.ToString("N0")</td>
+                <td class="mono" style="font-weight:700;color:#e02424">@c.totalDed.ToString("N0")</td>
+              </tr>
+            }
+            <tr style="background:#f8fafc;font-weight:700">
+              <td>TOTALS</td>
+              <td class="mono">@statEmps.Sum(e => e.sal).ToString("N0")</td>
+              <td class="mono" style="color:#e02424">@statEmps.Sum(e => Pay(e.sal).paye).ToString("N0")</td>
+              <td class="mono" style="color:#e02424">@statEmps.Sum(e => Pay(e.sal).nhif).ToString("N0")</td>
+              <td class="mono" style="color:#e02424">@statEmps.Sum(e => Pay(e.sal).nssf).ToString("N0")</td>
+              <td class="mono" style="color:#e02424">@statEmps.Sum(e => Pay(e.sal).hous).ToString("N0")</td>
+              <td class="mono" style="color:#e02424">@statEmps.Sum(e => Pay(e.sal).totalDed).ToString("N0")</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- CUSTOM DEDUCTIONS TAB -->
+  @if (tab == "custom")
+  {
+    <div class="card">
+      <div class="ch"><div class="ct"><i class="fas fa-minus-circle me-2" style="color:#e02424"></i>Custom Deductions</div><button class="btn btn-dk btn-sm"><i class="fas fa-plus"></i> Add</button></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Employee</th><th>Deduction Type</th><th>Amount (KES)</th><th>Months</th><th>Remaining</th><th>Status</th></tr></thead>
+          <tbody>
+            @foreach (var d in customDeds)
+            {
+              <tr>
+                <td><div class="er"><div class="av" style="background:@d.bg;color:@d.col">@d.init</div><div><div class="en">@d.name</div></div></div></td>
+                <td><span class="bdg bb">@d.dtype</span></td>
+                <td class="mono" style="color:#e02424">@d.amount.ToString("N0")</td>
+                <td style="color:#64748b;font-size:.82rem">@d.months months</td>
+                <td class="mono">@d.remaining.ToString("N0")</td>
+                <td><span class="bdg @(d.active ? "bg" : "br")">@(d.active ? "Active" : "Completed")</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- REMITTANCE TAB -->
+  @if (tab == "remit")
+  {
+    <div class="two-col">
+      <div class="card">
+        <div class="ch"><div class="ct"><i class="fas fa-landmark me-2" style="color:#e02424"></i>KRA — PAYE Remittance</div></div>
+        <div style="padding:1.25rem;display:flex;flex-direction:column;gap:.5rem">
+          <div class="rem-row"><span style="color:#64748b">Total PAYE Collected</span><span class="mono" style="font-weight:700;color:#e02424">KES 312,480.00</span></div>
+          <div class="rem-row"><span style="color:#64748b">Due Date</span><span style="font-weight:600">9th @DateTime.Now.AddMonths(1).ToString("MMMM yyyy")</span></div>
+          <div class="rem-row"><span style="color:#64748b">Reference No</span><span class="mono">P10-@DateTime.Now.ToString("yyyyMM")</span></div>
+          <div class="rem-row"><span style="color:#64748b">Status</span><span class="bdg ba">Pending Remittance</span></div>
+          <button class="btn btn-dk btn-sm" style="margin-top:.5rem"><i class="fas fa-file-export"></i> Generate P10 Report</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct"><i class="fas fa-hospital me-2" style="color:#1a56db"></i>NHIF Remittance</div></div>
+        <div style="padding:1.25rem;display:flex;flex-direction:column;gap:.5rem">
+          <div class="rem-row"><span style="color:#64748b">Total NHIF Collected</span><span class="mono" style="font-weight:700;color:#e02424">KES 28,800.00</span></div>
+          <div class="rem-row"><span style="color:#64748b">Due Date</span><span style="font-weight:600">9th @DateTime.Now.AddMonths(1).ToString("MMMM yyyy")</span></div>
+          <div class="rem-row"><span style="color:#64748b">Status</span><span class="bdg bg"><i class="fas fa-check me-1"></i>Submitted</span></div>
+          <button class="btn btn-gh btn-sm" style="margin-top:.5rem"><i class="fas fa-receipt"></i> View Receipt</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct"><i class="fas fa-piggy-bank me-2" style="color:#0e9f6e"></i>NSSF Remittance</div></div>
+        <div style="padding:1.25rem;display:flex;flex-direction:column;gap:.5rem">
+          <div class="rem-row"><span style="color:#64748b">Employee Share (6%)</span><span class="mono" style="font-weight:700;color:#e02424">KES 85,500.00</span></div>
+          <div class="rem-row"><span style="color:#64748b">Employer Match (6%)</span><span class="mono" style="font-weight:700;color:#1a56db">KES 85,500.00</span></div>
+          <div class="rem-row"><span style="color:#64748b">Total NSSF</span><span class="mono" style="font-weight:700">KES 171,000.00</span></div>
+          <div class="rem-row"><span style="color:#64748b">Status</span><span class="bdg ba">Processing</span></div>
+          <button class="btn btn-dk btn-sm" style="margin-top:.5rem"><i class="fas fa-file-export"></i> Generate NSSF Report</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct"><i class="fas fa-home me-2" style="color:#d97706"></i>Housing Levy</div></div>
+        <div style="padding:1.25rem;display:flex;flex-direction:column;gap:.5rem">
+          <div class="rem-row"><span style="color:#64748b">Employee 1.5%</span><span class="mono" style="font-weight:700;color:#e02424">KES 21,356.50</span></div>
+          <div class="rem-row"><span style="color:#64748b">Employer Match 1.5%</span><span class="mono" style="font-weight:700;color:#1a56db">KES 21,356.50</span></div>
+          <div class="rem-row"><span style="color:#64748b">Total Housing Levy</span><span class="mono" style="font-weight:700">KES 42,713.00</span></div>
+          <div class="rem-row"><span style="color:#64748b">Status</span><span class="bdg ba">Processing</span></div>
+          <button class="btn btn-gh btn-sm" style="margin-top:.5rem"><i class="fas fa-clock"></i> Awaiting Confirmation</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
+
+@code {
+  string tab = "bonus";
+  record PR(decimal paye, decimal nhif, decimal nssf, decimal hous, decimal totalDed, decimal net);
+  record ES(string name, string dept, decimal sal, string init, string bg, string col);
+  record Bonus(string name, string title, string type, decimal amount, string reason, string init, string bg, string col, string tbdg);
+  record CustomDed(string name, decimal amount, string dtype, int months, decimal remaining, bool active, string init, string bg, string col);
+
+  PR Pay(decimal g)
+  {
+    var nssf = Math.Round(g * .06m, 2); var h = Math.Round(g * .015m, 2);
+    decimal nhif = g switch { <= 5999 => 150, <= 7999 => 300, <= 11999 => 400, <= 14999 => 500, <= 19999 => 600, <= 24999 => 750, <= 29999 => 850, <= 34999 => 900, <= 39999 => 950, <= 44999 => 1000, <= 49999 => 1100, <= 59999 => 1200, <= 69999 => 1300, <= 79999 => 1400, <= 89999 => 1500, <= 99999 => 1600, _ => 1700 };
+    var tax = g - nssf; decimal paye = tax switch { <= 24000 => tax * .10m, <= 32333 => 2400 + (tax - 24000) * .25m, <= 500000 => 4483.25m + (tax - 32333) * .30m, _ => 144433.25m + (tax - 500000) * .325m };
+    paye = Math.Max(0, Math.Round(paye - 2400, 2)); var tot = paye + nhif + nssf + h; return new PR(paye, nhif, nssf, h, tot, g - tot);
+  }
+  string[] bgs = { "#dbeafe", "#dcfce7", "#fef3c7", "#fce7f3", "#ede9fe", "#ffedd5" };
+  string[] cols = { "#1d4ed8", "#15803d", "#b45309", "#be185d", "#7c3aed", "#c2410c" };
+  string AV(string n) => $"{n.Split(' ')[0][0]}{n.Split(' ').Last()[0]}".ToUpper();
+  string BG(string n) => bgs[Math.Abs(n.GetHashCode()) % 6];
+  string CO(string n) => cols[Math.Abs(n.GetHashCode()) % 6];
+
+  List<Bonus> bonuses => new(){
+        new("Mwende Muthee","Software Developer","Performance",15000,"Exceeded Q4 targets",AV("Mwende Muthee"),BG("Mwende Muthee"),CO("Mwende Muthee"),"bg"),
+        new("Ann Wangui","Operations Head","Annual Bonus",25000,"End of year bonus",AV("Ann Wangui"),BG("Ann Wangui"),CO("Ann Wangui"),"bb"),
+        new("Don Muthee","Marketing Head","Commission",18000,"Campaign results",AV("Don Muthee"),BG("Don Muthee"),CO("Don Muthee"),"ba"),
+        new("Alvin Kiarie","Full Stack Developer","Performance",12000,"Project delivery",AV("Alvin Kiarie"),BG("Alvin Kiarie"),CO("Alvin Kiarie"),"bg"),
+        new("Arsenal Otieno","Operations Head","Annual Bonus",22000,"End of year bonus",AV("Arsenal Otieno"),BG("Arsenal Otieno"),CO("Arsenal Otieno"),"bb"),
+        new("Rose Gichuru","Full Stack Developer","Performance",12000,"Sprint completion",AV("Rose Gichuru"),BG("Rose Gichuru"),CO("Rose Gichuru"),"bg"),
+        new("Jeff Ntongai","HR Manager","Performance",10000,"HR KPIs met",AV("Jeff Ntongai"),BG("Jeff Ntongai"),CO("Jeff Ntongai"),"ba"),
+        new("Rogers Kamori","IT Support","Performance",8000,"Systems uptime",AV("Rogers Kamori"),BG("Rogers Kamori"),CO("Rogers Kamori"),"bg"),
+    };
+
+  List<ES> statEmps => new(){
+        new("Ann Wangui","Operations",145000,AV("Ann Wangui"),BG("Ann Wangui"),CO("Ann Wangui")),
+        new("Mwende Muthee","ICT",200000,AV("Mwende Muthee"),BG("Mwende Muthee"),CO("Mwende Muthee")),
+        new("Arsenal Otieno","Operations",138000,AV("Arsenal Otieno"),BG("Arsenal Otieno"),CO("Arsenal Otieno")),
+        new("Jackline Obure","Operations",132000,AV("Jackline Obure"),BG("Jackline Obure"),CO("Jackline Obure")),
+        new("Don Muthee","Marketing",125000,AV("Don Muthee"),BG("Don Muthee"),CO("Don Muthee")),
+        new("Alvin Mwaniki2","ICT",115000,AV("Alvin Mwaniki2"),BG("Alvin Mwaniki2"),CO("Alvin Mwaniki2")),
+        new("Alvin Kiarie","ICT",110000,AV("Alvin Kiarie"),BG("Alvin Kiarie"),CO("Alvin Kiarie")),
+        new("Rose Gichuru","ICT",110000,AV("Rose Gichuru"),BG("Rose Gichuru"),CO("Rose Gichuru")),
+        new("Jeff Ntongai","HR",92000,AV("Jeff Ntongai"),BG("Jeff Ntongai"),CO("Jeff Ntongai")),
+        new("John Munene","Procurement",88000,AV("John Munene"),BG("John Munene"),CO("John Munene")),
+    };
+
+  List<CustomDed> customDeds => new(){
+        new("Ann Wangui",5000,"Salary Advance",6,25000,true,AV("Ann Wangui"),BG("Ann Wangui"),CO("Ann Wangui")),
+        new("Alvin Kiarie",3000,"Salary Advance",4,9000,true,AV("Alvin Kiarie"),BG("Alvin Kiarie"),CO("Alvin Kiarie")),
+        new("Jared Okumu",2000,"Equipment Loan",12,18000,true,AV("Jared Okumu"),BG("Jared Okumu"),CO("Jared Okumu")),
+        new("Rogers Kamori",1500,"Staff Loan",8,0,false,AV("Rogers Kamori"),BG("Rogers Kamori"),CO("Rogers Kamori")),
+        new("Valentine Wahito",2500,"Salary Advance",3,5000,true,AV("Valentine Wahito"),BG("Valentine Wahito"),CO("Valentine Wahito")),
+    };
+}

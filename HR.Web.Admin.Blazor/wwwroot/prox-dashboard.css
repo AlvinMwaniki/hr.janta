@@ -11,6 +11,8 @@
   letter-spacing: -0.03em;
   line-height: 1;
   color: #0EA5E9 !important; /* UPGRADED: Deep Dashboard Blue */
+  margin-top: 8px;
+  display: block;
 }
 
 .prox-kpi-label, .prox-metric-title {
@@ -57,7 +59,7 @@ body.dark .prox-kpi-label, body.dark .prox-metric-title {
 .prox-metric-decor {
   position: absolute;
   bottom: -5px;
-  right: -8px;
+  right: 4px;
   opacity: .12 !important; /* Subtle watermark */
   font-size: 4rem;
   color: #222240 !important;
@@ -75,7 +77,7 @@ body.dark .prox-kpi-label, body.dark .prox-metric-title {
 /* Keep background white, but change the bottom accent color */
 .prox-employee-card {
   background: #ffffff !important; /* UPGRADED: Pure White Skin */
-  box-shadow: 0 10px 30px rgba(34, 34, 64, 0.05), inset 0 -2px 0 0 #0EA5E9 !important;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   transition: transform .3s ease, box-shadow .3s ease;
   color: #222240 !important; /* Text to Deep Blue */
 }
@@ -86,7 +88,6 @@ body.dark .prox-kpi-label, body.dark .prox-metric-title {
     left: 0;
     right: 0;
     height: 6px; /* SLIMMER & CLEANER */
-    background: linear-gradient(135deg, #0EA5E9 0%, #0284c7 100%);
     border-radius: 0 0 20px 20px; /* MATCHES CARD CURVE PERFECTLY */
   }
 

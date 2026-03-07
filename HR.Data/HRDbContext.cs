@@ -9,6 +9,7 @@ using HR.Data.Models.Departments;
 using HR.Data.Models.Employees;
 using HR.Data.Models.EmployestatusLog;
 using HR.Data.Models.Leaves;
+using HR.Data.Models.PAYROLL;
 using HR.Data.Models.Recruitment;
 
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,7 @@ namespace HR.Data
 		public DbSet<ApplicantExperience> ApplicantExperiences { get; set; }
 		public DbSet<Interview> Interviews { get; set; } = default!;
 		public DbSet<Onboarding> Onboardings { get; set; }
+		public DbSet<EmployeeSalary> EmployeeSalaries { get; set; }
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);

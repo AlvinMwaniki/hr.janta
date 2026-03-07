@@ -3,6 +3,7 @@ using HR.Data;
 using HR.Data.Models.Recruitment;
 using HR.Services.DTO;
 using HR.Services.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
@@ -17,17 +18,22 @@ namespace HR.Services.Services
 		private readonly IAtsScoringService _atsScorer;
 		private readonly string _uploadPath;
 		private readonly ILogger<JobApplicationService> _logger;
+		private readonly IMemoryCache _cache;
+		private readonly RefreshBroker _broker;
 
 		public JobApplicationService(
 			IDbContextFactory<HRDbContext> dbFactory,
 			IAppNotificationService notificationService,
 			IAtsScoringService atsScorer,
-			ILogger<JobApplicationService> logger)
+			ILogger<JobApplicationService> logger,
+			IMemoryCache cache,
+			RefreshBroker broker	)
 		{
 			_dbFactory = dbFactory;
 			_notificationService = notificationService;
 			_atsScorer = atsScorer;
 			_logger = logger;
+			_cache = cache;
 
 			_uploadPath = Path.Combine(
 				Directory.GetCurrentDirectory(),
@@ -37,6 +43,7 @@ namespace HR.Services.Services
 
 			if (!Directory.Exists(_uploadPath))
 				Directory.CreateDirectory(_uploadPath);
+			_broker = broker;
 		}
 
 		public async Task<bool> SubmitApplicationAsync(
@@ -97,9 +104,10 @@ namespace HR.Services.Services
 				// 6️⃣ Persist
 				db.JobApplications.Add(application);
 				await db.SaveChangesAsync();
-
+				_cache.Remove("PendingCounts");
 				// 7️⃣ Notify
 				await _notificationService.NotifyChangeAsync();
+				await _broker.NotifyNewRequest("Job Application", application.FullName);
 
 				return true;
 			}
@@ -203,6 +211,7 @@ namespace HR.Services.Services
 
 			return await db.JobApplications
 				.Include(a => a.JobListing)
+				.ThenInclude(j => j!.JobRequisition)
 				.Include(a => a.Experience)
 				.Include(a => a.Education)
 				.Include(a => a.Country)

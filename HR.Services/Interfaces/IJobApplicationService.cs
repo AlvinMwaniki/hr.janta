@@ -1,5 +1,6 @@
 ﻿using HR.Data.Models.Recruitment;
 using HR.Services.DTO;
+using HR.Core.Enums;
 
 using Microsoft.AspNetCore.Components.Forms;
 

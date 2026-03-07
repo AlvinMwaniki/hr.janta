@@ -92,13 +92,51 @@
               <div class="col-md-4"><label class="form-label small fw-bold">Job Title</label><InputText class="form-control" @bind-Value="Employee.JobTitle" /></div>
               <div class="col-md-4">
                 <label class="form-label small fw-bold">Contract Type</label>
-                <InputSelect @bind-Value="Employee.ContractType" class="form-select">
+                <InputSelect TValue="ContractType"
+                             @bind-Value="Employee.ContractType"
+                             @bind-Value:after="OnTypeChanged"
+                             class="form-select">
                   @foreach (var type in Enum.GetValues<ContractType>())
                   {
                     <option value="@type">@type.ToString()</option>
                   }
                 </InputSelect>
               </div>
+
+              @if (Employee.ContractType != ContractType.Permanent)
+              {
+                <div class="col-md-8 animate__animated animate__fadeInRight">
+                  <div class="card shadow-sm border-primary" style="background-color: #f0f7ff; border-left: 5px solid #007bff !important;">
+                    <div class="card-body py-2">
+                      <div class="row align-items-center">
+                        <div class="col-md-5">
+                          <label class="form-label mb-1 small fw-bold">Set Duration</label>
+                          <div class="input-group input-group-sm">
+                            <input type="number" class="form-control"
+                                   @bind="durationValue"
+                                   @bind:event="oninput"
+                                   @bind:after="Calculate" />
+                            <select class="form-select w-auto"
+                                    @bind="durationUnit"
+                                    @bind:after="Calculate">
+                              <option value="Months">Months</option>
+                              <option value="Years">Years</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-md-7">
+                          <label class="form-label mb-1 small fw-bold text-primary">Calculated End Date</label>
+                          <div class="d-flex align-items-center">
+                            <InputDate @bind-Value="Employee.ContractEndDate"
+                                       class="form-control form-control-sm fw-bold border-primary text-primary" />
+                            <span class="ms-2 badge bg-primary text-white">Smart Mode</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
 
               <div class="col-md-4">
                 <label class="form-label small fw-bold text-success">County</label>
@@ -316,7 +354,8 @@
   private List<HR.Data.Models.County.County> counties = new();
   private List<HR.Data.Models.County.SubCounty> allSubCounties = new();
   private List<HR.Data.Models.County.SubCounty> filteredSubCounties = new();
-
+  private int durationValue;
+  private string durationUnit = "Months";
   private int currentStep = 1;
   private bool showToast = false, isModalOpen = false;
 
@@ -420,6 +459,38 @@ if (Employee?.Education != null && edu.Id == Guid.Empty && !Employee.Education.C
       }
     }
   }
+  private void OnTypeChanged()
+  {
+    if (Employee == null) return;
+
+    if (Employee.ContractType == ContractType.Permanent)
+    {
+      Employee.ContractEndDate = null;
+      durationValue = 0;
+    }
+    else
+    {
+      if (durationValue == 0) durationValue = 6;
+      Calculate();
+    }
+  }
+  private void Calculate()
+  {
+    if (Employee == null) return;
+
+    var baseDate = Employee.HireDate == default
+        ? DateTime.Today
+        : Employee.HireDate;
+
+    if (durationValue > 0)
+    {
+      Employee.ContractEndDate = durationUnit == "Months"
+          ? baseDate.AddMonths(durationValue)
+          : baseDate.AddYears(durationValue);
+    }
+
+    StateHasChanged();
+  }
   private async Task HandleSubmit(EditContext editContext)
   {
     // We manually trigger validation but tuna decide if we proceed
@@ -471,6 +542,7 @@ if (Employee?.Education != null && edu.Id == Guid.Empty && !Employee.Education.C
       entry.Property(x => x.DepartmentId).IsModified = true;
       entry.Property(x => x.JobTitle).IsModified = true;
       entry.Property(x => x.ContractType).IsModified = true;
+      entry.Property(x => x.ContractEndDate).IsModified = true;
       entry.Property(x => x.CountyId).IsModified = true;
       entry.Property(x => x.SubCountyId).IsModified = true;
       entry.Property(x => x.Estate).IsModified = true;

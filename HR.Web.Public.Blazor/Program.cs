@@ -30,6 +30,7 @@ builder.Services.AddMemoryCache(); // Required for high speed
 builder.Services.AddScoped<IRequisitionService, RequisitionService>();
 builder.Services.AddScoped<ICurrentUserService, PublicGuestService>();
 builder.Services.AddHttpClient();
+builder.Services.AddSingleton<RefreshBroker>();
 builder.Services.AddScoped<IAppNotificationService, PublicNotificationService>();
 builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
 builder.Services.AddSingleton(sp =>

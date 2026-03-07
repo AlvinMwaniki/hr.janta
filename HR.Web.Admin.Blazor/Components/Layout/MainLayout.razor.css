@@ -242,3 +242,93 @@ main {
 }
     /* End of HR.Web.Admin.Blazor/Components/Layout/MainLayout.razor.css */
 
+    /*=======NOTIFICATION DROP DOWN=================*/
+/* Notification Dropdown */
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 320px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.1);
+  border-radius: 12px;
+  z-index: 9999;
+  overflow: hidden;
+  animation: notifFadeIn .15s ease;
+}
+
+@keyframes notifFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notif-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  font-size: .9rem;
+}
+
+.notif-body {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.notif-item {
+  color: #333;
+  border-bottom: 1px solid rgba(0,0,0,.05);
+  transition: background .15s;
+}
+
+  .notif-item:hover {
+    background: #f0f4ff;
+  }
+
+.notif-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: .75rem;
+}
+
+.icon-leave {
+  background: #dff0d8;
+  color: #3c763d;
+}
+
+.icon-advance {
+  background: #d9edf7;
+  color: #31708f;
+}
+
+.icon-job {
+  background: #f2dede;
+  color: #a94442;
+}
+
+.icon-default {
+  background: #f5f5f5;
+  color: #777;
+}
+
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0d6efd;
+  flex-shrink: 0;
+}
+
+.notif-footer a:hover {
+  text-decoration: underline;
+}

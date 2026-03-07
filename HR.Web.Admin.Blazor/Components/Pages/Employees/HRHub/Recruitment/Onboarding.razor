@@ -36,7 +36,63 @@
         @ChecklistItem("Background Check", () => onboarding.BackgroundCheckPassed, v => onboarding.BackgroundCheckPassed = v)
 
       </div>
+      @* ── Salary Agreement Section ── *@
+      <div class="card border-primary shadow-sm rounded-4 p-3 mb-4">
+        <h6 class="fw-bold text-primary mb-3">
+          <i class="fas fa-money-bill-wave me-2"></i>Agreed Salary
+        </h6>
 
+        @* Show range from requisition if available *@
+        @if (app?.JobListing?.JobRequisition != null)
+        {
+          <div class="alert alert-info py-2 mb-3">
+            <i class="fas fa-info-circle me-1"></i>
+            <strong>Approved Range:</strong>
+            KES @app.JobListing.JobRequisition.SalaryMin.ToString("N0")
+            –
+            KES @app.JobListing.JobRequisition.SalaryMax.ToString("N0")
+          </div>
+        }
+
+        <div class="row g-2 align-items-end">
+          <div class="col-md-6">
+            <label class="form-label fw-bold small">Agreed Basic Salary (KES)</label>
+            <div class="input-group">
+              <span class="input-group-text">KES</span>
+              <input type="number"
+                     class="form-control fw-bold"
+                     placeholder="e.g. 85000"
+                     @bind="agreedSalary"
+                     @bind:event="oninput" />
+            </div>
+          </div>
+          <div class="col-md-6">
+            @if (agreedSalary > 0)
+            {
+              var c = KenyaPayCalc.Calculate(agreedSalary);
+              <div class="border rounded p-2 bg-light small">
+                <div class="d-flex justify-content-between">
+                  <span>PAYE</span><span class="text-danger">- KES @c.PAYE.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span>NHIF</span><span class="text-danger">- KES @c.NHIF.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span>NSSF (6%)</span><span class="text-danger">- KES @c.NSSF.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span>Housing Levy (1.5%)</span><span class="text-danger">- KES @c.HousingLevy.ToString("N2")</span>
+                </div>
+                <hr class="my-1" />
+                <div class="d-flex justify-content-between fw-bold text-success">
+                  <span>Est. NET PAY</span>
+                  <span>KES @c.NetPay.ToString("N2")</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
       <div class="mb-4">
         <label class="form-label fw-bold">Progress</label>
         <div class="progress" style="height: 20px;">
@@ -69,6 +125,8 @@
 @code {
   private JobApplication? app;
   private HR.Data.Models.Recruitment.Onboarding onboarding = new();
+  private decimal agreedSalary = 0;
+
   protected override async Task OnInitializedAsync()
   {
     var uri = Nav.ToAbsoluteUri(Nav.Uri);
@@ -150,6 +208,12 @@
 
   private async Task HireCandidate()
   {
+     if (agreedSalary > 0)
+    {
+        onboarding.AgreedSalary = agreedSalary;
+        await OnboardingService.CreateOrUpdateAsync(onboarding); // persists AgreedSalary
+    }
+
     await OnboardingService.MarkAsHiredAsync(onboarding.JobApplicationId);
 
     // Load the full application
@@ -157,8 +221,15 @@
 
     if (app != null)
     {
-      // Map application → employee temp model
       TempService.InitializeFromApplication(app);
+
+      // ⭐ Carry salary range + agreed salary through the wizard
+      var req = app.JobListing?.JobRequisition;
+      if (req != null)
+        TempService.SetSalaryRange(req.SalaryMin, req.SalaryMax);
+
+      if (agreedSalary > 0)
+        TempService.SetAgreedSalary(agreedSalary); // ⭐ carry to Confirm page
     }
 
     // Redirect to employee creation
@@ -190,5 +261,70 @@
       return "bg-warning";
 
     return "bg-danger";
+  }
+  // ── Kenya Statutory Deductions Calculator ──
+  public class KenyaPayCalc
+  {
+    public decimal PAYE { get; set; }
+    public decimal NHIF { get; set; }
+    public decimal NSSF { get; set; }
+    public decimal HousingLevy { get; set; }
+    public decimal TotalDeductions => PAYE + NHIF + NSSF + HousingLevy;
+    public decimal NetPay { get; set; }
+
+    public static KenyaPayCalc Calculate(decimal gross)
+    {
+      var c = new KenyaPayCalc();
+
+      // NSSF — 6% of gross (new rates)
+      c.NSSF = Math.Round(gross * 0.06m, 2);
+
+      // Housing Levy — 1.5% of gross
+      c.HousingLevy = Math.Round(gross * 0.015m, 2);
+
+      // NHIF bands (2024 rates)
+      c.NHIF = gross switch
+      {
+        <= 5999 => 150,
+        <= 7999 => 300,
+        <= 11999 => 400,
+        <= 14999 => 500,
+        <= 19999 => 600,
+        <= 24999 => 750,
+        <= 29999 => 850,
+        <= 34999 => 900,
+        <= 39999 => 950,
+        <= 44999 => 1000,
+        <= 49999 => 1100,
+        <= 59999 => 1200,
+        <= 69999 => 1300,
+        <= 79999 => 1400,
+        <= 89999 => 1500,
+        <= 99999 => 1600,
+        _ => 1700
+      };
+
+      // PAYE — Kenya 2024 tax bands
+      // NSSF is tax deductible
+      decimal taxable = gross - c.NSSF;
+      decimal paye = 0;
+
+      if (taxable <= 24000)
+        paye = taxable * 0.10m;
+      else if (taxable <= 32333)
+        paye = 2400 + (taxable - 24000) * 0.25m;
+      else if (taxable <= 500000)
+        paye = 4483.25m + (taxable - 32333) * 0.30m;
+      else if (taxable <= 800000)
+        paye = 144433.25m + (taxable - 500000) * 0.325m;
+      else
+        paye = 241933.25m + (taxable - 800000) * 0.35m;
+
+      // Personal Relief — KES 2,400/month
+      c.PAYE = Math.Max(0, Math.Round(paye - 2400, 2));
+
+      c.NetPay = gross - c.TotalDeductions;
+      return c;
+    }
   }
 }

@@ -319,8 +319,15 @@ public async Task<(int working, int onLeave)> GetWorkingVsLeaveAsync(DateTime as
 				using var db = await _dbFactory.CreateDbContextAsync();
 				var leaves = await db.LeaveRequests.CountAsync(l => l.Status == "Pending");
 				var advances = await db.SalaryAdvances.CountAsync(a => a.Status == "Pending");
+				var jobApps = await db.JobApplications //MPYAA
+						   .CountAsync(j => j.Status == ApplicationStatus.New);
 
-				counts = new PendingCountDto { Leaves = leaves, Advances = advances };
+				counts = new PendingCountDto
+				{
+					Leaves = leaves,
+					Advances = advances,
+					JobApplications = jobApps  
+				}; 
 				_cache.Set("PendingCounts", counts, TimeSpan.FromMinutes(2));
 			}
 			return counts ?? new PendingCountDto();
@@ -330,6 +337,8 @@ public async Task<(int working, int onLeave)> GetWorkingVsLeaveAsync(DateTime as
 		{
 			public int Leaves { get; set; }
 			public int Advances { get; set; }
+			public int JobApplications { get; set; } 
+			public int Total => Leaves + Advances + JobApplications;
 		}
 
 		public async Task<List<UnifiedRequestDto>> GetJobApplicationsForWidgetAsync()

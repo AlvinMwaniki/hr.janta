@@ -43,9 +43,7 @@ else
                 <div class="prox-metric-value">@totals.Employees</div>
               </div>
               <div style="position: absolute; bottom: 0; right: 50%; width: 60%; opacity: 0.4;">
-                <svg viewBox="0 0 100 40" preserveAspectRatio="none" style="width: 100%; height: 60px;">
-                  <path d="M100,30 Q85,5 70,20 T40,10 T0,25" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
-                </svg>
+                
               </div>
               <i class="fas fa-users prox-metric-decor"></i>
             </div>
@@ -73,10 +71,8 @@ else
                 <small class="opacity-75">4 Pending</small>
               </div>
               <i class="fas fa-plane-departure prox-metric-decor"></i>
-            <div style="position: absolute; bottom: 0; right: 0; width: 60%; opacity: 0.4;">
-              <svg viewBox="0 0 100 40" preserveAspectRatio="none" style="width: 100%; height: 50px;">
-                <path d="M0,35 Q20,35 40,15 T80,25 T100,5" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
-              </svg>
+              <div style="position: absolute; bottom: 0; right: 50%; width: 60%; opacity: 0.4;">
+                
             </div>
           </div>
         </div>
@@ -118,6 +114,10 @@ else
               <button class="nav-link py-1 px-3 rounded-pill @(activePage == 3 ? "active shadow-sm" : "text-muted")"
                       @onclick="() => SetPage(3)">
                 Job Applications
+                @if (atsPendingList?.Any() == true)
+                {
+                  <span class="badge bg-danger rounded-pill ms-1">@atsPendingList.Count</span>
+                }
               </button>
             </li>
             <li class="nav-item">

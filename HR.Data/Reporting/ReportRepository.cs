@@ -138,7 +138,12 @@ public class ReportRepository : IReportRepository
          SELECT MONTH(RequestDate) as Month, COUNT(*) as Count 
           FROM SalaryAdvances 
          WHERE YEAR(RequestDate) = YEAR(CURDATE())
-         GROUP BY MONTH(RequestDate);";
+         GROUP BY MONTH(RequestDate);
+
+         /* 10. ⭐ TRUE TOTAL — counts ALL employees regardless of gender/missing data */
+         SELECT COUNT(*) FROM Employees;";
+
+
 
 		using var multi = await db.QueryMultipleAsync(sql);
 		var stats = new DashboardStatsDTO();
@@ -190,17 +195,12 @@ public class ReportRepository : IReportRepository
 
 		foreach (var row in contractRows)
 		{
-			// Accessing the dynamic properties using the Aliases we set in SQL
-			// We use Convert.ToInt32 because MySQL COUNT is a Long (Int64)
-			string dbType = Convert.ToString(row.CType);
+			string dbType = Convert.ToString(row.CType) ?? "";
 			int dbCount = Convert.ToInt32(row.CCount);
 
-			if (dbType == "1")
-				stats.PermanentCount = dbCount;
-			else if (dbType == "2")
-				stats.ContractCount = dbCount;
-			else if (dbType == "3")
-				stats.InternCount = dbCount;
+			if (dbType == "0") stats.PermanentCount = dbCount;  // 7 Permanent
+			else if (dbType == "1") stats.ContractCount = dbCount;  // 16 Contract
+			else if (dbType == "2") stats.InternCount = dbCount;  // 1 Intern
 		}
 		// ... after reading Contract Types ...
 
@@ -218,6 +218,9 @@ public class ReportRepository : IReportRepository
 		{
 			stats.MonthlyAdvancesTrend[row.Month - 1] = row.Count;
 		}
+		// 10. ⭐ TRUE TOTAL — read last
+		totalEmployees = await multi.ReadFirstAsync<int>(); // ⭐ no 'int' — just reassign
+		stats.TotalCount = totalEmployees;
 
 		// Set the "Current Month" single values for  cards
 		int currentMonth = DateTime.Now.Month;

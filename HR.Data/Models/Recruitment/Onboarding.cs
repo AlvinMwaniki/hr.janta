@@ -16,6 +16,7 @@ namespace HR.Data.Models.Recruitment
 		public bool NHIFProvided { get; set; }
 		public bool BankDetailsProvided { get; set; }
 		public bool BackgroundCheckPassed { get; set; }
+		public decimal? AgreedSalary { get; set; }
 
 		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 		public DateTime? UpdatedAt { get; set; }

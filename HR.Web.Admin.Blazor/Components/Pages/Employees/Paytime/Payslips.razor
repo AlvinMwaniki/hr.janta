@@ -1,0 +1,498 @@
+﻿@page "/payslips/admin"
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+
+<PageTitle>Payslips</PageTitle>
+
+<style>
+  @@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  .ps-wrap {
+    font-family: 'Plus Jakarta Sans',sans-serif;
+    background: #f0f4ff;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  .ps-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .ps-ttl {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f1c3f;
+    letter-spacing: -0.03em;
+  }
+
+  .ps-sub {
+    font-size: .8rem;
+    color: #64748b;
+    margin-top: 3px;
+  }
+
+  .ps-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+
+  .ch {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ct {
+    font-weight: 700;
+    font-size: .92rem;
+    color: #0f1c3f;
+  }
+
+  .emp-item {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .8rem 1.2rem;
+    border-bottom: 1px solid #f8fafc;
+    cursor: pointer;
+    transition: background .15s;
+  }
+
+    .emp-item:hover, .emp-item.active {
+      background: #f0f5ff;
+    }
+
+    .emp-item.active {
+      border-left: 3px solid #1a56db;
+    }
+
+  .av {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: .72rem;
+    flex-shrink: 0;
+  }
+
+  .en {
+    font-weight: 600;
+    font-size: .85rem;
+    color: #1e293b;
+  }
+
+  .et {
+    font-size: .7rem;
+    color: #94a3b8;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono',monospace;
+  }
+
+  .btn {
+    padding: .45rem 1rem;
+    border-radius: 8px;
+    font-family: 'Plus Jakarta Sans',sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+  }
+
+  .btn-dk {
+    background: #0f1c3f;
+    color: white;
+  }
+
+    .btn-dk:hover {
+      background: #1a2d5a;
+    }
+
+  .btn-gn {
+    background: #0e9f6e;
+    color: white;
+  }
+
+    .btn-gn:hover {
+      filter: brightness(1.1);
+    }
+
+  .btn-gh {
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+
+    .btn-gh:hover {
+      border-color: #0f1c3f;
+      color: #0f1c3f;
+    }
+
+  .btn-sm {
+    padding: .28rem .7rem;
+    font-size: .73rem;
+  }
+
+  .bdg {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: .68rem;
+    font-weight: 700;
+  }
+
+  .bg {
+    background: #e3faf3;
+    color: #0e9f6e;
+  }
+
+  .bb {
+    background: #e8effe;
+    color: #1a56db;
+  }
+
+  /* Payslip print styles */
+  .payslip {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 2rem;
+  }
+
+  .ps-company-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 1.25rem;
+    border-bottom: 3px solid #0f1c3f;
+    margin-bottom: 1.25rem;
+  }
+
+  .ps-co-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f1c3f;
+    letter-spacing: -.02em;
+  }
+
+  .ps-co-sub {
+    font-size: .72rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  .ps-period-badge {
+    background: #0f1c3f;
+    color: white;
+    border-radius: 8px;
+    padding: .4rem .9rem;
+    font-size: .78rem;
+    font-weight: 700;
+  }
+
+  .ps-emp-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 1rem;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .ps-fld label {
+    font-size: .63rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #94a3b8;
+    font-weight: 700;
+  }
+
+  .ps-fld p {
+    font-weight: 600;
+    font-size: .85rem;
+    color: #1e293b;
+    margin-top: 2px;
+  }
+
+  .pay-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+
+    .pay-table th {
+      background: #0f1c3f;
+      color: white;
+      padding: .6rem .9rem;
+      text-align: left;
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+      .pay-table th:last-child {
+        text-align: right;
+      }
+
+    .pay-table td {
+      padding: .55rem .9rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: .83rem;
+    }
+
+      .pay-table td:last-child {
+        text-align: right;
+        font-family: 'JetBrains Mono',monospace;
+        font-weight: 600;
+      }
+
+    .pay-table tr.subtotal td {
+      background: #f8fafc;
+      font-weight: 700;
+    }
+
+  .net-stripe {
+    background: #0f1c3f;
+    color: white;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ps-footer {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    font-size: .72rem;
+    color: #94a3b8;
+  }
+
+  @@media print {
+    .no-print {
+      display: none !important;
+    }
+
+    .ps-wrap {
+      background: white;
+      padding: 0;
+    }
+
+    .ps-layout {
+      display: block;
+    }
+
+    .payslip {
+      border: none;
+      box-shadow: none;
+      padding: 1.5rem 0;
+    }
+
+    body {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+  }
+</style>
+
+<div class="ps-wrap">
+  <div class="ps-hdr no-print">
+    <div>
+      <div class="ps-ttl"><i class="fas fa-file-invoice-dollar me-2" style="color:#1a56db"></i>Payslips</div>
+      <div class="ps-sub">@DateTime.Now.ToString("MMMM yyyy") · Click employee to view payslip</div>
+    </div>
+    <div style="display:flex;gap:.6rem">
+      <select @bind="selMonth" style="border:1px solid #e2e8f0;border-radius:8px;padding:.38rem .7rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:.81rem;color:#1e293b;background:white;outline:none;">
+        <option>March 2025</option>
+        <option>April 2025</option>
+        <option>May 2025</option>
+        <option selected>@DateTime.Now.ToString("MMMM yyyy")</option>
+      </select>
+      <button class="btn btn-gh btn-sm no-print" @onclick='async () => await JS.InvokeVoidAsync("window.print")'><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-dk btn-sm no-print"><i class="fas fa-download"></i> Download PDF</button>
+    </div>
+  </div>
+
+  <div class="ps-layout">
+    <!-- Employee List -->
+    <div class="card no-print" style="max-height:80vh;overflow-y:auto">
+      <div class="ch"><div class="ct">Employees</div><span style="background:#e8effe;color:#1a56db;padding:2px 8px;border-radius:99px;font-size:.7rem;font-weight:700">@emps.Count</span></div>
+      @foreach (var e in emps)
+      {
+        <div class="emp-item @(selEmp == e ? "active" : "")" @onclick="() => selEmp = e">
+          <div class="av" style="background:@e.bg;color:@e.col">@e.init</div>
+          <div><div class="en">@e.name</div><div class="et">@e.title</div></div>
+        </div>
+      }
+    </div>
+
+    <!-- Payslip Preview -->
+    <div class="card">
+      @if (selEmp == null)
+      {
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem;color:#94a3b8;text-align:center">
+          <i class="fas fa-file-invoice-dollar" style="font-size:3rem;margin-bottom:1rem;opacity:.3"></i>
+          <div style="font-weight:600;font-size:.9rem">Select an employee</div>
+          <div style="font-size:.8rem;margin-top:.3rem">Click any name on the left to view their payslip</div>
+        </div>
+      }
+      else
+      {
+        var c = Pay(selEmp.sal);
+        <div class="ch no-print">
+          <div class="ct">Payslip — @selEmp.name</div>
+          <div style="display:flex;gap:.4rem">
+            <button class="btn btn-gh btn-sm" @onclick='async () => await JS.InvokeVoidAsync("window.print")'><i class="fas fa-print"></i> Print</button>
+            <button class="btn btn-gn btn-sm"><i class="fas fa-paper-plane"></i> Send to Employee</button>
+          </div>
+        </div>
+        <div style="padding:1.5rem">
+          <div class="payslip">
+            <!-- Header -->
+            <div class="ps-company-hdr">
+              <div>
+                <div class="ps-co-name">HR PRO MAX SYSTEM</div>
+                <div class="ps-co-sub">Official Employee Payslip · Confidential</div>
+              </div>
+              <div>
+                <div class="ps-period-badge">@selMonth</div>
+                <div style="font-size:.7rem;color:#94a3b8;margin-top:.3rem;text-align:right">Pay Date: @DateTime.Now.ToString("dd MMM yyyy")</div>
+              </div>
+            </div>
+
+            <!-- Employee Details -->
+            <div class="ps-emp-grid">
+              <div class="ps-fld"><label>Employee Name</label><p>@selEmp.name</p></div>
+              <div class="ps-fld"><label>Employee Code</label><p>@selEmp.code</p></div>
+              <div class="ps-fld"><label>Job Title</label><p>@selEmp.title</p></div>
+              <div class="ps-fld"><label>Department</label><p>@selEmp.dept</p></div>
+              <div class="ps-fld"><label>Pay Period</label><p>@selMonth</p></div>
+              <div class="ps-fld"><label>Payment Method</label><p>Bank Transfer</p></div>
+            </div>
+
+            <!-- Pay Table -->
+            <table class="pay-table">
+              <thead><tr><th>Description</th><th>Category</th><th>Amount (KES)</th></tr></thead>
+              <tbody>
+                <tr><td>Basic Salary</td><td><span class="bdg bg">Earning</span></td><td style="color:#0e9f6e">@selEmp.sal.ToString("N2")</td></tr>
+                <tr class="subtotal"><td colspan="2">Gross Earnings</td><td>@selEmp.sal.ToString("N2")</td></tr>
+                <tr><td>PAYE (Income Tax)</td><td><span class="bdg" style="background:#fde8e8;color:#e02424">Deduction</span></td><td style="color:#e02424">(@c.paye.ToString("N2"))</td></tr>
+                <tr><td>NHIF Contribution</td><td><span class="bdg" style="background:#fde8e8;color:#e02424">Deduction</span></td><td style="color:#e02424">(@c.nhif.ToString("N2"))</td></tr>
+                <tr><td>NSSF Contribution (6%)</td><td><span class="bdg" style="background:#fde8e8;color:#e02424">Deduction</span></td><td style="color:#e02424">(@c.nssf.ToString("N2"))</td></tr>
+                <tr><td>Housing Levy (1.5%)</td><td><span class="bdg" style="background:#fde8e8;color:#e02424">Deduction</span></td><td style="color:#e02424">(@c.hous.ToString("N2"))</td></tr>
+                <tr class="subtotal"><td colspan="2">Total Deductions</td><td style="color:#e02424">(@c.totalDed.ToString("N2"))</td></tr>
+              </tbody>
+            </table>
+
+            <div class="net-stripe">
+              <div><div style="color:#94a3b8;font-size:.75rem;margin-bottom:.15rem">NET PAY</div><div style="font-size:.72rem;color:#64748b2e">After all statutory deductions</div></div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;color:#34d399">KES @c.net.ToString("N2")</div>
+            </div>
+
+            <!-- Deductions Summary Bar -->
+            <div style="margin-top:1.25rem;background:#f8fafc;border-radius:10px;padding:1rem">
+              <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:.6rem">Deduction Breakdown</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem">
+                @foreach (var row in new[] { ("PAYE", c.paye), ("NHIF", c.nhif), ("NSSF", c.nssf), ("Housing", c.hous) })
+                {
+                  <div style="text-align:center">
+                    <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.85rem;color:#e02424">@row.Item2.ToString("N0")</div>
+                    <div style="font-size:.65rem;color:#94a3b8;margin-top:2px">@row.Item1</div>
+                    <div style="background:#f1f5f9;border-radius:99px;height:4px;margin-top:.3rem;overflow:hidden">
+                      <div style="height:100%;background:#e02424;border-radius:99px;width:@((row.Item2 / selEmp.sal * 100).ToString("N0"))%"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="ps-footer">
+              <span>Generated: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+              <span>This is a computer-generated payslip — no signature required</span>
+              <span>HR PRO MAX SYSTEM</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@code {
+  string selMonth = DateTime.Now.ToString("MMMM yyyy");
+  EmpS? selEmp;
+
+  record PR(decimal paye, decimal nhif, decimal nssf, decimal hous, decimal totalDed, decimal net);
+  record EmpS(string code, string name, string title, string dept, decimal sal, string init, string bg, string col);
+
+  PR Pay(decimal g)
+  {
+    var nssf = Math.Round(g * .06m, 2); var h = Math.Round(g * .015m, 2);
+    decimal nhif = g switch { <= 5999 => 150, <= 7999 => 300, <= 11999 => 400, <= 14999 => 500, <= 19999 => 600, <= 24999 => 750, <= 29999 => 850, <= 34999 => 900, <= 39999 => 950, <= 44999 => 1000, <= 49999 => 1100, <= 59999 => 1200, <= 69999 => 1300, <= 79999 => 1400, <= 89999 => 1500, <= 99999 => 1600, _ => 1700 };
+    var tax = g - nssf; decimal paye = tax switch { <= 24000 => tax * .10m, <= 32333 => 2400 + (tax - 24000) * .25m, <= 500000 => 4483.25m + (tax - 32333) * .30m, _ => 144433.25m + (tax - 500000) * .325m };
+    paye = Math.Max(0, Math.Round(paye - 2400, 2)); var tot = paye + nhif + nssf + h; return new PR(paye, nhif, nssf, h, tot, g - tot);
+  }
+  string[] bgs = { "#dbeafe", "#dcfce7", "#fef3c7", "#fce7f3", "#ede9fe", "#ffedd5" };
+  string[] cols = { "#1d4ed8", "#15803d", "#b45309", "#be185d", "#7c3aed", "#c2410c" };
+  EmpS Mk(string code, string fn, string ln, string title, string dept, decimal sal)
+  {
+    var nm = $"{fn} {ln}"; var i = Math.Abs(nm.GetHashCode()) % 6;
+    return new EmpS(code, nm, title, dept, sal, $"{fn[0]}{ln[0]}".ToUpper(), bgs[i], cols[i]);
+  }
+  List<EmpS> emps => new(){
+        Mk("29122025","Jackason","Munene","Kulima","Operations",65000),
+        Mk("0000002","Jared","Okumu","HR Officer","HR",72000),
+        Mk("0000001","Alvin","Mwaniki","Sales Executive","Sales",68000),
+        Mk("0000001","Ann","Wangui","Operations Head","Operations",145000),
+        Mk("22022026","Alvin","Kiarie","Full Stack Developer","ICT",110000),
+        Mk("050320260107","Mwende","Muthee","Software Developer","ICT",200000),
+        Mk("000000003","Jame","Shikuku","Software Developer","ICT",95000),
+        Mk("08022026","Kenneth","Oluthe","Sales Executive","Sales",78000),
+        Mk("20251219","Angela","Atieno","Supply Chain Officer","Supply Chain",82000),
+        Mk("22022026","John","Munene","Procurement Officer","Procurement",88000),
+        Mk("000000004","Jeff","Ntongai","HR Manager","HR",92000),
+        Mk("20251230","Yobra","Mnoma","Supply Chain Officer","Supply Chain",75000),
+        Mk("90OIUUU","Rogers","Kamori","IT Support","ICT",68000),
+        Mk("202002221824","Don","Muthee","Marketing Head","Marketing",125000),
+        Mk("05032026","Rose","Gichuru","Full Stack Developer","ICT",110000),
+        Mk("000000003","Richard","Magoma","ERT Officer","Operations",55000),
+        Mk("20251219","Valentine","Wahito","Supply Chain Officer","Supply Chain",80000),
+        Mk("123456","Arsenal","Otieno","Operations Head","Operations",138000),
+        Mk("07022026","Megan","Wanjiku","Customer Care","Customer Service",62000),
+        Mk("21012026","Rose","Gichuru2","Supply Chain","Supply Chain",76000),
+        Mk("000000003","Ince","Njenga","ERT Officer","Operations",55000),
+        Mk("000000003","Jackline","Obure","Operations Head","Operations",132000),
+        Mk("20260222","Alvin","Mwaniki2","Full Stack Developer","ICT",115000),
+        Mk("5558745223","Martin","Kukushi","Fundi Mwitu","Operations",45000),
+        Mk("20251219","Rose","Gichuru3","Supply Chain Officer","Supply Chain",78000),
+    };
+}

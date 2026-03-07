@@ -7,6 +7,7 @@
 @using HR.Services.Services
 @using HR.Core.Enums
 @using HR.Services
+@using HR.Data.Models.PAYROLL
 @using Microsoft.EntityFrameworkCore
 @inject EmployeeTempService TempService
 @inject HRDbContext Db
@@ -313,8 +314,23 @@
       Notes = "Employee record created via registration wizard."
     };
     Db.EmployeeStatusLogs.Add(initialLog);
-    // This single call saves ALL tracked entities (Employee, related entities, AND User)
-    await Db.SaveChangesAsync();
+// ⭐ Save agreed salary from onboarding if it was set
+if (TempService.AgreedSalary.HasValue && TempService.AgreedSalary.Value > 0)
+{
+    var salaryRecord = new HR.Data.Models.PAYROLL.EmployeeSalary
+    {
+        Id            = Guid.NewGuid(),
+        EmployeeId    = employeeToSave.Id,
+        JobTitle      = employeeToSave.JobTitle,
+        DepartmentId  = employeeToSave.DepartmentId,
+        BasicSalary   = TempService.AgreedSalary.Value,
+        EffectiveDate = employeeToSave.HireDate,
+        CreatedAt     = DateTime.UtcNow
+    };
+    Db.EmployeeSalaries.Add(salaryRecord); // ⭐ queued in same transaction
+}    
+
+await Db.SaveChangesAsync();
 
     // ***************************************************************
     // --- 2. INITIATE SECURE SETUP EMAIL (POST-SAVE ya baadaye) ---

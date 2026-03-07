@@ -70,7 +70,12 @@ namespace HR.Services.Services
 				PaymentData = new PaymentData(),
 
 				DisabilityDetail = new DisabilityDetail()
+
 			};
+			OnboardingId = null;
+			AgreedSalary = null;
+			RequisitionSalaryMin = null; 
+			RequisitionSalaryMax = null;
 		}
 
 		public void Clear() => Reset();
@@ -236,5 +241,28 @@ namespace HR.Services.Services
 				CompanyCountry = w.Country ?? "N/A"
 			}).ToList();
 		}
+		public Guid? OnboardingId { get; private set; }
+		public decimal? AgreedSalary { get; private set; }
+
+		public void SetOnboardingContext(Guid onboardingId, decimal? agreedSalary)
+		{
+			OnboardingId = onboardingId;
+			AgreedSalary = agreedSalary;
+		}
+		// ⭐ Salary range from requisition (display guidance only)
+		public decimal? RequisitionSalaryMin { get; private set; }
+		public decimal? RequisitionSalaryMax { get; private set; }
+
+		public void SetSalaryRange(decimal min, decimal max)
+		{
+			RequisitionSalaryMin = min;
+			RequisitionSalaryMax = max;
+		}
+
+		public void SetAgreedSalary(decimal salary)
+		{
+			AgreedSalary = salary;
+		}
+
 	}
 }
